@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://cbgrupbarna-3x3timechamber.com/</loc>
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://cbgrupbarna-3x3timechamber.com/og-image.png</image:loc>
+      <image:title>3×3 Westfield Glòries 2026 — Torneig urbà a Barcelona</image:title>
+      <image:caption>Cartell del torneig 3×3 Westfield Glòries, edició 2026, al barri del Clot-Glòries de Barcelona.</image:caption>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://cbgrupbarna-3x3timechamber.com/inscripcion</loc>
+    <lastmod>2026-05-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+</urlset>
