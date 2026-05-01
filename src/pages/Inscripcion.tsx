@@ -617,6 +617,28 @@ export default function Inscripcion() {
               ✅ Justificant adjuntat: <strong>{justFile.name}</strong>
             </div>
           )}
+
+          {/* CTA: Comparteix la pàgina del teu equip (motor viral) */}
+          {(() => {
+            const equipParams = new URLSearchParams({
+              nom: watch("nomEquip") || "",
+              cap: `${watch("capNom") || ""} ${watch("capCognom") || ""}`.trim(),
+              cat: watch("capCategoria") || "",
+              club: watch("capClub") || "",
+              jug: String(numJugadors),
+            });
+            const equipUrl = `/equip?${equipParams.toString()}`;
+            return (
+              <Link to={equipUrl} className="block">
+                <div className="bg-gradient-to-br from-red-600/20 to-orange-500/15 border border-red-500/40 rounded-2xl p-5 mb-5 text-left hover:scale-[1.02] active:scale-[0.99] transition-transform">
+                  <p className="text-xs font-bold uppercase tracking-wider text-orange-300 mb-1">🔥 Pàgina del teu equip</p>
+                  <p className="text-lg font-black text-white mb-1.5">{watch("nomEquip") || "El teu equip"} ja té web</p>
+                  <p className="text-xs text-white/60">Comparteix-la amb la família, amics, ex-companys… que vinguin a animar-vos!</p>
+                </div>
+              </Link>
+            );
+          })()}
+
           <div className="flex flex-col sm:flex-row gap-3">
             <a href={`https://wa.me/34600000000?text=Hola!%20Acabo%20d'enviar%20la%20inscripci%C3%B3%20del%20meu%20equip%20al%203x3%20Westfield%20Gl%C3%B2ries.%20Podeu%20confirmar%20la%20recepci%C3%B3%3F`}
               target="_blank" rel="noopener noreferrer"
