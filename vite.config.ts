@@ -208,9 +208,9 @@ function cdnPrefixImages(): Plugin {
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   return {
-    // GitHub Pages project page: replace 3x3-westfield-grupbarna-timechamber with your repo name.
-    // Example: site at https://anaperez.github.io/web-3x3/ → base: '/web-3x3/'
-    base: '/3x3-westfield-grupbarna-timechamber/',
+    // Custom domain via CNAME → site at root (cbgrupbarna-3x3timechamber.com).
+    // If reverting to project page: put back '/3x3-westfield-grupbarna-timechamber/'.
+    base: '/',
     server: {
       host: "::",
       port: 8080,
