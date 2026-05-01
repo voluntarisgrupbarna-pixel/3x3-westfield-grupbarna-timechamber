@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
@@ -235,6 +235,31 @@ export default function Inscripcion() {
   const [sharedSlots, setSharedSlots] = useState<boolean[]>([false, false, false, false, false]);
   const [igFollowed, setIgFollowed]   = useState(false);
   const [descInvitacions, setDescInvitacions] = useState(false);
+  // Queue simulator (Ticketmaster-style anti-bot + urgency)
+  const [queueState, setQueueState] = useState<"queueing" | "passed">("queueing");
+  const [queuePos, setQueuePos]     = useState(0);
+  const [queueInitial, setQueueInitial] = useState(0);
+
+  // Tick down queue position
+  useEffect(() => {
+    if (queueState !== "queueing") return;
+    // Position aleatoria 32-68 al entrar
+    const initial = 32 + Math.floor(Math.random() * 37);
+    setQueueInitial(initial);
+    setQueuePos(initial);
+    let pos = initial;
+    const interval = setInterval(() => {
+      const decrement = 1 + Math.floor(Math.random() * 4); // -1 a -4 per tick
+      pos = Math.max(0, pos - decrement);
+      setQueuePos(pos);
+      if (pos === 0) {
+        clearInterval(interval);
+        setTimeout(() => setQueueState("passed"), 700);
+      }
+    }, 550);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -339,6 +364,81 @@ export default function Inscripcion() {
       setSending(false);
     }
   };
+
+  /* ─── Queue simulator: 8-15s d'espera per percepció de demanda alta ─── */
+  if (queueState === "queueing") {
+    const progress = queueInitial > 0 ? Math.round(((queueInitial - queuePos) / queueInitial) * 100) : 0;
+    const etaSeconds = Math.max(1, Math.ceil(queuePos * 0.22));
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4 py-8 relative overflow-hidden">
+        {/* Fondo radial sutil */}
+        <div className="absolute inset-0 bg-gradient-to-br from-red-950/40 via-slate-950 to-slate-950 pointer-events-none" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="relative max-w-md w-full bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-8 md:p-10 text-center shadow-2xl shadow-red-900/20"
+        >
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 mb-6">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+            </span>
+            <span className="text-xs font-bold uppercase tracking-widest text-red-300">En cua</span>
+          </div>
+
+          {/* Spinner */}
+          <Loader2 className="w-12 h-12 text-red-500 mx-auto mb-6 animate-spin" />
+
+          {/* Counter */}
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-widest text-white/40 mb-2">Persones davant teu</p>
+            <motion.p
+              key={queuePos}
+              initial={{ scale: 1.15, opacity: 0.7 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.25 }}
+              className="text-6xl md:text-7xl font-black font-mono text-white tabular-nums"
+              style={{ textShadow: "0 0 40px rgba(220,38,38,0.4)" }}
+            >
+              {queuePos}
+            </motion.p>
+          </div>
+
+          {/* Progress bar */}
+          <div className="w-full h-2 bg-white/5 rounded-full overflow-hidden mb-3 border border-white/10">
+            <motion.div
+              className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-red-400"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              style={{ boxShadow: "0 0 12px rgba(220,38,38,0.5)" }}
+            />
+          </div>
+          <p className="text-xs text-white/40 mb-7 tabular-nums">
+            {progress}% completat · temps estimat ~{etaSeconds}s
+          </p>
+
+          {/* Status text */}
+          <p className="text-sm text-white/70 mb-2 font-medium">
+            Comprovant disponibilitat de places...
+          </p>
+          <p className="text-xs text-white/40 mb-6 leading-relaxed">
+            S'estan processant inscripcions en aquest moment. Et donarem accés en breus.
+          </p>
+
+          {/* Warning */}
+          <div className="bg-orange-500/10 border border-orange-500/25 rounded-xl px-4 py-3 text-xs text-orange-200">
+            ⚠️ <strong>No tanquis aquesta finestra</strong> — perdries la teva posició a la cua.
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
 
   /* ─── Gate viral: 5 invitacions + IG follow → 10% off ─── */
   if (gateState === "active") {
