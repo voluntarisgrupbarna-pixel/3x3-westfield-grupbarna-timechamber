@@ -347,15 +347,24 @@ export default function Inscripcion() {
   const onSubmit = async (data: FD) => {
     setSending(true);
     try {
-      // 1. Submit to JotForm
-      await submitToJotForm(data, descAplicat, descInvitacions, justFile?.name || "");
-      // 2. Also send to Google Sheets (fallback)
+      // Submit to Apps Script webhook (primary backend: Sheet + emails)
+      // Replaced JotForm REST API to avoid exposing API key in public bundle.
       if (GOOGLE_WEBHOOK) {
-        fetch(GOOGLE_WEBHOOK, {
-          method:"POST", mode:"no-cors",
-          headers:{ "Content-Type":"application/json" },
-          body: JSON.stringify({ ...data, total, descAplicat, descInvitacions, justificant: justFile?.name || "", data: new Date().toLocaleString("ca-ES") })
-        }).catch(() => {});
+        await fetch(GOOGLE_WEBHOOK, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            total,
+            descAplicat,
+            descInvitacions,
+            justificant: justFile?.name || "",
+            data: new Date().toLocaleString("ca-ES"),
+          }),
+        });
+      } else {
+        throw new Error("Webhook no configurat");
       }
       setSubmitted(true);
     } catch (err) {
