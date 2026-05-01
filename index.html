@@ -53,9 +53,21 @@
     <meta name="twitter:image:alt" content="3×3 Westfield Glòries 2026" />
 
     <!-- Performance: preconnect to third parties used by the SPA -->
-    <link rel="preconnect" href="https://eu-api.jotform.com" crossorigin />
     <link rel="preconnect" href="https://script.google.com" crossorigin />
-    <link rel="dns-prefetch" href="https://www.google.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-R6XYR7G1WF"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-R6XYR7G1WF', {
+        anonymize_ip: true,
+        cookie_flags: 'SameSite=None;Secure'
+      });
+    </script>
 
     <!-- JSON-LD: SportsEvent (Google rich results for sports events) -->
     <script type="application/ld+json">
