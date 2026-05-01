@@ -1,0 +1,210 @@
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+==========================================================================
+【AI HANDOVER NOTE】
+1. DESIGN PHILOSOPHY:
+   - Urban Streetball Energy: Este diseño captura la esencia del baloncesto 3x3 urbano - rápido, explosivo, y visceral. La filosofía es "Dark Court, Neon Lights" - imagina una cancha nocturna iluminada por neones naranjas y amarillos, con la energía cruda del streetball.
+   - Neo-Urban Brutalism: Combinamos superficies oscuras brutales con acentos neón vibrantes. El contraste dramático refleja la intensidad del deporte urbano #1 del mundo.
+   - Youth-First Mobile Experience: Diseñado para la generación Z/Alpha que consume contenido en móvil. Animaciones sutiles, cards con glassmorphism, y jerarquía visual clara para conversión rápida de inscripciones.
+
+2. TYPOGRAPHY:
+   - Display (Rajdhani): Fuente geométrica bold con carácter deportivo y tecnológico. Sus formas angulares evocan movimiento y velocidad - perfecta para títulos impactantes como "TIME CHAMBER EXPERIENCE" o "3 Y 4 DE MAYO 2025".
+   - Sans (Inter): Legibilidad excepcional para cuerpo de texto, formularios y datos. Su neutralidad permite que los acentos neón brillen sin competencia.
+   - Mono (JetBrains Mono): Para estadísticas, contadores de inscripciones ("75% plazas llenas"), y datos numéricos que requieren precisión visual.
+
+3. COLOR SYSTEM:
+   - Brand Primary (Neon Orange H:35): El naranja neón es el corazón del sistema - representa energía urbana, visibilidad nocturna, y el balón de baloncesto. Hue 35° captura ese punto exacto entre naranja puro y amarillo eléctrico.
+   - Mapping: --brand → --primary (CTAs de inscripción), --accent (highlights de stats), --ring (focus states en formularios)
+   - Dark Foundation: Background casi negro (L:0.12) crea el "asfalto nocturno" sobre el que brillan los neones. Foreground en blanco cálido (L:0.96) asegura legibilidad WCAG AAA.
+   - Semantic Colors: Success (verde neón H:150) para confirmaciones de inscripción, Warning (amarillo eléctrico H:50) para plazas limitadas, Destructive (rojo neón H:15) para fechas límite.
+   - Chart Colors: Gradiente de naranjas a amarillos para visualizar stats del torneo (categorías, inscripciones, impacto digital).
+
+4. USAGE GUIDE:
+   - Layout: Full-width hero con video/imagen de fondo oscurecida, seguido por secciones Bento-style para categorías, stats, patrocinadores.
+   - Glassmorphism: Cards con backdrop-blur-md y border naranja sutil (1px) sobre fondos oscuros semi-transparentes. Usar para: cards de categorías, testimonios, info de patrocinadores.
+   - Neon Effects: Aplicar glow sutil (box-shadow con --primary a 20% opacity) en CTAs principales, títulos hero, y stats destacadas. NO abusar - máximo 3 elementos con glow por viewport.
+   - Mobile-First: Hero height 70vh en mobile, 85vh en desktop. Formulario sticky bottom bar en mobile con "Inscríbete Ahora" siempre visible.
+   - Animations: Fade-in-up para cards (stagger 100ms), pulse suave en CTA principal, counter animation para stats numéricas.
+   - Accessibility: Mantener contraste mínimo 7:1 en texto sobre fondos oscuros. Proveer modo de alto contraste alternativo para usuarios con sensibilidad a neones.
+   - Specific Rules: Logos de patrocinadores en grayscale por defecto, color on hover. Formulario multi-step con progress bar naranja. Sección de reglas 3x3 con iconografía minimalista.
+==========================================================================
+*/
+
+:root {
+  /* Typography */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+  
+  /* Radius */
+  --radius: 0.5rem;
+
+  /* Core UI Tokens */
+  --background: oklch(0.98 0.005 35);
+  --foreground: oklch(0.15 0.02 35);
+  --card: oklch(0.96 0.008 35);
+  --card-foreground: oklch(0.18 0.02 35);
+  --popover: oklch(0.97 0.006 35);
+  --popover-foreground: oklch(0.16 0.02 35);
+  --primary: oklch(0.58 0.22 35);
+  --primary-foreground: oklch(0.98 0.005 35);
+  --secondary: oklch(0.88 0.015 35);
+  --secondary-foreground: oklch(0.22 0.02 35);
+  --muted: oklch(0.92 0.01 35);
+  --muted-foreground: oklch(0.48 0.015 35);
+  --accent: oklch(0.65 0.24 50);
+  --accent-foreground: oklch(0.98 0.005 35);
+  --destructive: oklch(0.55 0.22 15);
+  --destructive-foreground: oklch(0.98 0.005 15);
+  --border: oklch(0.85 0.012 35);
+  --input: oklch(0.88 0.012 35);
+  --ring: oklch(0.58 0.22 35);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.58 0.22 35);
+  --chart-2: oklch(0.62 0.24 45);
+  --chart-3: oklch(0.68 0.26 50);
+  --chart-4: oklch(0.55 0.20 30);
+  --chart-5: oklch(0.52 0.18 25);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.95 0.008 35);
+  --sidebar-foreground: oklch(0.25 0.02 35);
+  --sidebar-primary: oklch(0.58 0.22 35);
+  --sidebar-primary-foreground: oklch(0.98 0.005 35);
+  --sidebar-accent: oklch(0.90 0.012 35);
+  --sidebar-accent-foreground: oklch(0.22 0.02 35);
+  --sidebar-border: oklch(0.88 0.012 35);
+  --sidebar-ring: oklch(0.58 0.22 35);
+}
+
+.dark {
+  --background: oklch(0.12 0.015 35);
+  --foreground: oklch(0.96 0.008 35);
+  --card: oklch(0.16 0.018 35);
+  --card-foreground: oklch(0.94 0.008 35);
+  --popover: oklch(0.14 0.016 35);
+  --popover-foreground: oklch(0.95 0.008 35);
+  --primary: oklch(0.68 0.26 35);
+  --primary-foreground: oklch(0.12 0.015 35);
+  --secondary: oklch(0.25 0.025 35);
+  --secondary-foreground: oklch(0.92 0.008 35);
+  --muted: oklch(0.22 0.02 35);
+  --muted-foreground: oklch(0.62 0.015 35);
+  --accent: oklch(0.72 0.28 50);
+  --accent-foreground: oklch(0.12 0.015 35);
+  --destructive: oklch(0.62 0.26 15);
+  --destructive-foreground: oklch(0.96 0.008 15);
+  --border: oklch(0.28 0.025 35);
+  --input: oklch(0.25 0.025 35);
+  --ring: oklch(0.68 0.26 35);
+  
+  /* Chart Tokens */
+  --chart-1: oklch(0.68 0.26 35);
+  --chart-2: oklch(0.72 0.28 45);
+  --chart-3: oklch(0.75 0.30 50);
+  --chart-4: oklch(0.65 0.24 30);
+  --chart-5: oklch(0.62 0.22 25);
+  
+  /* Sidebar Tokens */
+  --sidebar: oklch(0.14 0.018 35);
+  --sidebar-foreground: oklch(0.88 0.008 35);
+  --sidebar-primary: oklch(0.68 0.26 35);
+  --sidebar-primary-foreground: oklch(0.12 0.015 35);
+  --sidebar-accent: oklch(0.22 0.022 35);
+  --sidebar-accent-foreground: oklch(0.90 0.008 35);
+  --sidebar-border: oklch(0.25 0.025 35);
+  --sidebar-ring: oklch(0.68 0.26 35);
+}
+
+@theme inline {
+  /* Shadcn Core Mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Charts Mapping */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar Mapping */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Typography */
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+
+  /* Radius */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply scroll-smooth antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans min-h-screen;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  code, pre {
+    @apply font-mono;
+  }
+
+  ::selection {
+    @apply bg-primary/20 text-primary;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/40;
+  }
+}
