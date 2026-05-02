@@ -73,6 +73,7 @@ function Countdown({ target }: { target: Date }) {
 /* ─── Animated Counter ─── */
 function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
   const [count, setCount] = useState(0);
+  const isDecimal = !Number.isInteger(end);
   useEffect(() => {
     const duration = 2000;
     const steps = 70;
@@ -81,11 +82,12 @@ function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
     const timer = setInterval(() => {
       current += increment;
       if (current >= end) { setCount(end); clearInterval(timer); }
-      else setCount(Math.floor(current));
+      else setCount(isDecimal ? +current.toFixed(1) : Math.floor(current));
     }, duration / steps);
     return () => clearInterval(timer);
-  }, [end]);
-  return <span>{count.toLocaleString("es-ES")}{suffix}</span>;
+  }, [end, isDecimal]);
+  const display = isDecimal ? count.toFixed(1) : count.toLocaleString("es-ES");
+  return <span>{display}{suffix}</span>;
 }
 
 /* ─── Lightbox ─── */
@@ -179,10 +181,10 @@ const rules = [
 ];
 
 const stats = [
-  { value: 1000, suffix: "M+", label: "Impressions digitals" },
-  { value: 10, suffix: "M+", label: "Seguidors FIBA 3x3" },
-  { value: 37, suffix: "%", label: "Creixement anual" },
-  { value: 2021, suffix: "", label: "Debut Olímpic Tòquio" },
+  { value: 180, suffix: "+",   label: "Equips a 2 edicions" },
+  { value: 800, suffix: "+",   label: "Jugadors/es totals" },
+  { value: 2.4, suffix: "M+",  label: "Impressions potencials" },
+  { value: 25,  suffix: "%",   label: "Creixement 2024→2025" },
 ];
 
 /* Logo order: Westfield → Grup Barna → Time Chamber → Eix Clot */
@@ -219,6 +221,157 @@ const UBICACIONS = [
 
 const EVENT_DATE = new Date("2025-06-06T09:00:00");
 const INSCRIPTIONS_PCT = 75;
+
+/* ─── Reels Instagram destacats (dossier oficial) ─── */
+const HIGHLIGHTED_REELS = [
+  { id: "DJNKYiuMOGm", caption: "Ambient i partits 1ª Edició" },
+  { id: "DJND83Ush_P", caption: "Highlights de la pista" },
+  { id: "DJR-4_RsR9O", caption: "Imatges del centre comercial" },
+];
+
+/* ─── Edicions Anteriors (dades del dossier oficial) ─── */
+function EdicionsAnterior() {
+  // Reprocesa els blockquotes Instagram quan el component es munta i quan el script ja està carregat
+  useEffect(() => {
+    const tryProcess = () => {
+      if ((window as any).instgrm?.Embeds?.process) {
+        (window as any).instgrm.Embeds.process();
+      }
+    };
+    tryProcess();
+    const t = setTimeout(tryProcess, 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <section id="edicions" className="py-20 bg-slate-950 scroll-mt-20 border-t border-white/8">
+      <div className="container mx-auto px-4 max-w-6xl">
+        {/* Header */}
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-14">
+          <span className="text-red-400 text-xs font-bold uppercase tracking-[0.3em] mb-3 block">Edicions Anteriors</span>
+          <h2 className="text-4xl md:text-5xl font-black mb-4" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            UN PROJECTE QUE <span className="text-red-500">CREIX</span>
+          </h2>
+          <p className="text-white/50 max-w-2xl mx-auto">
+            Dades oficials extretes del dossier d'impacte CB Grup Barna × Time Chamber × Westfield Glòries.
+          </p>
+        </motion.div>
+
+        {/* Comparison cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-14">
+          {[
+            { num: "1ª", date: "Maig 2024", equips: 80, jugadors: "~360", cats: "Cadet M, Infantil F, Infantil M", color: "from-slate-500/15 to-slate-600/10", border: "border-white/15" },
+            { num: "2ª", date: "Maig 2025", equips: 100, jugadors: "~450", cats: "+ Veterans · creixement +25%", color: "from-red-500/20 to-orange-500/10", border: "border-red-500/40" },
+            { num: "3ª", date: "6-7 Juny 2026", equips: "—", jugadors: "Tu hi pots ser", cats: "+ EQUALS (inclusiva) · Senior Pro Prize Money", color: "from-orange-500/20 to-yellow-500/10", border: "border-orange-400/50" },
+          ].map((ed, i) => (
+            <motion.div
+              key={ed.num}
+              variants={fadeUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              custom={i}
+              className={`relative bg-gradient-to-br ${ed.color} border ${ed.border} rounded-2xl p-6 backdrop-blur`}
+            >
+              <div className="flex items-baseline gap-3 mb-1">
+                <span className="text-5xl font-black text-white" style={{ fontFamily: "'Rajdhani', sans-serif" }}>{ed.num}</span>
+                <span className="text-xs uppercase tracking-widest text-white/50 font-bold">EDICIÓ</span>
+              </div>
+              <p className="text-sm text-white/40 mb-5 font-mono">{ed.date}</p>
+              <div className="space-y-3">
+                <div>
+                  <p className="text-3xl font-black text-white tabular-nums">{ed.equips}{typeof ed.equips === "number" ? " equips" : ""}</p>
+                </div>
+                <div>
+                  <p className="text-lg text-white/80">{ed.jugadors}{typeof ed.jugadors === "string" && ed.jugadors.startsWith("~") ? " jugadors/es" : ""}</p>
+                </div>
+                <div className="pt-3 border-t border-white/10">
+                  <p className="text-xs text-white/50">{ed.cats}</p>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Impact metrics */}
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-14">
+          {[
+            { v: "20.000+", l: "Persones al centre comercial" },
+            { v: "1.9M+",   l: "Reach influencers (Ari Geli, Rubenrg…)" },
+            { v: "67K+",    l: "Seguidors orgs (TC + Westfield + GB)" },
+            { v: "500-600", l: "Samarretes oficials per edició" },
+          ].map((m, i) => (
+            <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 text-center backdrop-blur">
+              <p className="text-2xl font-black text-red-400 font-mono mb-1">{m.v}</p>
+              <p className="text-[10px] uppercase tracking-wider text-white/50 leading-tight">{m.l}</p>
+            </div>
+          ))}
+        </motion.div>
+
+        {/* Clubs participants */}
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
+          <p className="text-xs uppercase tracking-widest text-white/40 mb-3 font-bold">Han participat clubs com</p>
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {["FC Barcelona", "Joventut Badalona", "+ clubs de Catalunya", "+ equips d'Alacant"].map(c => (
+              <span key={c} className="px-3 py-1 rounded-full bg-white/5 border border-white/15 text-sm text-white/70">{c}</span>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Instagram reels destacats */}
+        <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-10">
+          <div className="text-center mb-7">
+            <span className="text-red-400 text-xs font-bold uppercase tracking-[0.3em] mb-2 block">Reels destacats</span>
+            <h3 className="text-2xl md:text-3xl font-black" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+              VEU L'AMBIENT EN <span className="text-red-500">DIRECTE</span>
+            </h3>
+            <p className="text-white/40 text-sm mt-2">
+              Continguts oficials del dossier · etiquetats <span className="text-white/70 font-mono">#3x3</span> <span className="text-white/70 font-mono">#3x3timechamber</span>
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 justify-items-center">
+            {HIGHLIGHTED_REELS.map(reel => (
+              <div key={reel.id} className="w-full max-w-[400px]">
+                <blockquote
+                  className="instagram-media"
+                  data-instgrm-permalink={`https://www.instagram.com/reel/${reel.id}/`}
+                  data-instgrm-version="14"
+                  style={{
+                    background: "#0f172a",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    borderRadius: 12,
+                    margin: "0 auto",
+                    maxWidth: 400,
+                    minWidth: 280,
+                    width: "100%",
+                  }}
+                >
+                  <div style={{ padding: 16, color: "#94a3b8", fontSize: 13, textAlign: "center" }}>
+                    Carregant Instagram...{" "}
+                    <a href={`https://www.instagram.com/reel/${reel.id}/`} target="_blank" rel="noopener noreferrer" style={{ color: "#f87171", textDecoration: "underline" }}>
+                      Obrir el reel
+                    </a>
+                  </div>
+                </blockquote>
+                <p className="text-center text-xs text-white/40 mt-2">{reel.caption}</p>
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-7">
+            <a
+              href="https://www.instagram.com/cbgrupbarna/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-pink-400 hover:text-pink-300 transition-colors text-sm font-semibold"
+            >
+              <Instagram className="w-4 h-4" /> Veure tots els reels a @cbgrupbarna
+            </a>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -693,6 +846,9 @@ export default function Home() {
           </motion.div>
         </div>
       </section>
+
+      {/* ══ EDICIONS ANTERIORS (dossier oficial) ══ */}
+      <EdicionsAnterior />
 
       {/* ══ CTA ══ */}
       <section className="py-20 relative overflow-hidden bg-slate-900">
