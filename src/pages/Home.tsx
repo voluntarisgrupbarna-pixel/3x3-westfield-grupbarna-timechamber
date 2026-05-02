@@ -70,6 +70,30 @@ function Countdown({ target }: { target: Date }) {
   );
 }
 
+/* ─── Anunci banner (visible fins 2026-05-05 00:00) ─── */
+function AnunciBanner() {
+  const VISIBLE_FINS = new Date("2026-05-05T00:00:00");
+  const [visible, setVisible] = useState(() => new Date() < VISIBLE_FINS);
+
+  useEffect(() => {
+    if (!visible) return;
+    const ms = VISIBLE_FINS.getTime() - Date.now();
+    if (ms <= 0) { setVisible(false); return; }
+    const t = setTimeout(() => setVisible(false), ms);
+    return () => clearTimeout(t);
+  }, [visible]);
+
+  if (!visible) return null;
+  return (
+    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white text-center py-2 px-4 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
+      <span className="inline-flex items-center gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+        Dilluns 4 maig · Anunci oficial: samarreta, premis i nova seu
+      </span>
+    </div>
+  );
+}
+
 /* ─── Animated Counter ─── */
 function Counter({ end, suffix = "" }: { end: number; suffix?: string }) {
   const [count, setCount] = useState(0);
@@ -227,7 +251,7 @@ const UBICACIONS = [
   { id: "RC", nom: "Rambleta del Clot", tipus: "Pista Exterior", adreca: "Rambla del Poblenou / Clot, Barcelona", color: "#EAB308", lat: 41.4074, lng: 2.1876, emoji: "🌳", desc: "Pista exterior 3x3 de barri" },
 ];
 
-const EVENT_DATE = new Date("2025-06-06T09:00:00");
+const EVENT_DATE = new Date("2026-06-06T09:00:00");
 const INSCRIPTIONS_PCT = 75;
 
 /* ─── Reels Instagram destacats (dossier oficial) ─── */
@@ -401,6 +425,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
       <ScrollProgressBar />
+      <AnunciBanner />
 
       {/* ══ WHATSAPP SHARE FAB (viral hook — always visible) ══ */}
       <a
@@ -503,7 +528,7 @@ export default function Home() {
               <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="flex flex-wrap gap-x-5 gap-y-2 mb-6 text-sm text-white/70">
                 <span className="flex items-center gap-1.5">
                   <Calendar className="w-4 h-4 text-red-400" />
-                  <strong className="text-white">6 i 7 de Juny 2025</strong>
+                  <strong className="text-white">6 i 7 de Juny 2026</strong>
                 </span>
                 <span className="flex items-center gap-1.5">
                   <MapPin className="w-4 h-4 text-red-400" />

@@ -269,13 +269,13 @@ export default function Inscripcion() {
   // Tick down queue position
   useEffect(() => {
     if (queueState !== "queueing") return;
-    // Position aleatoria 32-68 al entrar
-    const initial = 32 + Math.floor(Math.random() * 37);
+    // Position aleatoria 8-20 al entrar (queue suau)
+    const initial = 8 + Math.floor(Math.random() * 13);
     setQueueInitial(initial);
     setQueuePos(initial);
     let pos = initial;
     const interval = setInterval(() => {
-      const decrement = 1 + Math.floor(Math.random() * 4); // -1 a -4 per tick
+      const decrement = 1 + Math.floor(Math.random() * 2); // -1 a -2 per tick
       pos = Math.max(0, pos - decrement);
       setQueuePos(pos);
       if (pos === 0) {
