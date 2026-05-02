@@ -70,6 +70,90 @@ function Countdown({ target }: { target: Date }) {
   );
 }
 
+/* ─── Comptador d'equips inscrits (live des d'Apps Script doGet) ─── */
+const COUNTER_ENDPOINT = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
+const COUNTER_CACHE_KEY = "equips_inscrits_cache_v1";
+const COUNTER_REFRESH_MS = 30_000;
+
+type EquipsState = { count: number; capacity: number | null; loaded: boolean };
+
+function useEquipsInscrits(): EquipsState {
+  const [state, setState] = useState<EquipsState>(() => {
+    try {
+      const raw = localStorage.getItem(COUNTER_CACHE_KEY);
+      if (raw) {
+        const p = JSON.parse(raw);
+        return { count: Number(p.count) || 0, capacity: typeof p.capacity === "number" ? p.capacity : null, loaded: true };
+      }
+    } catch {}
+    return { count: 0, capacity: null, loaded: false };
+  });
+
+  useEffect(() => {
+    if (!COUNTER_ENDPOINT) return;
+    let alive = true;
+    const tick = async () => {
+      try {
+        const res = await fetch(COUNTER_ENDPOINT, { method: "GET" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!alive) return;
+        const next: EquipsState = {
+          count: Number(json.count) || 0,
+          capacity: typeof json.capacity === "number" ? json.capacity : null,
+          loaded: true,
+        };
+        setState(next);
+        try { localStorage.setItem(COUNTER_CACHE_KEY, JSON.stringify(next)); } catch {}
+      } catch {}
+    };
+    tick();
+    const id = setInterval(tick, COUNTER_REFRESH_MS);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+
+  return state;
+}
+
+function EquipsBadge() {
+  const { count, capacity, loaded } = useEquipsInscrits();
+  if (!loaded) {
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+        ⚡ Inscripcions Obertes
+      </span>
+    );
+  }
+  const pctLabel = capacity ? ` · ${Math.min(100, Math.round((count / capacity) * 100))}%` : "";
+  return (
+    <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+      ⚡ {count} {count === 1 ? "equip inscrit" : "equips inscrits"}{pctLabel}
+    </span>
+  );
+}
+
+function EquipsProgress() {
+  const { count, capacity, loaded } = useEquipsInscrits();
+  const hasLive = loaded && capacity != null;
+  const pct = hasLive ? Math.min(100, Math.round((count / capacity!) * 100)) : INSCRIPTIONS_PCT;
+  const titol = hasLive ? `${count} equips inscrits de ${capacity}` : "Places ocupades";
+  return (
+    <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-sm font-semibold text-white">{titol}</span>
+        <span className="text-sm font-bold text-red-400">{pct}%</span>
+      </div>
+      <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+        <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          className="h-full rounded-full bg-gradient-to-r from-red-600 to-orange-500" />
+      </div>
+      <p className="text-xs text-white/40 mt-2">⚡ Poques places disponibles</p>
+    </div>
+  );
+}
+
 /* ─── Anunci banner (visible fins 2026-05-05 00:00) ─── */
 function AnunciBanner() {
   const VISIBLE_FINS = new Date("2026-05-05T00:00:00");
@@ -564,11 +648,9 @@ export default function Home() {
                 ))}
               </motion.div>
 
-              {/* Urgency badge */}
+              {/* Urgency badge — live */}
               <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={5} className="mt-4">
-                <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-                  ⚡ {INSCRIPTIONS_PCT}% de places ocupades
-                </span>
+                <EquipsBadge />
               </motion.div>
             </div>
 
@@ -617,19 +699,8 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {/* Progress */}
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-semibold text-white">Places ocupades</span>
-                  <span className="text-sm font-bold text-red-400">{INSCRIPTIONS_PCT}%</span>
-                </div>
-                <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
-                  <motion.div initial={{ width: 0 }} whileInView={{ width: `${INSCRIPTIONS_PCT}%` }} viewport={{ once: true }}
-                    transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
-                    className="h-full rounded-full bg-gradient-to-r from-red-600 to-orange-500" />
-                </div>
-                <p className="text-xs text-white/40 mt-2">⚡ Poques places disponibles</p>
-              </div>
+              {/* Progress — live */}
+              <EquipsProgress />
             </motion.div>
 
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
