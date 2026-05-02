@@ -36,8 +36,21 @@ const CATS      = [
   "U14 Infantil Masculí",
   "Prebenjamí / Benjamí / Aleví"
 ];
-const PRECIO_4  = 70;
-const PRECIO_5  = 90;
+/* Preus inscripció. Senior A i B paguen una mica més (categoria principal). */
+const PRECIO_GEN_4    = 75;   // General · 4 jugadors
+const PRECIO_GEN_5    = 90;   // General · 5 jugadors
+const PRECIO_SENIOR_4 = 85;   // Senior A/B · 4 jugadors
+const PRECIO_SENIOR_5 = 105;  // Senior A/B · 5 jugadors
+
+function isSeniorCat(cat: string | undefined): boolean {
+  if (!cat) return false;
+  return /^Senior\s*[AB]/i.test(cat);
+}
+function precioByCat(cat: string | undefined, mida: string): number {
+  const senior = isSeniorCat(cat);
+  if (mida === "5") return senior ? PRECIO_SENIOR_5 : PRECIO_GEN_5;
+  return senior ? PRECIO_SENIOR_4 : PRECIO_GEN_4;
+}
 const COD_DESC  = "3X3AVIAT";
 const IBAN      = "ES42 0182 1797 3902 0409 9747";
 
@@ -95,8 +108,8 @@ const slide = {
   exit:    (d:number) => ({ opacity:0, x: d*-40, transition:{ duration:0.25 } }),
 };
 
-function calcTotal(mida: string, desc5pct: boolean, descInvite10pct: boolean = false) {
-  const base = mida === "5" ? PRECIO_5 : PRECIO_4;
+function calcTotal(mida: string, capCategoria: string | undefined, desc5pct: boolean, descInvite10pct: boolean = false) {
+  const base = precioByCat(capCategoria, mida);
   const desc5  = desc5pct        ? Math.round(base *  5) / 100 : 0;
   const desc10 = descInvite10pct ? Math.round(base * 10) / 100 : 0;
   const total = Math.max(0, base - desc5 - desc10);
@@ -294,7 +307,8 @@ export default function Inscripcion() {
   const capDataNaix  = watch("capDataNaix");
   const numJugadors  = midaEquip === "5" ? 5 : 4;
   const isMinor      = capDataNaix ? (new Date().getFullYear() - new Date(capDataNaix).getFullYear() < 18) : false;
-  const { base, desc5, desc10, total } = calcTotal(midaEquip || "4", descAplicat, descInvitacions);
+  const capCategoria = watch("capCategoria");
+  const { base, desc5, desc10, total } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions);
 
   /* ─── Gate viral helpers ─── */
   const sharesDone = sharedSlots.filter(Boolean).length;
@@ -746,7 +760,10 @@ export default function Inscripcion() {
                             className={`border-2 rounded-xl p-4 text-center transition-all ${midaEquip===n ? "border-red-500 bg-red-500/10" : "border-white/10 hover:border-white/25"}`}>
                             <div className="text-3xl font-black font-mono text-red-400">{n}</div>
                             <div className="text-sm font-bold text-white mt-0.5">jugadors</div>
-                            <div className="text-xs text-red-400 font-bold mt-1">{n==="4"?`${PRECIO_4}€`:`${PRECIO_5}€`}</div>
+                            <div className="text-xs text-red-400 font-bold mt-1">
+                              {`${precioByCat(capCategoria, n)}€`}
+                              {!capCategoria && <span className="text-white/40 font-normal"> · {n==="4" ? `${PRECIO_GEN_4}-${PRECIO_SENIOR_4}` : `${PRECIO_GEN_5}-${PRECIO_SENIOR_5}`}€</span>}
+                            </div>
                           </button>
                         ))}
                       </div>
