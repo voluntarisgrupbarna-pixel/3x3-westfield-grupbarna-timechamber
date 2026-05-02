@@ -676,8 +676,9 @@ export default function Home() {
               <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0.5}
                 className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <iframe
-                  title="Mapa 3x3 Westfield Glòries"
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2532.8!2d2.1896!3d41.4048!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x12a4a330c0f3abc1%3A0x1234!2sAv.+Diagonal+208%2C+08018+Barcelona!5e0!3m2!1sca!2ses!4v1700000000000!5m2!1sca!2ses"
+                  key={activeUbic}
+                  title={`Mapa ${UBICACIONS[activeUbic].nom} · 3x3 Westfield Glòries`}
+                  src={`https://maps.google.com/maps?q=${UBICACIONS[activeUbic].lat},${UBICACIONS[activeUbic].lng}&hl=ca&z=16&output=embed`}
                   width="100%" height="380"
                   style={{ border: 0 }}
                   allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
