@@ -92,7 +92,7 @@ function calcTotal(mida: string, desc5pct: boolean, descInvite10pct: boolean = f
 
 /* ─── Textos de WhatsApp (variados para no parecer spam) ─── */
 const SHARE_TEXTS = [
-  "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 850€ Prize Money i punts FIBA. T'apuntes?",
+  "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 2.400€ Prize Money en 6 categories i punts FIBA. T'apuntes?",
   "🔥 Quintet o què? 3×3 al barri del Clot els 6-7 Juny. Premis, samarretes i festa. Necessito gent!",
   "Hey! Inscripcions obertes 3×3 Westfield Glòries 2026 · Barcelona. Em vens?",
   "🏆 3×3 Barcelona 6-7 Juny · 500€ al guanyador, FIBA points. Apunta't amb mi!",

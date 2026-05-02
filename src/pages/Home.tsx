@@ -165,11 +165,17 @@ const categories = [
   { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-amber-500/15 to-amber-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)" },
 ];
 
+/* Premi econòmic per categoria — només pel 1r classificat. 2n: copa. 3r: medalles.
+   Total Prize Money 2026: 2.400€ */
 const prizes = [
-  { pos: "🥇", ord: "1r", label: "Primer Classificat", amount: "500€", plus: "+ Trofeu + Samarretes", color: "from-yellow-400/20 to-yellow-600/10 border-yellow-400/40" },
-  { pos: "🥈", ord: "2n", label: "Segon Classificat", amount: "250€", plus: "+ Trofeu + Samarretes", color: "from-slate-300/20 to-slate-500/10 border-slate-300/40" },
-  { pos: "🥉", ord: "3r", label: "Tercer Classificat", amount: "100€", plus: "+ Trofeu", color: "from-orange-400/20 to-orange-600/10 border-orange-400/40" },
+  { cat: "Senior A · Femení",   amount: "800€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
+  { cat: "Senior A · Masculí",  amount: "800€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
+  { cat: "Senior B · Femení",   amount: "300€", color: "from-amber-500/15 to-yellow-500/10 border-amber-400/40",   featured: false },
+  { cat: "Senior B · Masculí",  amount: "300€", color: "from-amber-500/15 to-yellow-500/10 border-amber-400/40",   featured: false },
+  { cat: "Veterans · Femení",   amount: "200€", color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
+  { cat: "Veterans · Masculí",  amount: "200€", color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
 ];
+const PRIZE_MONEY_TOTAL = "2.400€";
 
 const rules = [
   { icon: "🏀", title: "Mitja pista", desc: "Pista de 15×11 m amb un sol aro" },
@@ -396,7 +402,7 @@ export default function Home() {
 
       {/* ══ WHATSAPP SHARE FAB (viral hook — always visible) ══ */}
       <a
-        href={`https://wa.me/?text=${encodeURIComponent("🏀 3×3 Westfield Glòries 2026 · Torneig FIBA a Barcelona · 850€ Prize Money · 6-7 Juny · Places limitades! 👉 https://cbgrupbarna-3x3timechamber.com/")}`}
+        href={`https://wa.me/?text=${encodeURIComponent("🏀 3×3 Westfield Glòries 2026 · Torneig FIBA a Barcelona · 2.400€ Prize Money en 6 categories · 6-7 Juny · Places limitades! 👉 https://cbgrupbarna-3x3timechamber.com/")}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Comparteix el torneig per WhatsApp"
@@ -705,29 +711,77 @@ export default function Home() {
       <section id="premis" className="py-20 bg-slate-900 scroll-mt-20">
         <div className="container mx-auto px-4">
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12">
-            <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">Senior Pro · Prize Money</span>
-            <h2 className="text-4xl md:text-5xl font-black" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">Edició 2026 · Prize Money</span>
+            <h2 className="text-4xl md:text-5xl font-black mb-3" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
               PREMIS <span className="text-red-500">& TROFEUS</span>
             </h2>
+            <div className="inline-flex items-center gap-3 mt-2 px-5 py-2 rounded-full bg-gradient-to-r from-red-600/20 to-orange-500/20 border border-orange-400/40">
+              <span className="text-xs font-bold uppercase tracking-widest text-orange-300">Total Prize Money</span>
+              <span className="text-2xl font-black font-mono text-white">{PRIZE_MONEY_TOTAL}</span>
+            </div>
+            <p className="text-white/40 text-sm mt-4 max-w-xl mx-auto">
+              Repartit en 6 categories. Premi econòmic <strong className="text-white/70">només pel 1r classificat</strong> de cada categoria.
+            </p>
           </motion.div>
-          <div className="grid sm:grid-cols-3 gap-5 max-w-3xl mx-auto mb-10">
+
+          {/* Grid 6 categories */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10">
             {prizes.map((prize, i) => (
-              <motion.div key={prize.ord} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.3}
-                whileHover={{ scale: 1.04, y: -4 }}
-                className={`relative bg-gradient-to-br ${prize.color} border rounded-2xl p-6 text-center`}>
-                <div className="text-4xl mb-2">{prize.pos}</div>
-                <div className="text-xs uppercase tracking-wider text-white/50 mb-1">{prize.label}</div>
+              <motion.div
+                key={prize.cat}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                custom={i * 0.15}
+                whileHover={{ scale: 1.03, y: -3 }}
+                className={`relative bg-gradient-to-br ${prize.color} border rounded-2xl p-5 text-center backdrop-blur`}
+              >
+                {prize.featured && (
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-red-600 text-white text-[10px] font-bold uppercase tracking-widest shadow-lg">
+                    Top Categoria
+                  </span>
+                )}
+                <div className="text-3xl mb-2">🥇</div>
+                <div className="text-xs uppercase tracking-wider text-white/60 mb-1 font-bold">{prize.cat}</div>
                 <div className="text-3xl font-black font-mono text-white mb-1">{prize.amount}</div>
-                <div className="text-xs text-white/40">{prize.plus}</div>
+                <div className="text-[10px] text-white/40 uppercase tracking-wider">al 1r classificat</div>
               </motion.div>
             ))}
           </div>
+
+          {/* 2n + 3r + comerços */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <span className="text-2xl">🥈</span>
+              <div>
+                <div className="font-bold text-sm text-white">2n classificat</div>
+                <div className="text-xs text-white/40">Copa oficial</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
+              <span className="text-2xl">🥉</span>
+              <div>
+                <div className="font-bold text-sm text-white">3r classificat</div>
+                <div className="text-xs text-white/40">Medalles</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 bg-orange-500/10 border border-orange-400/30 rounded-xl p-4">
+              <span className="text-2xl">🎁</span>
+              <div>
+                <div className="font-bold text-sm text-white">Bonus comerços</div>
+                <div className="text-xs text-white/40">Sortejos i regals dels patrocinadors locals</div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Resta d'avantatges */}
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto grid sm:grid-cols-3 gap-4">
             {[
               { icon: <Star className="w-4 h-4" />, title: "Punts FIBA 3x3", desc: "Rànquing mundial oficial" },
-              { icon: <Medal className="w-4 h-4" />, title: "Trofeus", desc: "Per als 3 primers de totes les categories" },
+              { icon: <Medal className="w-4 h-4" />, title: "Trofeus i medalles", desc: "Per als 3 primers de totes les categories" },
               { icon: <Zap className="w-4 h-4" />, title: "Material esportiu", desc: "Lots per als equips participants" },
-            ].map((item, i) => (
+            ].map((item) => (
               <div key={item.title} className="flex items-start gap-3 bg-white/5 border border-white/10 rounded-xl p-4">
                 <span className="text-red-400 mt-0.5">{item.icon}</span>
                 <div>
@@ -737,6 +791,7 @@ export default function Home() {
               </div>
             ))}
           </motion.div>
+
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mt-8">
             <Link to="/inscripcion">
               <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-10 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl">
