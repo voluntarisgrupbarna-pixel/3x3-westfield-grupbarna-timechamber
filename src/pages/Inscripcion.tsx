@@ -22,7 +22,20 @@ const JOTFORM_BASE_URL = import.meta.env.VITE_JOTFORM_BASE_URL || "https://eu-ap
 const GOOGLE_WEBHOOK   = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
 
 const TALLAS    = ["8-10","12-14","16","XS","S","M","L","XL","XXL"];
-const CATS      = ["Senior Pro Masculí","Senior Pro Femení","Senior Amateur Masculí","Senior Amateur Femení","U18 Junior Masculí","U18 Junior Femení","U16 Cadet Masculí","U14 Infantil Masculí","Prebenjamí / Benjamí / Aleví"];
+const CATS      = [
+  "Senior A · Pro Masculí",
+  "Senior A · Pro Femení",
+  "Senior B · Amateur Masculí",
+  "Senior B · Amateur Femení",
+  "Veterans Masculí (+35)",
+  "Veterans Femení (+35)",
+  "EQUALS · Inclusiva",
+  "U18 Junior Masculí",
+  "U18 Junior Femení",
+  "U16 Cadet Masculí",
+  "U14 Infantil Masculí",
+  "Prebenjamí / Benjamí / Aleví"
+];
 const PRECIO_4  = 70;
 const PRECIO_5  = 90;
 const COD_DESC  = "3X3AVIAT";

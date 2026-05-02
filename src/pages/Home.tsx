@@ -157,12 +157,14 @@ const fadeUp = {
 };
 
 const categories = [
-  { name: "SENIOR PRO", gender: "♂ ♀", desc: "Prize Money + Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)" },
-  { name: "SENIOR AMATEUR", gender: "♂ ♀", desc: "Per a tots els nivells competitius", color: "from-slate-500/15 to-slate-600/10", badge: "OBERT", price: "70€ (4 jug.)" },
+  { name: "SENIOR A · PRO", gender: "♂ ♀", desc: "Prize Money 800€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)" },
+  { name: "SENIOR B · AMATEUR", gender: "♂ ♀", desc: "Prize Money 300€ · Per a tots els nivells", color: "from-amber-500/15 to-yellow-500/10", badge: "OBERT", price: "70€ (4 jug.)" },
+  { name: "VETERANS", gender: "♂ ♀", desc: "Prize Money 200€ · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "70€ (4 jug.)" },
+  { name: "EQUALS · INCLUSIVA", gender: "♂ ♀", desc: "Specials i jugadors sense discapacitat compartint pista. NOVETAT 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "NOU 2026", price: "70€ (4 jug.)" },
   { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "70€ (4 jug.)" },
   { name: "U16 CADET", gender: "♂", desc: "Competició formativa d'elit", color: "from-emerald-500/15 to-emerald-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)" },
   { name: "U14 INFANTIL", gender: "♂", desc: "Primer pas cap a la competició", color: "from-violet-500/15 to-violet-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)" },
-  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-amber-500/15 to-amber-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)" },
+  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-slate-500/15 to-slate-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)" },
 ];
 
 /* Premi econòmic per categoria — només pel 1r classificat. 2n: copa. 3r: medalles.
