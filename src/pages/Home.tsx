@@ -774,6 +774,22 @@ export default function Home() {
                 </div>
                 <p className="text-xs text-white/30 mt-2">🚶 ~15 min a peu entre les tres seus</p>
               </div>
+              {/* Enllaços a pàgines individuals de seu (transport, pàrquing, mapa, categories) */}
+              <div className="flex flex-col gap-1.5 pt-1">
+                <p className="text-[10px] text-white/30 uppercase tracking-wider font-bold">Tota la info per seu</p>
+                <Link to="/seu/westfield-glories" className="flex items-center justify-between bg-white/3 hover:bg-white/8 border border-white/10 hover:border-orange-500/40 rounded-lg px-3 py-2 transition-colors group">
+                  <span className="text-xs font-semibold text-white/80 group-hover:text-white">🏬 Westfield Glòries · Seu Principal</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-white/30 group-hover:text-orange-400" />
+                </Link>
+                <Link to="/seu/nau-del-clot" className="flex items-center justify-between bg-white/3 hover:bg-white/8 border border-white/10 hover:border-red-500/40 rounded-lg px-3 py-2 transition-colors group">
+                  <span className="text-xs font-semibold text-white/80 group-hover:text-white">🏟️ La Nau del Clot · Pavelló Oficial</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-white/30 group-hover:text-red-400" />
+                </Link>
+                <Link to="/seu/rambleta-del-clot" className="flex items-center justify-between bg-white/3 hover:bg-white/8 border border-white/10 hover:border-yellow-500/40 rounded-lg px-3 py-2 transition-colors group">
+                  <span className="text-xs font-semibold text-white/80 group-hover:text-white">🌳 Rambleta del Clot · Streetball</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-white/30 group-hover:text-yellow-400" />
+                </Link>
+              </div>
             </div>
 
             <div className="lg:col-span-3">
