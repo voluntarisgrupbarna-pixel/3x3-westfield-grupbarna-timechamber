@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
+import { tracker } from "@/lib/track";
 
 /* ─── Config ─── */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
@@ -351,6 +352,11 @@ export default function Inscripcion() {
   const [queuePos, setQueuePos]     = useState(0);
   const [queueInitial, setQueueInitial] = useState(0);
 
+  // GA4: usuari entra a la pàgina d'inscripció
+  useEffect(() => {
+    tracker.inscripcioIniciada();
+  }, []);
+
   // Tick down queue position
   useEffect(() => {
     if (queueState !== "queueing") return;
@@ -358,6 +364,7 @@ export default function Inscripcion() {
     const initial = 8 + Math.floor(Math.random() * 13);
     setQueueInitial(initial);
     setQueuePos(initial);
+    const startTs = Date.now();
     let pos = initial;
     const interval = setInterval(() => {
       const decrement = 1 + Math.floor(Math.random() * 2); // -1 a -2 per tick
@@ -365,6 +372,8 @@ export default function Inscripcion() {
       setQueuePos(pos);
       if (pos === 0) {
         clearInterval(interval);
+        const waitedSec = (Date.now() - startTs) / 1000;
+        tracker.queuePassada(waitedSec);
         setTimeout(() => setQueueState("passed"), 700);
       }
     }, 550);
@@ -402,19 +411,23 @@ export default function Inscripcion() {
     const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
     setSharedSlots(prev => prev.map((v, i) => i === idx ? true : v));
+    tracker.shareWhatsApp(idx);
   };
   const followInstagram = () => {
     window.open(IG_URL, "_blank", "noopener,noreferrer");
     setIgFollowed(true);
+    tracker.igFollowed();
   };
   const unlockGate = () => {
     if (!canUnlockGate) return;
     setDescInvitacions(true);
     setGateState("unlocked");
+    tracker.gateViralPassat(sharesDone);
     toast({ title: "🎉 10% de descompte desbloquejat!", description: "Continua omplint el formulari." });
   };
   const skipGate = () => {
     setGateState("skipped");
+    tracker.gateViralSkipped();
   };
 
   const goNext = async () => {
@@ -431,7 +444,11 @@ export default function Inscripcion() {
       ok = await trigger(jugF);
     }
     if (step === 4) ok = true;
-    if (ok) { setDir(1); setStep(s => s+1); }
+    if (ok) {
+      tracker.pasCompletat(step);
+      setDir(1);
+      setStep(s => s+1);
+    }
   };
   const goBack = () => { setDir(-1); setStep(s => s-1); };
 
@@ -505,7 +522,14 @@ export default function Inscripcion() {
         throw new Error("Webhook no configurat");
       }
       setSubmitted(true);
+      tracker.inscripcioCompletada({
+        categoria: data.capCategoria,
+        total,
+        jugadors: Number(data.midaEquip) || 4,
+        teamId: newTeamId,
+      });
     } catch (err) {
+      tracker.inscripcioError(err instanceof Error ? err.message : String(err));
       toast({ title:"Error d'enviament", description:"Torna-ho a intentar o contacta per WhatsApp.", variant:"destructive" });
     } finally {
       setSending(false);

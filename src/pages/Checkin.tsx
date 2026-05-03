@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Check, MapPin, Phone, Mail, User, Users, Calendar, Trophy, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { tracker } from "@/lib/track";
 
 /**
  * Pàgina de check-in del torneig.
@@ -36,7 +37,10 @@ export default function Checkin() {
   // Persistim a localStorage per si l'staff escaneja el mateix QR més tard
   const arrivedKey = `checkin_arrived_${id}`;
   useEffect(() => {
-    if (id && localStorage.getItem(arrivedKey) === "1") setArrived("ok");
+    if (id) {
+      tracker.qrCheckinEscanejat(id);
+      if (localStorage.getItem(arrivedKey) === "1") setArrived("ok");
+    }
   }, [id, arrivedKey]);
 
   const marcarArribada = async () => {
@@ -60,6 +64,7 @@ export default function Checkin() {
       }
       localStorage.setItem(arrivedKey, "1");
       setArrived("ok");
+      tracker.arribadaMarcada(id);
     } catch {
       setArrived("err");
     } finally {
