@@ -68,84 +68,88 @@ function handleOgSvg(url: URL): Response {
 }
 
 function renderOgSvg(nom: string, cat: string, club: string): string {
-  // Fons amb gradient dark + dos blobs ambientals + accent vermell
+  // Imatges live al GH Pages
+  const BG_URL = "https://cbgrupbarna-3x3timechamber.com/og-image.png";
+  const TC_LOGO_URL = "https://cbgrupbarna-3x3timechamber.com/logos/time-chamber.webp";
+  const EC_LOGO_URL = "https://cbgrupbarna-3x3timechamber.com/logos/eix-clot.png";
+
   const safeNom = escapeXml(nom).toUpperCase();
   const safeCat = escapeXml(cat);
   const safeClub = escapeXml(club);
 
-  // Mida de font del nom auto-ajustada a la longitud
   const nomLen = nom.length;
-  const nomFontSize = nomLen <= 12 ? 140 : nomLen <= 18 ? 110 : nomLen <= 24 ? 88 : 72;
+  const nomFontSize = nomLen <= 8 ? 150 : nomLen <= 14 ? 122 : nomLen <= 20 ? 92 : nomLen <= 26 ? 72 : 56;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${escapeXml(nom)} · ${escapeXml(cat)} · ${SITE_NAME} 2026">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${escapeXml(nom)} · ${escapeXml(cat)} · ${SITE_NAME} 2026">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0b1020"/>
-      <stop offset="55%" stop-color="#1a0a14"/>
-      <stop offset="100%" stop-color="#0b0f1c"/>
-    </linearGradient>
-    <radialGradient id="blob1" cx="0.15" cy="0.2" r="0.55">
-      <stop offset="0%" stop-color="rgba(220,38,38,0.55)"/>
-      <stop offset="100%" stop-color="rgba(220,38,38,0)"/>
-    </radialGradient>
-    <radialGradient id="blob2" cx="0.85" cy="0.85" r="0.5">
-      <stop offset="0%" stop-color="rgba(249,115,22,0.4)"/>
-      <stop offset="100%" stop-color="rgba(249,115,22,0)"/>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.55)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.92)"/>
     </radialGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#dc2626"/>
       <stop offset="100%" stop-color="#f97316"/>
     </linearGradient>
+    <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
+      <feOffset dx="0" dy="4" result="offsetblur"/>
+      <feFlood flood-color="rgba(0,0,0,0.95)"/>
+      <feComposite in2="offsetblur" operator="in"/>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#blob1)"/>
-  <rect width="1200" height="630" fill="url(#blob2)"/>
+  <!-- 1. Imatge de fons: cartell oficial del torneig (3×3 + logos brand) -->
+  <image x="0" y="0" width="1200" height="630" href="${BG_URL}" xlink:href="${BG_URL}" preserveAspectRatio="xMidYMid slice"/>
 
-  <!-- Top stripe -->
+  <!-- 2. Vignette dark heavy → l'imatge queda com a textura ambient, no llegible -->
+  <rect x="0" y="0" width="1200" height="630" fill="rgba(11,16,32,0.78)"/>
+  <rect x="0" y="0" width="1200" height="630" fill="url(#vignette)"/>
+
+  <!-- 3. Top stripe accent -->
   <rect x="0" y="0" width="1200" height="6" fill="url(#accent)"/>
 
-  <!-- Eyebrow -->
-  <g transform="translate(80, 90)">
-    <rect width="220" height="38" rx="19" fill="rgba(220,38,38,0.15)" stroke="rgba(220,38,38,0.5)"/>
-    <circle cx="22" cy="19" r="5" fill="#fca5a5"/>
-    <text x="42" y="25" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="800" letter-spacing="3" fill="#fca5a5">4ª EDICIÓ · INSCRIT</text>
+  <!-- 4. Header centrat: brand del torneig (perquè el receptor sàpiga què és) -->
+  <text x="600" y="80" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="6" fill="#fca5a5">3×3 WESTFIELD GLÒRIES · 4ª EDICIÓ</text>
+
+  <!-- 5. INSCRIT badge top-right (subtle stamp) -->
+  <g transform="translate(960, 110) rotate(-4)">
+    <rect width="200" height="44" rx="22" fill="#dc2626" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <circle cx="24" cy="22" r="5" fill="#ffffff"/>
+    <text x="40" y="29" font-family="Helvetica, Arial, sans-serif" font-size="15" font-weight="900" letter-spacing="3" fill="#ffffff">INSCRIT · LIVE</text>
   </g>
 
-  <!-- Team name (huge, bold) -->
-  <text x="80" y="270" font-family="Helvetica, Arial, sans-serif" font-size="${nomFontSize}" font-weight="900" letter-spacing="-2" fill="#ffffff" style="text-shadow: 0 0 40px rgba(220,38,38,0.6);">
-    <tspan>${safeNom}</tspan>
-  </text>
+  <!-- 6. Eyebrow (small, decorative) -->
+  <text x="600" y="240" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="8" fill="rgba(252,165,165,0.85)">EL TEU EQUIP JUGA AL TORNEIG</text>
 
-  <!-- Subline: ja juga al ... -->
-  <text x="80" y="335" font-family="Helvetica, Arial, sans-serif" font-size="32" font-weight="600" fill="rgba(255,255,255,0.7)">
-    juga al <tspan fill="#fca5a5" font-weight="800">3×3 Westfield Glòries 2026</tspan>
-  </text>
+  <!-- 7. Team name (HERO) — centrat, gegant, amb shadow -->
+  <text x="600" y="380" text-anchor="middle" font-family="'Rajdhani', 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="${nomFontSize}" font-weight="900" letter-spacing="-3" fill="#ffffff" filter="url(#ds)">${safeNom}</text>
 
-  <!-- Category pill -->
-  <g transform="translate(80, 380)">
-    <rect width="${Math.max(280, safeCat.length * 14 + 60)}" height="48" rx="24" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.18)"/>
-    <text x="30" y="32" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" fill="#ffffff">${safeCat}</text>
+  <!-- 8. Subtle accent line below name -->
+  <rect x="${600 - 100}" y="410" width="200" height="3" fill="url(#accent)"/>
+
+  <!-- 9. Category pill (centred under accent line) -->
+  <g transform="translate(${600 - Math.min(560, Math.max(180, safeCat.length * 14)) / 2}, 445)">
+    <rect width="${Math.min(560, Math.max(180, safeCat.length * 14))}" height="48" rx="24" fill="rgba(220,38,38,0.18)" stroke="rgba(252,165,165,0.6)" stroke-width="1.5"/>
+    <text x="${Math.min(560, Math.max(180, safeCat.length * 14)) / 2}" y="32" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="800" fill="#ffffff">${safeCat}</text>
   </g>
 
-  <!-- Bottom row: date + city + club -->
-  <g transform="translate(80, 530)">
-    <text x="0" y="0" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#f97316">📅 ${EVENT_DATE}</text>
-    <text x="0" y="40" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="rgba(255,255,255,0.5)">📍 ${CITY}</text>
-    ${safeClub ? `<text x="700" y="0" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="600" fill="rgba(255,255,255,0.45)">${safeClub}</text>` : ""}
-  </g>
+  <!-- 10. Divider line -->
+  <rect x="80" y="540" width="1040" height="1" fill="rgba(255,255,255,0.15)"/>
 
-  <!-- Right-side basketball mark (3 i 3) -->
-  <g transform="translate(900, 100)" opacity="0.95">
-    <circle cx="100" cy="100" r="100" fill="#dc2626"/>
-    <text x="100" y="135" font-family="Helvetica, Arial, sans-serif" font-size="120" font-weight="900" text-anchor="middle" fill="#ffffff">3</text>
-    <text x="100" y="195" font-family="Helvetica, Arial, sans-serif" font-size="38" font-weight="700" text-anchor="middle" fill="#ffffff" letter-spacing="6">×3</text>
-  </g>
+  <!-- 11. Bottom row: date + city left, logos right -->
+  <text x="80" y="580" font-family="Helvetica, Arial, sans-serif" font-size="22" font-weight="900" letter-spacing="2" fill="#f97316">📅 ${EVENT_DATE}</text>
+  <text x="80" y="608" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="600" fill="rgba(255,255,255,0.6)">📍 ${CITY}</text>
+  ${safeClub ? `<text x="600" y="595" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="600" fill="rgba(255,255,255,0.5)">Club: ${safeClub}</text>` : ""}
 
-  <!-- Brand bottom-right -->
-  <text x="1120" y="600" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="3" fill="rgba(255,255,255,0.4)">CBGRUPBARNA-3X3TIMECHAMBER.COM</text>
+  <!-- 12. Logos sponsors a la cantonada inferior dreta -->
+  <image x="950" y="568" width="76" height="24" href="${TC_LOGO_URL}" xlink:href="${TC_LOGO_URL}" preserveAspectRatio="xMidYMid meet"/>
+  <image x="1050" y="565" width="60" height="30" href="${EC_LOGO_URL}" xlink:href="${EC_LOGO_URL}" preserveAspectRatio="xMidYMid meet"/>
+  <text x="1120" y="615" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="2" fill="rgba(255,255,255,0.35)">cbgrupbarna-3x3timechamber.com</text>
 </svg>`;
 }
 
