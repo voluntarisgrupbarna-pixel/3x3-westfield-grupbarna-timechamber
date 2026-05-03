@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, X, Copy, Check, MessageCircle } from "lucide-react";
 import { tracker } from "@/lib/track";
+import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 /**
  * 2 botons flotants al cantó dret del Home:
@@ -15,15 +16,12 @@ import { tracker } from "@/lib/track";
  *        Telegram, Copy link, Native Share API si disponible.
  */
 
-const WHATSAPP_QA_URL = "https://wa.me/+34698425153?text=" + encodeURIComponent(
-  "Hola! 👋 Tinc dubtes sobre el 3×3 Westfield Glòries 2026. Em podeu ajudar?"
-);
-
 const SHARE_URL = "https://cbgrupbarna-3x3timechamber.com/";
 const SHARE_TEXT = "🏀 3×3 Westfield Glòries 2026 · Torneig FIBA a Barcelona · 100 equips · 6-7 Juny · 2.400€ prize money. Inscriu-te ja!";
 
 export default function FloatingButtons() {
   const [shareOpen, setShareOpen] = useState(false);
+  const [leadOpen, setLeadOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -148,18 +146,19 @@ export default function FloatingButtons() {
         </button>
       </div>
 
-      {/* WhatsApp Q&A — bottom-right, separat del Share */}
-      <a
-        href={WHATSAPP_QA_URL}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* WhatsApp Q&A — bottom-right · obre modal de captura abans de WhatsApp */}
+      <button
+        type="button"
+        onClick={() => setLeadOpen(true)}
         aria-label="Pregunta'ns per WhatsApp · Contact directe"
-        onClick={() => tracker.ctaWhatsAppHomeClick()}
         className="fixed bottom-5 right-5 z-[55] flex items-center gap-2 bg-[#25D366] hover:bg-[#1da851] active:scale-95 transition-all text-white px-4 py-3 rounded-full shadow-lg shadow-green-500/30 ring-2 ring-white/10 motion-safe:animate-pulse motion-safe:hover:animate-none"
       >
         <MessageCircle className="w-5 h-5" fill="currentColor"/>
         <span className="text-sm font-bold hidden sm:inline">Pregunta'ns</span>
-      </a>
+      </button>
+
+      {/* Modal: captura nom + telèfon abans d'obrir WhatsApp */}
+      <WhatsAppLeadForm open={leadOpen} onClose={() => setLeadOpen(false)} />
     </>
   );
 }

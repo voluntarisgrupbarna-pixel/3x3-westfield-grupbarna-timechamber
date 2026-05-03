@@ -155,6 +155,15 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ─── Acció whatsapp_lead (algú es disposa a contactar per WhatsApp · captura
+    //     prèvia per llista de difusió 3x3 abans d'obrir wa.me) ───
+    if (raw.action === 'whatsapp_lead' && (raw.telefon || raw.email)) {
+      try { addWhatsAppLead_(raw); } catch (err) { Logger.log('whatsapp_lead error: ' + err); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'whatsapp_lead' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ─── Acció subscribe (newsletter del blog) ───
     if (raw.action === 'subscribe' && raw.email) {
       try { addBlogSubscriber_(raw); } catch (err) { Logger.log('subscribe error: ' + err); }
@@ -341,6 +350,64 @@ function addIndividualPlayer_(data) {
     'No',
     '',  // Arribat
   ]);
+}
+
+/**
+ * Captura un lead que es disposa a contactar per WhatsApp.
+ * Va a la pestanya "Llista_Difusio_3x3" del Sheet — la base que Ana
+ * utilitza per crear la broadcast list de WhatsApp del torneig.
+ *
+ * Dedupe per telèfon (normalitzat). Notifica admin del primer contacte.
+ */
+function addWhatsAppLead_(data) {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss = SpreadsheetApp.openById(id);
+  let sheet = ss.getSheetByName('Llista_Difusio_3x3');
+  if (!sheet) sheet = ss.insertSheet('Llista_Difusio_3x3');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta', 'Source', 'Notificat broadcast?']);
+  }
+
+  const phoneClean = String(data.telefon || '').replace(/[^0-9+]/g, '');
+  // Dedupe per telèfon
+  if (phoneClean && sheet.getLastRow() >= 2) {
+    const phones = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues()
+      .map(r => String(r[0]).replace(/[^0-9+]/g, ''));
+    if (phones.indexOf(phoneClean) >= 0) {
+      // ja està a la llista; no afegim però fem que el flow continuï (l'usuari
+      // sí podrà obrir WhatsApp sense fricció)
+      return;
+    }
+  }
+
+  sheet.appendRow([
+    data.data || new Date().toLocaleString('ca-ES'),
+    data.nom || '',
+    phoneClean,
+    data.email || '',
+    data.dubte || '',
+    data.source || 'home_fab',
+    'No',
+  ]);
+
+  // Alerta admin (només la primera vegada que aquest lead apareix)
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
+  try {
+    MailApp.sendEmail({
+      to: admin,
+      subject: '💬 Nou contacte WhatsApp · ' + (data.nom || 'sense nom') + ' · 3x3',
+      htmlBody: '<h3>Nou contacte per WhatsApp</h3>'
+        + '<p>Algú està a punt de contactar-te per WhatsApp. Ara està al teu chat.</p>'
+        + '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">'
+        + '<tr><td><strong>Nom</strong></td><td>' + (data.nom || '—') + '</td></tr>'
+        + '<tr><td><strong>Telèfon</strong></td><td><a href="https://wa.me/' + phoneClean + '">' + phoneClean + '</a></td></tr>'
+        + '<tr><td><strong>Email</strong></td><td>' + (data.email || '—') + '</td></tr>'
+        + '<tr><td><strong>Dubte</strong></td><td>' + (data.dubte || '—') + '</td></tr>'
+        + '<tr><td><strong>Source</strong></td><td>' + (data.source || 'home_fab') + '</td></tr>'
+        + '</table>'
+        + '<p style="font-size:11px;color:#666;margin-top:14px">Ja s\'ha afegit a la pestanya <strong>Llista_Difusio_3x3</strong> del Sheet. Pots usar-la per fer broadcast quan tinguis novetats del torneig.</p>',
+    });
+  } catch (e) { Logger.log('lead admin mail err: ' + e); }
 }
 
 /**
