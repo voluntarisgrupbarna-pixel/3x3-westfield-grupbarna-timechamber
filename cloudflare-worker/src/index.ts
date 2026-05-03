@@ -84,20 +84,21 @@ function renderOgSvg(nom: string, cat: string, club: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${escapeXml(nom)} · ${escapeXml(cat)} · ${SITE_NAME} 2026">
   <defs>
-    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.75">
-      <stop offset="0%" stop-color="rgba(0,0,0,0.55)"/>
-      <stop offset="100%" stop-color="rgba(0,0,0,0.92)"/>
+    <radialGradient id="vignette" cx="0.5" cy="0.5" r="0.85">
+      <stop offset="0%" stop-color="rgba(0,0,0,0.15)"/>
+      <stop offset="100%" stop-color="rgba(0,0,0,0.65)"/>
     </radialGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%" stop-color="#dc2626"/>
       <stop offset="100%" stop-color="#f97316"/>
     </linearGradient>
-    <filter id="ds" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceAlpha" stdDeviation="8"/>
-      <feOffset dx="0" dy="4" result="offsetblur"/>
-      <feFlood flood-color="rgba(0,0,0,0.95)"/>
+    <filter id="ds" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="14"/>
+      <feOffset dx="0" dy="5" result="offsetblur"/>
+      <feFlood flood-color="rgba(0,0,0,1)"/>
       <feComposite in2="offsetblur" operator="in"/>
       <feMerge>
+        <feMergeNode/>
         <feMergeNode/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
@@ -107,9 +108,12 @@ function renderOgSvg(nom: string, cat: string, club: string): string {
   <!-- 1. Imatge de fons: PISTA REAL del torneig (Westfield Glòries amb "TIME CHAMBER" pintat al terra) -->
   <image x="0" y="0" width="1200" height="630" href="${BG_URL}" xlink:href="${BG_URL}" preserveAspectRatio="xMidYMid slice"/>
 
-  <!-- 2. Overlay fosc + vignette per llegibilitat (la pista queda visible com a context) -->
-  <rect x="0" y="0" width="1200" height="630" fill="rgba(11,16,32,0.55)"/>
+  <!-- 2. Overlay lleuger + vignette suau (la pista queda BEN visible) -->
+  <rect x="0" y="0" width="1200" height="630" fill="rgba(11,16,32,0.22)"/>
   <rect x="0" y="0" width="1200" height="630" fill="url(#vignette)"/>
+
+  <!-- 2b. Banda fosca centrada per assegurar llegibilitat del nom (només darrere el text) -->
+  <rect x="0" y="270" width="1200" height="200" fill="rgba(0,0,0,0.42)"/>
 
   <!-- 3. Top stripe accent -->
   <rect x="0" y="0" width="1200" height="6" fill="url(#accent)"/>
