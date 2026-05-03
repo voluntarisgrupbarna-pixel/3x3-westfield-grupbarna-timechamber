@@ -1292,6 +1292,7 @@ export default function Home() {
                 ))}
                 <Link to="/preguntes-frequents" className="block text-sm text-white/40 hover:text-white transition-colors">FAQ · Preguntes freqüents</Link>
                 <Link to="/sobre-nosaltres" className="block text-sm text-white/40 hover:text-white transition-colors">Qui som</Link>
+                <Link to="/blog" className="block text-sm text-white/40 hover:text-white transition-colors">Blog · Articles 3×3</Link>
                 <Link to="/premsa" className="block text-sm text-white/40 hover:text-white transition-colors">Premsa & Mitjans</Link>
               </div>
             </div>

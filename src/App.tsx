@@ -18,6 +18,8 @@ const Seu                 = lazy(() => import("@/pages/Seu"));
 const LlistaEspera        = lazy(() => import("@/pages/LlistaEspera"));
 const SobreNosaltres      = lazy(() => import("@/pages/SobreNosaltres"));
 const Premsa              = lazy(() => import("@/pages/Premsa"));
+const Blog                = lazy(() => import("@/pages/Blog"));
+const BlogPost            = lazy(() => import("@/pages/BlogPost"));
 
 function PageLoader() {
   return (
@@ -47,6 +49,8 @@ export default function App() {
           <Route path="/qui-som" element={<SobreNosaltres />} />
           <Route path="/premsa" element={<Premsa />} />
           <Route path="/press" element={<Premsa />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
         </Routes>
       </Suspense>
       <Toaster />
