@@ -41,9 +41,10 @@ function getSheet_() {
 
 function getCapacitat_() {
   const raw = PROPS.getProperty('CAPACITAT_TOTAL');
-  if (!raw) return null;
+  // Default 100 (suma de quotes per categoria a src/lib/categories.ts)
+  if (!raw) return 100;
   const n = Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : null;
+  return Number.isFinite(n) && n > 0 ? n : 100;
 }
 
 function getFilloutAuth_() {
@@ -93,14 +94,38 @@ function doGet(e) {
     Logger.log('doGet error: ' + err);
   }
 
+  // Per-categoria counts llegits del Sheet (rapid, sense gastar quota Fillout)
+  let byCategory = {};
+  try { byCategory = getByCategoryFromSheet_(); } catch (e) { Logger.log('byCategory err: ' + e); }
+
   return ContentService
     .createTextOutput(JSON.stringify({
       count: count,
       capacity: getCapacitat_(),
+      byCategory: byCategory,
       source: source,
       ts: new Date().toISOString(),
     }))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Compta inscripcions agrupades per categoria llegint del Sheet.
+ * Retorna p.ex. {"Sèniors": 7, "Cadet": 3, ...}
+ */
+function getByCategoryFromSheet_() {
+  const sheet = getSheet_();
+  if (sheet.getLastRow() < 2) return {};
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const catCol = headers.indexOf('Categoria');
+  if (catCol < 0) return {};
+  const cats = sheet.getRange(2, catCol + 1, sheet.getLastRow() - 1, 1).getValues();
+  const counts = {};
+  cats.forEach(function(row) {
+    const c = String(row[0] || '').trim();
+    if (c) counts[c] = (counts[c] || 0) + 1;
+  });
+  return counts;
 }
 
 /**

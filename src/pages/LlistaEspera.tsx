@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, AlertTriangle, Check, Loader2, Mail, Phone, User, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tracker } from "@/lib/track";
+import { CAT_NAMES as CATS } from "@/lib/categories";
 
 /**
  * Pàgina de llista d'espera.
@@ -13,11 +14,6 @@ import { tracker } from "@/lib/track";
  */
 
 const GOOGLE_WEBHOOK = (import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK as string | undefined) || "";
-
-const CATS = [
-  "Escola", "Premini", "Mini", "Preinfantil", "Infantil",
-  "Cadet", "Junior", "Sèniors", "Veterans", "Màgics",
-];
 
 export default function LlistaEspera() {
   useEffect(() => { document.title = "Llista d'espera · 3×3 Westfield Glòries 2026"; }, []);

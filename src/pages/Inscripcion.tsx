@@ -16,6 +16,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
 import { tracker } from "@/lib/track";
+import { CAT_NAMES } from "@/lib/categories";
 
 /* ─── Config ─── */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
@@ -24,20 +25,8 @@ const JOTFORM_BASE_URL = import.meta.env.VITE_JOTFORM_BASE_URL || "https://eu-ap
 const GOOGLE_WEBHOOK   = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
 
 const TALLAS    = ["8-10","12-14","16","XS","S","M","L","XL","XXL"];
-/* Categories segons les del CB Grup Barna (web del club: cbgrupbarna.com).
-   Sèniors i Veterans tenen un preu lleugerament superior (categoria principal). */
-const CATS      = [
-  "Escola",
-  "Premini",
-  "Mini",
-  "Preinfantil",
-  "Infantil",
-  "Cadet",
-  "Junior",
-  "Sèniors",
-  "Veterans",
-  "Màgics"
-];
+/* Categories del torneig — font canònica a src/lib/categories.ts */
+const CATS = CAT_NAMES;
 
 const PRECIO_GEN_4    = 75;   // Categories formatives · 4 jugadors
 const PRECIO_GEN_5    = 90;   // Categories formatives · 5 jugadors

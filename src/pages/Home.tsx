@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, X, ChevronLeft, ChevronRight, Zap, Medal, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CATEGORIES } from "@/lib/categories";
 
 /* ─── Scroll Progress Bar ─── */
 function ScrollProgressBar() {
@@ -75,7 +76,12 @@ const COUNTER_ENDPOINT = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
 const COUNTER_CACHE_KEY = "equips_inscrits_cache_v1";
 const COUNTER_REFRESH_MS = 30_000;
 
-type EquipsState = { count: number; capacity: number | null; loaded: boolean };
+type EquipsState = {
+  count: number;
+  capacity: number | null;
+  byCategory: Record<string, number>;
+  loaded: boolean;
+};
 
 function useEquipsInscrits(): EquipsState {
   const [state, setState] = useState<EquipsState>(() => {
@@ -83,10 +89,15 @@ function useEquipsInscrits(): EquipsState {
       const raw = localStorage.getItem(COUNTER_CACHE_KEY);
       if (raw) {
         const p = JSON.parse(raw);
-        return { count: Number(p.count) || 0, capacity: typeof p.capacity === "number" ? p.capacity : null, loaded: true };
+        return {
+          count: Number(p.count) || 0,
+          capacity: typeof p.capacity === "number" ? p.capacity : null,
+          byCategory: (typeof p.byCategory === "object" && p.byCategory) || {},
+          loaded: true,
+        };
       }
     } catch {}
-    return { count: 0, capacity: null, loaded: false };
+    return { count: 0, capacity: null, byCategory: {}, loaded: false };
   });
 
   useEffect(() => {
@@ -101,6 +112,7 @@ function useEquipsInscrits(): EquipsState {
         const next: EquipsState = {
           count: Number(json.count) || 0,
           capacity: typeof json.capacity === "number" ? json.capacity : null,
+          byCategory: (typeof json.byCategory === "object" && json.byCategory) || {},
           loaded: true,
         };
         setState(next);
@@ -166,6 +178,83 @@ function EquipsProgress() {
           className="h-full rounded-full bg-gradient-to-r from-red-600 to-orange-500" />
       </div>
       <p className="text-xs text-white/40 mt-2">⚡ Poques places disponibles</p>
+    </div>
+  );
+}
+
+/* ─── Gràfic per categoria amb 100 places repartides ─── */
+function CategoryChart() {
+  const { byCategory, loaded } = useEquipsInscrits();
+  const totalQuota = CATEGORIES.reduce((s, c) => s + c.quota, 0);
+  const totalInscrits = CATEGORIES.reduce((s, c) => s + (byCategory[c.name] || 0), 0);
+  const pctGlobal = Math.min(100, Math.round((totalInscrits / totalQuota) * 100));
+
+  return (
+    <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 sm:p-7">
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-red-400 mb-1">Places per categoria</p>
+          <h3 className="font-black text-2xl sm:text-3xl text-white" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            {totalInscrits} <span className="text-white/40">/ {totalQuota}</span> equips
+          </h3>
+          <p className="text-xs text-white/45 mt-1">{loaded ? `${pctGlobal}% del torneig ple` : "Carregant…"}</p>
+        </div>
+        <Link to="/inscripcion" className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-colors shadow-lg shadow-red-600/30">
+          🏀 Inscriu el teu equip
+        </Link>
+      </div>
+
+      <div className="space-y-2">
+        {CATEGORIES.map(cat => {
+          const inscrits = byCategory[cat.name] || 0;
+          const pct = Math.min(100, Math.round((inscrits / cat.quota) * 100));
+          const ple = inscrits >= cat.quota;
+          const lliures = Math.max(0, cat.quota - inscrits);
+          return (
+            <div key={cat.name} className="grid grid-cols-[80px_minmax(0,1fr)_auto] sm:grid-cols-[120px_minmax(0,1fr)_auto] items-center gap-3">
+              {/* Categoria + emoji */}
+              <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+                <span className="text-base sm:text-lg shrink-0">{cat.emoji}</span>
+                <div className="min-w-0">
+                  <p className={`text-[11px] sm:text-sm font-bold truncate ${ple ? "text-white/40 line-through" : "text-white"}`}>{cat.name}</p>
+                  <p className="text-[9px] sm:text-[10px] text-white/35 truncate hidden sm:block">{cat.edats}</p>
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div className="relative h-6 sm:h-7 bg-white/[0.06] rounded-md overflow-hidden border border-white/5">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct}%` }}
+                  transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+                  className={`h-full bg-gradient-to-r ${cat.color} ${ple ? "opacity-70" : ""}`}
+                />
+                <div className="absolute inset-0 flex items-center justify-between px-2 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider">
+                  <span className={`${pct > 35 ? "text-white" : "text-white/55"}`}>
+                    {ple ? "PLE" : `${inscrits}/${cat.quota}`}
+                  </span>
+                  <span className={`${pct > 75 ? "text-white" : "text-white/40"} hidden sm:inline`}>{pct}%</span>
+                </div>
+              </div>
+              {/* Lliures / waitlist link */}
+              <div className="text-right min-w-[44px]">
+                {ple ? (
+                  <Link to="/llista-espera" className="text-[10px] font-bold text-orange-300 hover:text-orange-200 underline">
+                    Llista
+                  </Link>
+                ) : (
+                  <span className="text-[10px] font-mono text-white/40">
+                    {lliures} <span className="hidden sm:inline">lliure{lliures === 1 ? "" : "s"}</span>
+                  </span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[10px] text-white/30 mt-4 leading-relaxed">
+        🔄 Actualització cada 30s · Les categories <span className="text-white/55 font-semibold">Sèniors</span> i <span className="text-white/55 font-semibold">Veterans</span> donen punts FIBA i prize money.
+      </p>
     </div>
   );
 }
@@ -742,6 +831,11 @@ export default function Home() {
               </div>
             </motion.div>
           </div>
+
+          {/* Gràfic de places per categoria — 100 places repartides */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-12">
+            <CategoryChart />
+          </motion.div>
         </div>
       </section>
 
