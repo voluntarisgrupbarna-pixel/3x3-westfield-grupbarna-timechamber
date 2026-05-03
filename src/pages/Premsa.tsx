@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Download, Mail, Phone, Image as ImageIcon, FileText, Trophy, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 /**
  * Pàgina /premsa — Press kit públic.
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
  */
 
 export default function Premsa() {
+  const [waOpen, setWaOpen] = useState(false);
   useEffect(() => { document.title = "Press kit · 3×3 Westfield Glòries 2026"; }, []);
 
   return (
@@ -121,14 +123,14 @@ export default function Premsa() {
                 <p className="text-sm font-semibold text-white group-hover:text-red-300">voluntaris@grupbarna.info</p>
               </div>
             </a>
-            <a href="https://wa.me/+34698425153?text=Hola%20·%20premsa%203x3%20Westfield%20Gl%C3%B2ries" target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-colors group">
+            <button type="button" onClick={() => setWaOpen(true)}
+              className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-colors group text-left w-full">
               <div className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center"><Phone className="w-4 h-4 text-green-300"/></div>
               <div>
                 <p className="text-xs text-white/40 uppercase tracking-wider font-bold">WhatsApp directe</p>
                 <p className="text-sm font-semibold text-white group-hover:text-green-300">+34 698 425 153</p>
               </div>
-            </a>
+            </button>
           </div>
           <p className="text-[10px] text-white/35 mt-3 leading-relaxed">
             Per acreditació in-situ el dia del torneig, contacta'ns 48h abans amb el nom del mitjà i credencials.
@@ -155,6 +157,8 @@ export default function Premsa() {
           </div>
         </div>
       </div>
+
+      <WhatsAppLeadForm open={waOpen} onClose={() => setWaOpen(false)} source="premsa" />
     </div>
   );
 }

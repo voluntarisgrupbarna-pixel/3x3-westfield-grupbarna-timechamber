@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trophy, Users, Heart, Calendar, MapPin, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 /**
  * Pàgina /sobre-nosaltres — Història del club + organitzadors del torneig.
@@ -11,6 +12,7 @@ import { Button } from "@/components/ui/button";
  */
 
 export default function SobreNosaltres() {
+  const [waOpen, setWaOpen] = useState(false);
   useEffect(() => { document.title = "Qui som · CB Grup Barna · 3×3 Westfield Glòries 2026"; }, []);
 
   return (
@@ -101,7 +103,7 @@ export default function SobreNosaltres() {
             L'organització del torneig la fem voluntaris i voluntàries del CB Grup Barna i Time Chamber. <strong>Ana Fernández</strong> coordina la inscripció, comunicació i logística. La part esportiva (arbitratge, format) la lidera el cos tècnic de Time Chamber.
           </p>
           <p className="text-xs text-white/40 mt-2">
-            Contacte premsa, voluntariat o partnerships: <a href="mailto:voluntaris@grupbarna.info" className="text-red-300 hover:underline">voluntaris@grupbarna.info</a> · WhatsApp <a href="https://wa.me/+34698425153" target="_blank" rel="noopener noreferrer" className="text-red-300 hover:underline">+34 698 425 153</a>
+            Contacte premsa, voluntariat o partnerships: <a href="mailto:voluntaris@grupbarna.info" className="text-red-300 hover:underline">voluntaris@grupbarna.info</a> · <button type="button" onClick={() => setWaOpen(true)} className="text-red-300 hover:underline">WhatsApp +34 698 425 153</button>
           </p>
         </Section>
 
@@ -128,6 +130,8 @@ export default function SobreNosaltres() {
           </div>
         </div>
       </div>
+
+      <WhatsAppLeadForm open={waOpen} onClose={() => setWaOpen(false)} source="sobre_nosaltres" />
     </div>
   );
 }

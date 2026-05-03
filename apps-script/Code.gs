@@ -158,6 +158,13 @@ function doPost(e) {
     // ─── Acció whatsapp_lead (algú es disposa a contactar per WhatsApp · captura
     //     prèvia per llista de difusió 3x3 abans d'obrir wa.me) ───
     if (raw.action === 'whatsapp_lead' && (raw.telefon || raw.email)) {
+      // RGPD: si arriba el camp acceptaRgpd, ha de ser true. Si no arriba (clients
+      // antics), deixem passar per compatibilitat — els nous clients sempre l'envien.
+      if (raw.acceptaRgpd === false) {
+        return ContentService
+          .createTextOutput(JSON.stringify({ ok: false, error: 'rgpd_consent_required' }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
       try { addWhatsAppLead_(raw); } catch (err) { Logger.log('whatsapp_lead error: ' + err); }
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, action: 'whatsapp_lead' }))
@@ -365,7 +372,17 @@ function addWhatsAppLead_(data) {
   let sheet = ss.getSheetByName('Llista_Difusio_3x3');
   if (!sheet) sheet = ss.insertSheet('Llista_Difusio_3x3');
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta', 'Source', 'Notificat broadcast?']);
+    sheet.appendRow(['Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta', 'Source', 'Consentiment RGPD', 'Notificat broadcast?']);
+  } else {
+    // Migració: si la capçalera no té encara la columna RGPD, l'afegim entre
+    // "Source" i "Notificat broadcast?". Una sola vegada.
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    if (headers.indexOf('Consentiment RGPD') < 0) {
+      const notifIdx = headers.indexOf('Notificat broadcast?');
+      const insertAt = (notifIdx >= 0 ? notifIdx : headers.length) + 1;
+      sheet.insertColumnBefore(insertAt);
+      sheet.getRange(1, insertAt).setValue('Consentiment RGPD');
+    }
   }
 
   const phoneClean = String(data.telefon || '').replace(/[^0-9+]/g, '');
@@ -387,6 +404,7 @@ function addWhatsAppLead_(data) {
     data.email || '',
     data.dubte || '',
     data.source || 'home_fab',
+    data.acceptaRgpd === true ? 'Sí' : (data.acceptaRgpd === false ? 'No' : '—'),
     'No',
   ]);
 

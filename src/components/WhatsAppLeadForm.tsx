@@ -1,56 +1,81 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle, User, Phone, HelpCircle, Loader2, Check } from "lucide-react";
+import { X, MessageCircle, Phone, Loader2, Check } from "lucide-react";
 import { tracker } from "@/lib/track";
 
 const GOOGLE_WEBHOOK = (import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK as string | undefined) || "";
 
 const WHATSAPP_NUMBER = "+34698425153";
 
-const QUICK_OPTIONS = [
-  "Vull inscriure el meu equip",
-  "Vull inscriure'm individualment (20€)",
-  "Tinc dubtes sobre les categories",
-  "Pregunta sobre pagament / inscripció",
-  "Som mitjà / premsa",
-  "Altre dubte",
-];
+export type WhatsAppLeadSource =
+  | "home_fab"
+  | "faq"
+  | "premsa"
+  | "sobre_nosaltres"
+  | "inscripcio_individual"
+  | "post_inscripcio"
+  | "landing_contacte"
+  | "linktree";
+
+const PRE_TEXT_BY_SOURCE: Record<WhatsAppLeadSource, string> = {
+  home_fab: "Hola! Tinc un dubte sobre el 3×3 Westfield Glòries.",
+  faq: "Hola! Tinc una pregunta sobre el 3×3 Westfield Glòries.",
+  premsa: "Hola · sóc de premsa, sobre el 3×3 Westfield Glòries.",
+  sobre_nosaltres: "Hola! M'agradaria contactar amb el CB Grup Barna.",
+  inscripcio_individual: "Hola! Tinc dubtes sobre la inscripció individual al 3×3.",
+  post_inscripcio: "Hola! Acabo d'enviar la inscripció del meu equip al 3×3 Westfield Glòries. Podeu confirmar la recepció?",
+  landing_contacte: "Hola CB Grup Barna! M'agradaria contactar amb vosaltres.",
+  linktree: "Hola CB Grup Barna! Vinc del Linktree i vull contactar amb vosaltres.",
+};
+
+// Format espanyol o internacional. Accepta espais i guions; els netegem abans de validar.
+const PHONE_REGEX = /^(\+?\d{8,15})$/;
 
 /**
- * Modal que captura el lead (nom + telèfon + dubte) ABANS d'obrir WhatsApp.
- * Així Ana es queda amb llista de contactes per fer broadcast quan tingui
- * novetats. L'usuari ho rep com una "pre-conversa" abans del xat real.
+ * Modal que captura el telèfon del lead ABANS d'obrir WhatsApp.
+ * El telèfon es desa a la pestanya `Llista_Difusio_3x3` del Sheet (via Apps Script)
+ * perquè Ana el pugui afegir més tard a una llista de difusió de WhatsApp.
+ *
+ * Mínima fricció: només telèfon + casella RGPD obligatòria.
  */
-export default function WhatsAppLeadForm({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [form, setForm] = useState({ nom: "", telefon: "", email: "", dubte: QUICK_OPTIONS[0] });
+export default function WhatsAppLeadForm({
+  open,
+  onClose,
+  source = "home_fab",
+}: {
+  open: boolean;
+  onClose: () => void;
+  source?: WhatsAppLeadSource;
+}) {
+  const [telefon, setTelefon] = useState("");
+  const [acceptaRgpd, setAcceptaRgpd] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const firstFieldRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (open) {
-      // Auto-focus al obrir
       setTimeout(() => firstFieldRef.current?.focus(), 150);
-      // ESC per tancar
       const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
       document.addEventListener("keydown", onKey);
       return () => document.removeEventListener("keydown", onKey);
     }
   }, [open, onClose]);
 
-  const setField = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm(s => ({ ...s, [k]: e.target.value }));
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.nom.trim() || !form.telefon.trim()) {
-      setError("Nom i telèfon obligatoris.");
+    const phoneClean = telefon.replace(/[\s\-().]/g, "");
+    if (!PHONE_REGEX.test(phoneClean)) {
+      setError("Telèfon no vàlid. Format: 600000000 o +34600000000.");
+      return;
+    }
+    if (!acceptaRgpd) {
+      setError("Has d'acceptar rebre informació per WhatsApp per continuar.");
       return;
     }
     setSending(true);
     setError("");
     try {
-      // 1) Registrem el lead a Apps Script (mode no-cors, no llegim resposta)
       if (GOOGLE_WEBHOOK) {
         await fetch(GOOGLE_WEBHOOK, {
           method: "POST",
@@ -58,26 +83,28 @@ export default function WhatsAppLeadForm({ open, onClose }: { open: boolean; onC
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             action: "whatsapp_lead",
-            ...form,
+            nom: "",
+            telefon: phoneClean,
+            email: "",
+            dubte: "",
+            acceptaRgpd: true,
             data: new Date().toLocaleString("ca-ES"),
-            source: "home_fab",
+            source,
           }),
         });
       }
       tracker.ctaWhatsAppHomeClick();
 
-      // 2) Obrim WhatsApp amb missatge pre-omplert
-      const text = `Hola! Soc ${form.nom}. ${form.dubte}.${form.telefon ? "" : ""}`;
+      const text = PRE_TEXT_BY_SOURCE[source] || PRE_TEXT_BY_SOURCE.home_fab;
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(text)}`;
       window.open(waUrl, "_blank", "noopener,noreferrer");
 
-      // 3) Tanquem el modal després d'obrir WhatsApp
       setTimeout(() => {
         onClose();
-        // Reset per la pròxima vegada
-        setForm({ nom: "", telefon: "", email: "", dubte: QUICK_OPTIONS[0] });
+        setTelefon("");
+        setAcceptaRgpd(false);
       }, 300);
-    } catch (err) {
+    } catch {
       setError("Error enviant. Prova de nou o escriu-nos a voluntaris@grupbarna.info");
     } finally {
       setSending(false);
@@ -106,7 +133,8 @@ export default function WhatsAppLeadForm({ open, onClose }: { open: boolean; onC
             {/* Header */}
             <div className="bg-gradient-to-br from-[#25D366] to-[#128C7E] p-5 relative">
               <button onClick={onClose}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors">
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
+                aria-label="Tancar">
                 <X className="w-4 h-4" />
               </button>
               <div className="flex items-center gap-3">
@@ -123,22 +151,35 @@ export default function WhatsAppLeadForm({ open, onClose }: { open: boolean; onC
             </div>
 
             {/* Form */}
-            <form onSubmit={submit} className="p-5 space-y-3">
-              <Field icon={User} label="El teu nom *">
-                <input ref={firstFieldRef} value={form.nom} onChange={setField("nom")} placeholder="Joan Garcia"
-                  className={inputCls}/>
-              </Field>
+            <form onSubmit={submit} className="p-5 space-y-4">
+              <label className="block">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
+                  <Phone className="w-3.5 h-3.5 text-[#25D366]"/>
+                  El teu telèfon *
+                </span>
+                <input
+                  ref={firstFieldRef}
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  value={telefon}
+                  onChange={e => setTelefon(e.target.value)}
+                  placeholder="600 000 000"
+                  className="w-full bg-white/8 border border-white/15 focus:border-[#25D366] text-white placeholder:text-white/30 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors"
+                />
+              </label>
 
-              <Field icon={Phone} label="Telèfon *">
-                <input type="tel" value={form.telefon} onChange={setField("telefon")} placeholder="600 000 000"
-                  className={inputCls}/>
-              </Field>
-
-              <Field icon={HelpCircle} label="Sobre què preguntes?">
-                <select value={form.dubte} onChange={setField("dubte") as any} className={inputCls}>
-                  {QUICK_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-                </select>
-              </Field>
+              <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={acceptaRgpd}
+                  onChange={e => setAcceptaRgpd(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 rounded border-white/30 bg-white/10 text-[#25D366] focus:ring-[#25D366] focus:ring-offset-slate-950 cursor-pointer accent-[#25D366]"
+                />
+                <span className="text-[11px] text-white/65 leading-relaxed">
+                  Accepto rebre informació del torneig 3×3 per WhatsApp (categories, places, recordatoris). Pots demanar baixa quan vulguis. <span className="text-white/40">(RGPD · CB Grup Barna)</span>
+                </span>
+              </label>
 
               {error && <p className="text-red-400 text-xs">⚠️ {error}</p>}
 
@@ -146,28 +187,10 @@ export default function WhatsAppLeadForm({ open, onClose }: { open: boolean; onC
                 className="w-full bg-[#25D366] hover:bg-[#1da851] disabled:opacity-60 text-white font-bold uppercase tracking-wider py-3.5 rounded-xl transition-all hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-2">
                 {sending ? <><Loader2 className="w-4 h-4 animate-spin"/> Obrint WhatsApp…</> : <><Check className="w-4 h-4"/> Continuar a WhatsApp</>}
               </button>
-
-              <p className="text-[10px] text-white/35 text-center leading-relaxed pt-1">
-                En continuar, el teu telèfon s'afegirà a la llista de difusió 3×3 per rebre notificacions del torneig (categories, places, recordatoris). Pots demanar baixa en qualsevol moment.
-              </p>
             </form>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
-  );
-}
-
-const inputCls = "w-full bg-white/8 border border-white/15 focus:border-[#25D366] text-white placeholder:text-white/30 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors";
-
-function Field({ icon: Icon, label, children }: { icon: any; label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
-        <Icon className="w-3.5 h-3.5 text-[#25D366]"/>
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }

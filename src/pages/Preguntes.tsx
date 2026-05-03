@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, ChevronDown, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 /**
  * Pàgina de preguntes freqüents (FAQ).
@@ -106,6 +107,7 @@ const FAQS: FAQ[] = [
 export default function Preguntes() {
   const [search, setSearch] = useState("");
   const [openIdx, setOpenIdx] = useState<number | null>(0);
+  const [waOpen, setWaOpen] = useState(false);
 
   useEffect(() => { document.title = "Preguntes freqüents · 3×3 Westfield Glòries 2026"; }, []);
 
@@ -201,11 +203,13 @@ export default function Preguntes() {
                 ✉️ Email
               </Button>
             </a>
-            <a href="https://wa.me/+34698425153?text=Hola!%20Tinc%20una%20pregunta%20sobre%20el%203x3%20Westfield%20Gl%C3%B2ries" target="_blank" rel="noopener noreferrer">
-              <Button className="bg-[#25D366] hover:bg-[#1da851] text-white font-bold uppercase tracking-wider w-full sm:w-auto">
-                📱 WhatsApp
-              </Button>
-            </a>
+            <Button
+              type="button"
+              onClick={() => setWaOpen(true)}
+              className="bg-[#25D366] hover:bg-[#1da851] text-white font-bold uppercase tracking-wider w-full sm:w-auto"
+            >
+              📱 WhatsApp
+            </Button>
             <Link to="/inscripcion">
               <Button className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider w-full sm:w-auto">
                 🏀 Equip
@@ -219,6 +223,8 @@ export default function Preguntes() {
           </div>
         </div>
       </div>
+
+      <WhatsAppLeadForm open={waOpen} onClose={() => setWaOpen(false)} source="faq" />
     </div>
   );
 }
