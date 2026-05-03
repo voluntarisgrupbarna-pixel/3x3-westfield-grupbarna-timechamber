@@ -12,5 +12,8 @@
     "@cloudflare/workers-types": "^4.20250101.0",
     "typescript": "^5.5.0",
     "wrangler": "^3.90.0"
+  },
+  "dependencies": {
+    "qrcode-svg": "^1.1.0"
   }
 }

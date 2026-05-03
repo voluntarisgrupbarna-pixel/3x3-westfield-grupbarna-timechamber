@@ -23,29 +23,29 @@ const JOTFORM_BASE_URL = import.meta.env.VITE_JOTFORM_BASE_URL || "https://eu-ap
 const GOOGLE_WEBHOOK   = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
 
 const TALLAS    = ["8-10","12-14","16","XS","S","M","L","XL","XXL"];
+/* Categories segons les del CB Grup Barna (web del club: cbgrupbarna.com).
+   Sèniors i Veterans tenen un preu lleugerament superior (categoria principal). */
 const CATS      = [
-  "Senior A · Pro Masculí",
-  "Senior A · Pro Femení",
-  "Senior B · Amateur Masculí",
-  "Senior B · Amateur Femení",
-  "Veterans Masculí (+35)",
-  "Veterans Femení (+35)",
-  "EQUALS · Inclusiva",
-  "U18 Junior Masculí",
-  "U18 Junior Femení",
-  "U16 Cadet Masculí",
-  "U14 Infantil Masculí",
-  "Prebenjamí / Benjamí / Aleví"
+  "Escola",
+  "Premini",
+  "Mini",
+  "Preinfantil",
+  "Infantil",
+  "Cadet",
+  "Junior",
+  "Sèniors",
+  "Veterans",
+  "Màgics"
 ];
-/* Preus inscripció. Senior A i B paguen una mica més (categoria principal). */
-const PRECIO_GEN_4    = 75;   // General · 4 jugadors
-const PRECIO_GEN_5    = 90;   // General · 5 jugadors
-const PRECIO_SENIOR_4 = 85;   // Senior A/B · 4 jugadors
-const PRECIO_SENIOR_5 = 105;  // Senior A/B · 5 jugadors
+
+const PRECIO_GEN_4    = 75;   // Categories formatives · 4 jugadors
+const PRECIO_GEN_5    = 90;   // Categories formatives · 5 jugadors
+const PRECIO_SENIOR_4 = 85;   // Sèniors/Veterans · 4 jugadors
+const PRECIO_SENIOR_5 = 105;  // Sèniors/Veterans · 5 jugadors
 
 function isSeniorCat(cat: string | undefined): boolean {
   if (!cat) return false;
-  return /^Senior\s*[AB]/i.test(cat);
+  return /^(Sèniors|Sèniors|Senior|Veterans)/i.test(cat);
 }
 function precioByCat(cat: string | undefined, mida: string): number {
   const senior = isSeniorCat(cat);
@@ -60,6 +60,43 @@ const BENEFICIARI = "CB Grup Barna";
 function buildConcepte(nomEquip: string | undefined): string {
   const clean = (nomEquip || "EQUIP").toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
   return `3X3+${clean}`;
+}
+
+/* Genera un team ID determinístic curt per al check-in QR.
+   Format: <slug-nom>-<base36-timestamp> (ex: "tigers-bcn-mfp4z2") */
+function buildTeamId(nomEquip: string | undefined): string {
+  const slug = String(nomEquip || "equip").toUpperCase().replace(/[^A-Z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 24).toLowerCase();
+  const tsBase36 = Math.floor(Date.now() / 1000).toString(36);
+  return `${slug}-${tsBase36}`;
+}
+
+/* URL del check-in que es comparteix dins el QR de l'equip.
+   Quan es escaneja, obre /checkin?id=...&nom=...&cat=...&cap=...&pob=...&jug=...&tel=...&data=...
+   La pàgina de checkin permet als responsables de torneig confirmar arribada + entrega samarretes. */
+function buildCheckinUrl(data: {
+  teamId: string; nomEquip: string; cap: string; cat: string;
+  pob: string; jug: number; mida: string; tel: string; email: string; data: string;
+}): string {
+  const SPA_BASE = (import.meta.env.VITE_SHARE_BASE as string | undefined)?.replace(/\/+$/, "")
+    || "https://cbgrupbarna-3x3timechamber.com";
+  const usp = new URLSearchParams({
+    id: data.teamId,
+    nom: data.nomEquip,
+    cap: data.cap,
+    cat: data.cat,
+    pob: data.pob,
+    jug: String(data.jug),
+    mida: data.mida,
+    tel: data.tel,
+    email: data.email,
+    data: data.data,
+  });
+  // Si la SPA_BASE és el worker, /checkin és part del worker també (no l'implementem allà,
+  // sempre redirigim a la SPA real). Construim URL cap a la SPA real.
+  const spa = (import.meta.env.VITE_SHARE_BASE as string | undefined)?.includes("workers.dev")
+    ? "https://cbgrupbarna-3x3timechamber.com"
+    : SPA_BASE;
+  return `${spa}/checkin?${usp.toString()}`;
 }
 
 /* Codifica un File com a payload {name, mimeType, base64} per enviar al webhook (Apps Script
@@ -123,6 +160,7 @@ const schema = z.object({
   capCategoria: z.string().min(1),
   capTalla: z.string().min(1),
   capClub: z.string().optional(),
+  capPoblacio: z.string().optional(),
   tutorNom: z.string().optional(),
   tutorCognom: z.string().optional(),
   tutorTelefon: z.string().optional(),
@@ -296,6 +334,8 @@ export default function Inscripcion() {
   const [step, setStep]           = useState(1);
   const [dir, setDir]             = useState(1);
   const [submitted, setSubmitted] = useState(false);
+  const [teamId, setTeamId]       = useState<string>("");
+  const [checkinUrl, setCheckinUrl] = useState<string>("");
   const [sending, setSending]     = useState(false);
   const [descAplicat, setDescAplicat] = useState(false);
   const [codError, setCodError]   = useState("");
@@ -421,6 +461,24 @@ export default function Inscripcion() {
     try {
       // Submit to Apps Script webhook (primary backend: Sheet + Fillout + emails)
       // Apps Script s'encarrega de pujar el justificant a Drive i passar la URL a Fillout.
+      // Genera identificador únic d'equip (per QR de check-in)
+      const newTeamId = buildTeamId(data.nomEquip);
+      const submissionDate = new Date().toLocaleString("ca-ES");
+      const newCheckinUrl = buildCheckinUrl({
+        teamId: newTeamId,
+        nomEquip: data.nomEquip,
+        cap: `${data.capNom} ${data.capCognom}`.trim(),
+        cat: data.capCategoria || "",
+        pob: data.capPoblacio || "",
+        jug: Number(data.midaEquip) || 4,
+        mida: data.capTalla || "",
+        tel: data.capTelefon || "",
+        email: data.capEmail || "",
+        data: submissionDate,
+      });
+      setTeamId(newTeamId);
+      setCheckinUrl(newCheckinUrl);
+
       if (GOOGLE_WEBHOOK) {
         // Codifica el fitxer com a base64 si n'hi ha
         let justificantPayload: null | { name: string; mimeType: string; base64: string } = null;
@@ -437,8 +495,10 @@ export default function Inscripcion() {
             descAplicat,
             descInvitacions,
             concepte: buildConcepte(data.nomEquip),
+            teamId: newTeamId,
+            checkinUrl: newCheckinUrl,
             justificant: justificantPayload,    // { name, mimeType, base64 } o null
-            data: new Date().toLocaleString("ca-ES"),
+            data: submissionDate,
           }),
         });
       } else {
@@ -678,10 +738,26 @@ export default function Inscripcion() {
           <p className="text-white/50 mb-8 leading-relaxed">
             Hem rebut la inscripció del teu equip al <strong className="text-white">3×3 Westfield Glòries</strong>. Comprova que la transferència s'hagi realitzat correctament.
           </p>
+          {/* QR check-in del teu equip (LLEGIT EL DIA DEL TORNEIG per identificar-vos) */}
+          {checkinUrl && (
+            <div className="bg-gradient-to-br from-red-600 to-orange-600 rounded-2xl p-5 mb-3 text-white">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-black uppercase tracking-wider">🎟️ QR del teu equip</span>
+                <span className="text-[10px] uppercase tracking-wider font-mono bg-black/30 px-2 py-1 rounded">ID: {teamId}</span>
+              </div>
+              <div className="bg-white rounded-xl p-4 flex flex-col items-center">
+                <QRCodeSVG value={checkinUrl} size={200} level="M" includeMargin={false} />
+              </div>
+              <p className="text-[11px] mt-3 leading-relaxed text-white/90">
+                <strong>Guarda aquest QR.</strong> El necessitareu el dia del torneig per a la <strong>recollida de samarretes</strong> i el <strong>check-in</strong>. També us l'enviem per email.
+              </p>
+            </div>
+          )}
+
           {/* QR pagament EPC — escaneig amb app del banc */}
           <div className="bg-white border border-white/10 rounded-2xl p-5 mb-3 flex flex-col items-center">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">Escaneja amb la teva app del banc</p>
-            <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={180} level="M" includeMargin={false} />
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">💳 Pagar amb el banc · QR</p>
+            <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={160} level="M" includeMargin={false} />
             <p className="text-[10px] text-slate-500 mt-2 text-center max-w-[220px]">
               Obre l'app del banc → "Pagar amb QR" → confirma. Tot pre-omplert.
             </p>
@@ -864,9 +940,14 @@ export default function Inscripcion() {
                         <SInput {...register("capTelefon")} type="tel" placeholder="+34 600 000 000" />
                       </FieldRow>
                     </div>
-                    <FieldRow label="Data de naixement *" error={errors.capDataNaix?.message}>
-                      <SInput {...register("capDataNaix")} type="date" />
-                    </FieldRow>
+                    <div className="grid grid-cols-2 gap-3">
+                      <FieldRow label="Data de naixement *" error={errors.capDataNaix?.message}>
+                        <SInput {...register("capDataNaix")} type="date" />
+                      </FieldRow>
+                      <FieldRow label="Població">
+                        <SInput {...register("capPoblacio")} placeholder="Sant Martí, Barcelona…" />
+                      </FieldRow>
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <FieldRow label="Categoria *" error={errors.capCategoria?.message}>
                         <Controller control={control} name="capCategoria" render={({ field }) => (

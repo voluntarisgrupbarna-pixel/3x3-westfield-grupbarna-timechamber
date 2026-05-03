@@ -22,6 +22,9 @@
  *   cd cloudflare-worker && npx wrangler deploy
  */
 
+// @ts-expect-error - qrcode-svg has no bundled types
+import QRCode from "qrcode-svg";
+
 const SPA_BASE = "https://cbgrupbarna-3x3timechamber.com";
 const SITE_NAME = "3×3 Westfield Glòries";
 const EVENT_DATE = "6-7 Juny 2026";
@@ -37,18 +40,58 @@ export default {
     if (pathname === "/og.svg") {
       return handleOgSvg(url);
     }
+    if (pathname === "/qr.svg") {
+      return handleQrSvg(url);
+    }
     if (pathname === "/equip" || pathname.startsWith("/equip/")) {
       return handleEquipShare(url, request);
     }
     if (pathname === "/" || pathname === "") {
       return new Response(
-        `3×3 Glòries OG Worker · OK\n\nEndpoints:\n  /og.svg?nom=X&cat=Y\n  /equip?nom=X&cat=Y&cap=Z&club=W`,
+        `3×3 Glòries OG Worker · OK\n\nEndpoints:\n  /og.svg?nom=X&cat=Y       (Open Graph preview image)\n  /qr.svg?data=<text-or-url>  (QR code as SVG)\n  /equip?nom=X&cat=Y&cap=Z   (HTML with OG tags + redirect)`,
         { headers: { "content-type": "text/plain; charset=utf-8" } }
       );
     }
     return new Response("Not found", { status: 404 });
   },
 };
+
+/* ───────────────────── /qr.svg ───────────────────── */
+
+function handleQrSvg(url: URL): Response {
+  const data = url.searchParams.get("data") || "";
+  const sizeParam = parseInt(url.searchParams.get("size") || "300", 10);
+  const size = Math.min(800, Math.max(100, isNaN(sizeParam) ? 300 : sizeParam));
+  const color = url.searchParams.get("color") || "#0b1020";
+  const bg = url.searchParams.get("bg") || "#ffffff";
+
+  if (!data) {
+    return new Response("Missing 'data' query parameter", { status: 400 });
+  }
+  try {
+    const qr = new QRCode({
+      content: data,
+      width: size,
+      height: size,
+      color,
+      background: bg,
+      ecl: "M",
+      padding: 2,
+      join: true,
+      container: "svg-viewbox",
+    });
+    const svg = qr.svg();
+    return new Response(svg, {
+      headers: {
+        "content-type": "image/svg+xml; charset=utf-8",
+        "cache-control": "public, max-age=86400, s-maxage=604800",
+        "access-control-allow-origin": "*",
+      },
+    });
+  } catch (err) {
+    return new Response("QR generation error: " + String(err), { status: 500 });
+  }
+}
 
 /* ───────────────────── /og.svg ───────────────────── */
 

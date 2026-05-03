@@ -112,13 +112,23 @@ function doPost(e) {
   let filloutError = '';
 
   try {
-    const data = JSON.parse(e.postData.contents || '{}');
+    const raw = JSON.parse(e.postData.contents || '{}');
+
+    // ─── Acció checkin (escanejat el QR de l'equip al torneig) ───
+    if (raw.action === 'checkin' && raw.teamId) {
+      try { markCheckinOnSheet_(raw.teamId, raw.local || raw.timestamp || ''); } catch (err) { Logger.log('checkin error: ' + err); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'checkin', teamId: raw.teamId }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+    const data = normalizeFormData_(raw);
 
     // 1) Si arriba justificant en base64, pujar-lo a Drive primer (per tenir URL al Sheet i Fillout)
     let justificantUpload = null;
-    if (data.justificant && data.justificant.base64) {
+    if (raw.justificant && raw.justificant.base64) {
       try {
-        justificantUpload = uploadJustificantToDrive_(data.justificant, data.nomEquip);
+        justificantUpload = uploadJustificantToDrive_(raw.justificant, data.nomEquip);
       } catch (driveErr) {
         Logger.log('Drive upload error: ' + driveErr);
       }
@@ -177,33 +187,87 @@ function doPost(e) {
   }
 }
 
+/**
+ * Normalitza el payload del form (que té capNom/capCognom/capEmail/capTelefon/capCategoria/capTalla/capPoblacio/comentaris)
+ * a un objecte uniforme que tot el codi pot llegir directament.
+ */
+function normalizeFormData_(data) {
+  return {
+    data: data.data || new Date().toLocaleString('ca-ES'),
+    teamId: data.teamId || '',
+    checkinUrl: data.checkinUrl || '',
+    concepte: data.concepte || '',
+    categoria: data.categoria || data.capCategoria || '',
+    nomEquip: data.nomEquip || '',
+    capita: data.capita || ((data.capNom || '') + ' ' + (data.capCognom || '')).trim(),
+    poblacio: data.poblacio || data.capPoblacio || '',
+    email: data.email || data.capEmail || '',
+    telefon: data.telefon || data.capTelefon || '',
+    mida: data.mida || data.capTalla || '',
+    notes: data.notes || data.comentaris || '',
+    total: data.total || 0,
+    descAplicat: !!data.descAplicat,
+    descInvitacions: !!data.descInvitacions,
+    jugadors: Array.isArray(data.jugadors) ? data.jugadors : [],
+    justificant: data.justificant || null,
+  };
+}
+
 function writeToSheet_(data, justificantUpload) {
+  // Defensiu: si arriba payload sense normalitzar (cas legacy), normalitzem
+  const d = data && data.capita ? data : normalizeFormData_(data);
   const sheet = getSheet_();
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
-      'Data', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Email', 'Telèfon',
+      'Data', 'Team ID', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Població', 'Email', 'Telèfon',
       'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
-      'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL'
+      'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
+      'Check-in URL', 'Arribat (timestamp)'
     ]);
   }
-  const jugadors = formatJugadors_(data);
+  const jugadors = formatJugadors_(d);
   const justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
   sheet.appendRow([
-    data.data || new Date().toLocaleString('ca-ES'),
-    data.concepte || '',
-    data.categoria || '',
-    data.nomEquip || '',
-    data.capita || '',
-    data.email || '',
-    data.telefon || '',
+    d.data,
+    d.teamId,
+    d.concepte,
+    d.categoria,
+    d.nomEquip,
+    d.capita,
+    d.poblacio,
+    d.email,
+    d.telefon,
     jugadors,
-    data.mida || '',
-    data.notes || '',
-    data.total || '',
-    data.descAplicat ? 'Sí' : 'No',
-    data.descInvitacions ? 'Sí' : 'No',
-    justifUrl
+    d.mida,
+    d.notes,
+    d.total,
+    d.descAplicat ? 'Sí' : 'No',
+    d.descInvitacions ? 'Sí' : 'No',
+    justifUrl,
+    d.checkinUrl,
+    ''   // "Arribat" buit fins que algú escanegi el QR el dia del torneig
   ]);
+}
+
+/**
+ * Quan algú escaneja el QR el dia del torneig i prem "Marcar arribada",
+ * trobem la fila amb teamId i hi posem el timestamp d'arribada.
+ */
+function markCheckinOnSheet_(teamId, localTimestamp) {
+  const sheet = getSheet_();
+  if (sheet.getLastRow() < 2) return;
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const teamIdCol = headers.indexOf('Team ID') + 1;
+  const arribatCol = headers.indexOf('Arribat (timestamp)') + 1;
+  if (!teamIdCol || !arribatCol) return;
+
+  const allTeamIds = sheet.getRange(2, teamIdCol, sheet.getLastRow() - 1, 1).getValues();
+  for (let i = 0; i < allTeamIds.length; i++) {
+    if (String(allTeamIds[i][0]).trim() === String(teamId).trim()) {
+      sheet.getRange(i + 2, arribatCol).setValue(localTimestamp || new Date().toLocaleString('ca-ES'));
+      return;
+    }
+  }
 }
 
 function formatJugadors_(data) {
@@ -298,23 +362,46 @@ function buildFilloutBody_(data, justificantUpload) {
 }
 
 function sendEmails_(data, justificantUpload) {
+  // Genera el QR PNG des del worker /qr.svg → convertir a PNG inline
+  let qrBlob = null;
+  if (data.checkinUrl) {
+    try {
+      const qrUrl = 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data='
+        + encodeURIComponent(data.checkinUrl);
+      const resp = UrlFetchApp.fetch(qrUrl, { muteHttpExceptions: true });
+      if (resp.getResponseCode() === 200) {
+        // SVG → afegir imatge inline a l'email com a "checkinQr"
+        // (Les apps de mail no sempre rendritzen SVG inline. Posem-la com a image/svg+xml.)
+        qrBlob = resp.getBlob().setName('checkin-qr.svg');
+      }
+    } catch (qrErr) {
+      Logger.log('QR fetch error: ' + qrErr);
+    }
+  }
+
+  // Email al capità
   if (data.email) {
     try {
+      const opts = { htmlBody: buildEmailCapita_(data) };
+      if (qrBlob) opts.inlineImages = { checkinQr: qrBlob };
       MailApp.sendEmail({
         to: data.email,
         subject: '✅ Inscripció rebuda · 3×3 Westfield Glòries 2026',
         htmlBody: buildEmailCapita_(data),
+        attachments: qrBlob ? [qrBlob] : undefined,
       });
     } catch (mailErr) {
       Logger.log('Error email capità: ' + mailErr);
     }
   }
+  // Email a admin
   const admin = PROPS.getProperty('ADMIN_EMAIL') || 'anafernandezduran78@gmail.com';
   try {
     MailApp.sendEmail({
       to: admin,
       subject: '📩 Nova inscripció: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
       htmlBody: buildEmailAdmin_(data, formatJugadors_(data), justificantUpload),
+      attachments: qrBlob ? [qrBlob] : undefined,
     });
   } catch (mailErr) {
     Logger.log('Error email admin: ' + mailErr);
@@ -322,12 +409,25 @@ function sendEmails_(data, justificantUpload) {
 }
 
 function buildEmailCapita_(data) {
+  const checkinUrl = data.checkinUrl || '';
+  const teamId = data.teamId || '';
+  const qrPngUrl = checkinUrl
+    ? 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data=' + encodeURIComponent(checkinUrl)
+    : '';
   return [
     '<h2 style="color:#dc2626">✅ Hem rebut la teva inscripció</h2>',
     '<p>Hola <strong>' + (data.capita || '') + '</strong>,</p>',
     '<p>Hem registrat l\'equip <strong>' + (data.nomEquip || '') + '</strong> a la categoria <strong>' + (data.categoria || '') + '</strong>.</p>',
     '<p><strong>Total a pagar:</strong> ' + (data.total || '') + ' €</p>',
     '<p>Quan rebem el justificant de transferència confirmarem la plaça per email i WhatsApp.</p>',
+    qrPngUrl ? (
+      '<div style="margin:24px 0;padding:20px;background:#fef2f2;border:2px solid #dc2626;border-radius:16px;text-align:center">' +
+      '<p style="margin:0 0 8px;font-weight:bold;color:#dc2626;text-transform:uppercase;letter-spacing:1px;font-size:13px">🎟️ QR del teu equip · ID ' + teamId + '</p>' +
+      '<img src="' + qrPngUrl + '" alt="QR check-in" style="width:220px;height:220px;display:block;margin:8px auto"/>' +
+      '<p style="margin:8px 0 0;font-size:12px;color:#7f1d1d"><strong>Guarda aquest email</strong> o el QR. El necessiteu el dia del torneig per a la <strong>recollida de samarretes</strong> i el <strong>check-in</strong>.</p>' +
+      '<p style="margin:8px 0 0;font-size:11px;color:#7f1d1d">També pots obrir directament: <a href="' + checkinUrl + '" style="color:#dc2626">' + checkinUrl + '</a></p>' +
+      '</div>'
+    ) : '',
     '<p>Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp del club</a>.</p>',
     '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>'
   ].join('');
@@ -338,13 +438,19 @@ function buildEmailAdmin_(data, jugadors, justificantUpload) {
     ? '<a href="' + justificantUpload.url + '">' + (justificantUpload.filename || 'Veure justificant') + '</a>'
     : '—';
   const concepte = '3X3+' + String(data.nomEquip || 'EQUIP').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+  const checkinUrl = data.checkinUrl || '';
+  const qrUrl = checkinUrl
+    ? 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=300&data=' + encodeURIComponent(checkinUrl)
+    : '';
   return [
     '<h2>📩 Nova inscripció</h2>',
     '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">',
+    '<tr><td><strong>Team ID</strong></td><td><code>' + (data.teamId || '—') + '</code></td></tr>',
     '<tr><td><strong>Concepte</strong></td><td><code>' + concepte + '</code></td></tr>',
     '<tr><td><strong>Equip</strong></td><td>' + (data.nomEquip || '') + '</td></tr>',
     '<tr><td><strong>Categoria</strong></td><td>' + (data.categoria || '') + '</td></tr>',
     '<tr><td><strong>Capità</strong></td><td>' + (data.capita || '') + '</td></tr>',
+    '<tr><td><strong>Població</strong></td><td>' + (data.poblacio || data.capPoblacio || '—') + '</td></tr>',
     '<tr><td><strong>Email</strong></td><td>' + (data.email || '') + '</td></tr>',
     '<tr><td><strong>Telèfon</strong></td><td>' + (data.telefon || '') + '</td></tr>',
     '<tr><td><strong>Jugadors</strong></td><td>' + jugadors + '</td></tr>',
@@ -352,6 +458,7 @@ function buildEmailAdmin_(data, jugadors, justificantUpload) {
     '<tr><td><strong>Total</strong></td><td>' + (data.total || '') + ' €</td></tr>',
     '<tr><td><strong>Notes</strong></td><td>' + (data.notes || '') + '</td></tr>',
     '<tr><td><strong>Justificant</strong></td><td>' + justifCell + '</td></tr>',
+    qrUrl ? '<tr><td><strong>Check-in QR</strong></td><td><a href="' + checkinUrl + '"><img src="' + qrUrl + '" width="180" height="180" alt="QR check-in"/></a><br><a href="' + checkinUrl + '" style="font-size:10px;font-family:monospace">' + checkinUrl + '</a></td></tr>' : '',
     '</table>'
   ].join('');
 }
