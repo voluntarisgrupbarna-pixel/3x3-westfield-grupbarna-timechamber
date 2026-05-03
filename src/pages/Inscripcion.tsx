@@ -224,7 +224,7 @@ const schema = z.object({
   // Legal
   acceptaBases: z.boolean().refine(v => v === true, "Obligatori"),
   acceptaLopd: z.boolean().refine(v => v === true, "Obligatori"),
-  acceptaImatge: z.boolean().optional(),
+  acceptaImatge: z.boolean().refine(v => v === true, "Obligatori"),
 });
 
 type FD = z.infer<typeof schema>;
@@ -1276,13 +1276,16 @@ export default function Inscripcion() {
                         {err && <p className="text-red-400 text-xs ml-7 mt-1">{(err as any).message}</p>}
                       </div>
                     ))}
-                    <div className="flex items-start gap-3">
-                      <Checkbox id="img" checked={!!watch("acceptaImatge")}
-                        onCheckedChange={v => setValue("acceptaImatge", v === true)}
-                        className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
-                      <Label htmlFor="img" className="text-sm leading-relaxed cursor-pointer text-white/40">
-                        Autoritzo expressament la captació i publicació d'imatges per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. <span className="text-white/25">(opcional · per als drets d'imatge més enllà de l'esdeveniment)</span>
-                      </Label>
+                    <div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="img" checked={!!watch("acceptaImatge")}
+                          onCheckedChange={v => setValue("acceptaImatge", v === true as any)}
+                          className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
+                        <Label htmlFor="img" className="text-sm leading-relaxed cursor-pointer text-white/70">
+                          Autoritzo expressament la captació i publicació d'imatges meves i/o del meu fill/a per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. *
+                        </Label>
+                      </div>
+                      {errors.acceptaImatge && <p className="text-red-400 text-xs ml-7 mt-1">{(errors.acceptaImatge as any).message}</p>}
                     </div>
                   </div>
                 </motion.div>

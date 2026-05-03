@@ -65,7 +65,7 @@ export default function InscripcioIndividual() {
     talla: "", posicio: "Indiferent", nivell: "Intermedi",
     poblacio: "", observacions: "",
   });
-  const [accept, setAccept] = useState({ bases: false, lopd: false });
+  const [accept, setAccept] = useState({ bases: false, lopd: false, imatge: false });
   const [sending, setSending] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [teamId, setTeamId] = useState("");
@@ -84,8 +84,8 @@ export default function InscripcioIndividual() {
       setError("Omple tots els camps obligatoris.");
       return;
     }
-    if (!accept.bases || !accept.lopd) {
-      setError("Has d'acceptar les bases i la política de privacitat.");
+    if (!accept.bases || !accept.lopd || !accept.imatge) {
+      setError("Has d'acceptar les bases, l'apartat legal i els drets d'imatge.");
       return;
     }
     setSending(true);
@@ -342,7 +342,12 @@ export default function InscripcioIndividual() {
             <label className="flex items-start gap-2 cursor-pointer">
               <input type="checkbox" checked={accept.lopd} onChange={e => setAccept(s => ({ ...s, lopd: e.target.checked }))}
                 className="mt-1 w-4 h-4 accent-red-500"/>
-              <span className="text-white/75 text-xs">Accepto l'apartat legal de Timechamber Experience: política de privacitat, tractament de dades (RGPD), autorització mèdica, normativa interna i drets d'imatge. *</span>
+              <span className="text-white/75 text-xs">Accepto l'apartat legal de Timechamber Experience: política de privacitat, tractament de dades (RGPD), autorització mèdica i normativa interna. *</span>
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" checked={accept.imatge} onChange={e => setAccept(s => ({ ...s, imatge: e.target.checked }))}
+                className="mt-1 w-4 h-4 accent-red-500"/>
+              <span className="text-white/75 text-xs">Autoritzo expressament la captació i publicació d'imatges meves (o del meu fill/a si soc tutor/a legal) per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. *</span>
             </label>
           </div>
 
