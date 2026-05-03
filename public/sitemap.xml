@@ -1,21 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
   <url>
     <loc>https://cbgrupbarna-3x3timechamber.com/</loc>
-    <lastmod>2026-05-01</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="ca" href="https://cbgrupbarna-3x3timechamber.com/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://cbgrupbarna-3x3timechamber.com/" />
     <image:image>
       <image:loc>https://cbgrupbarna-3x3timechamber.com/og-image.png</image:loc>
       <image:title>3×3 Westfield Glòries 2026 — Torneig urbà a Barcelona</image:title>
-      <image:caption>Cartell del torneig 3×3 Westfield Glòries, edició 2026, al barri del Clot-Glòries de Barcelona.</image:caption>
+      <image:caption>Cartell oficial del torneig 3×3 Westfield Glòries, 4a edició 2026, al barri del Clot-Glòries de Barcelona, amb 2.400€ de prize money i punts FIBA 3×3.</image:caption>
     </image:image>
   </url>
   <url>
     <loc>https://cbgrupbarna-3x3timechamber.com/inscripcion</loc>
-    <lastmod>2026-05-01</lastmod>
+    <lastmod>2026-05-03</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://cbgrupbarna-3x3timechamber.com/equip</loc>
+    <lastmod>2026-05-03</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.6</priority>
   </url>
 </urlset>

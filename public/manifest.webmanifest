@@ -1,0 +1,24 @@
+{
+  "name": "3×3 Westfield Glòries 2026",
+  "short_name": "3×3 Glòries",
+  "description": "Torneig oficial 3×3 FIBA al Clot-Glòries de Barcelona. 6-7 Juny 2026. 2.400€ prize money.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#dc2626",
+  "background_color": "#0b1020",
+  "lang": "ca-ES",
+  "categories": ["sports", "lifestyle", "events"],
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48 64x64 96x96", "type": "image/x-icon" },
+    { "src": "/og-image.png", "sizes": "1200x630", "type": "image/png", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Inscriu el teu equip",
+      "url": "/inscripcion",
+      "description": "Inscripció ràpida al torneig 3×3 Westfield Glòries 2026"
+    }
+  ]
+}

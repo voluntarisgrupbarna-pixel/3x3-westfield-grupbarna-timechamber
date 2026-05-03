@@ -47,16 +47,40 @@
 
     <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@cbgrupbarna" />
+    <meta name="twitter:creator" content="@cbgrupbarna" />
     <meta name="twitter:title" content="3×3 Westfield Glòries 2026 · Barcelona" />
     <meta name="twitter:description" content="Torneig 3×3 FIBA · 2.400€ prize money · 6 categories · 6-7 Juny 2026. Places limitades — inscriu-te ja!" />
     <meta name="twitter:image" content="https://cbgrupbarna-3x3timechamber.com/og-image.png" />
-    <meta name="twitter:image:alt" content="3×3 Westfield Glòries 2026" />
+    <meta name="twitter:image:alt" content="3×3 Westfield Glòries 2026 — Torneig urbà a Barcelona, 6-7 Juny" />
+
+    <!-- Pinterest Rich Pins (article) -->
+    <meta name="pinterest-rich-pin" content="true" />
+    <meta name="pinterest" content="nopin" />
+    <meta property="article:author" content="CB Grup Barna" />
+    <meta property="article:section" content="Bàsquet · Esports" />
+    <meta property="article:tag" content="3x3, FIBA, Barcelona, Bàsquet, Westfield Glòries, Clot" />
+
+    <!-- Apple / iOS specific -->
+    <meta name="apple-mobile-web-app-title" content="3×3 Glòries" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Performance: preconnect to third parties used by the SPA -->
     <link rel="preconnect" href="https://script.google.com" crossorigin />
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
     <link rel="preconnect" href="https://www.instagram.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+    <link rel="dns-prefetch" href="https://api.fillout.com" />
+
+    <!-- Hero font preload (Rajdhani 700 — usat al hero per LCP) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;900&display=swap" media="print" onload="this.media='all'" />
 
     <!-- Instagram embed (carrega blockquotes amb data-instgrm-permalink) -->
     <script async src="//www.instagram.com/embed.js"></script>
@@ -147,13 +171,13 @@
         }
       ],
       "offers": {
-        "@type": "Offer",
-        "name": "Inscripció equip",
+        "@type": "AggregateOffer",
+        "name": "Inscripció equip 3×3",
         "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
-        "price": "70",
+        "lowPrice": "75",
+        "highPrice": "105",
         "priceCurrency": "EUR",
-        "lowPrice": "70",
-        "highPrice": "90",
+        "offerCount": "12",
         "availability": "https://schema.org/InStock",
         "validFrom": "2026-04-01T00:00:00+02:00"
       },
@@ -202,10 +226,176 @@
       }
     }
     </script>
+
+    <!-- JSON-LD: BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        { "@type": "ListItem", "position": 1, "name": "Inici", "item": "https://cbgrupbarna-3x3timechamber.com/" },
+        { "@type": "ListItem", "position": 2, "name": "Inscripcions Torneig 3×3", "item": "https://cbgrupbarna-3x3timechamber.com/inscripcion" }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: FAQPage (long-tail SEO + rich results) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Què és el 3×3 Westfield Glòries?",
+          "acceptedAnswer": { "@type": "Answer", "text": "És el torneig oficial de bàsquet 3×3 amb punts FIBA del barri del Clot-Glòries de Barcelona, organitzat per CB Grup Barna · Time Chamber · Eix Clot. La 4a edició es disputa el 6 i 7 de juny de 2026 amb 2.400€ de prize money en 6 categories i jugadors de tota la península." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quan i on es juga el torneig 2026?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Es disputa el dissabte 6 i diumenge 7 de juny de 2026 a tres seus del barri del Clot-Glòries de Barcelona: Westfield Glòries (Av. Diagonal 208, seu principal), La Nau del Clot (Carrer de la Llacuna 172, pavelló oficial) i Rambleta del Clot (pista exterior)." }
+        },
+        {
+          "@type": "Question",
+          "name": "Com m'inscric al 3×3 Westfield Glòries?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Pel formulari online a cbgrupbarna-3x3timechamber.com/inscripcion. El procés té 5 passos: dades de l'equip, capità, jugadors (3-5), samarretes i pagament. La transferència bancària es fa amb un codi QR pre-omplert que escaneges amb l'app del banc. Confirmem la plaça en menys de 24h per email i WhatsApp." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quant costa la inscripció?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Entre 75€ i 105€ per equip. 75€ equip de 4 jugadors (categoria general), 85€ equip de 4 jugadors (Senior A/B), 90€ equip de 5 jugadors (general), 105€ equip de 5 jugadors (Senior A/B). Hi ha descompte del 10% si comparteixes el torneig amb 5 amics per WhatsApp i segueixes @cbgrupbarna a Instagram." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quantes categories hi ha?",
+          "acceptedAnswer": { "@type": "Answer", "text": "12 categories: Senior A · Pro Masculí, Senior A · Pro Femení, Senior B · Amateur Masculí, Senior B · Amateur Femení, Veterans Masculí (+35), Veterans Femení (+35), EQUALS · Inclusiva, U18 Junior Masculí, U18 Junior Femení, U16 Cadet Masculí, U14 Infantil Masculí i Premini/Benjamí/Aleví." }
+        },
+        {
+          "@type": "Question",
+          "name": "Hi ha categoria femenina?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sí. Tenim 4 categories femenines amb premis equiparats: Senior A Pro Femení (800€ + punts FIBA), Senior B Amateur Femení (300€), Veterans Femení +35 (200€) i U18 Junior Femení. La igualtat és un eix central de l'esdeveniment." }
+        },
+        {
+          "@type": "Question",
+          "name": "El torneig dóna punts FIBA 3×3?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sí. És un torneig oficial reconegut per FIBA 3×3, així que els jugadors Senior obtenen punts pel ranking mundial individual de FIBA 3×3 que sumen per accedir a competicions internacionals." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quants jugadors té un equip 3×3?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Cada equip té entre 3 i 5 jugadors: 3 a pista i fins a 2 reserves. La inscripció és per 4 o 5 jugadors per donar marge de canvis." }
+        },
+        {
+          "@type": "Question",
+          "name": "Què inclou el preu d'inscripció?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 2.400€ de prize money repartits en les 6 categories Senior i Veterans." }
+        },
+        {
+          "@type": "Question",
+          "name": "Quins són els premis (prize money)?",
+          "acceptedAnswer": { "@type": "Answer", "text": "2.400€ totals: Senior A Pro Masculí 800€ · Senior A Pro Femení 800€ · Senior B Amateur Masculí 300€ · Senior B Amateur Femení 300€ · Veterans Masculí (+35) 100€ · Veterans Femení (+35) 100€. Només cobra el 1r classificat de cada categoria; el 2n rep copa i el 3r medalla. Totes les categories tenen premis dels comerços." }
+        },
+        {
+          "@type": "Question",
+          "name": "Com puc pagar la inscripció?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Per transferència bancària a l'IBAN del club (es genera un codi QR EPC que pre-omple l'app del banc amb tot — IBAN, import i concepte). Després puges el comprovant al formulari per validar la inscripció." }
+        },
+        {
+          "@type": "Question",
+          "name": "Què he de portar el dia del torneig?",
+          "acceptedAnswer": { "@type": "Answer", "text": "DNI dels jugadors per validació, sabatilles de bàsquet o pista, samarreta oficial del torneig (la rebràs el dia), aigua i ganes. Hi haurà bar i ambient festiu durant els 2 dies." }
+        }
+      ]
+    }
+    </script>
+
+    <!-- JSON-LD: VideoObject (Instagram reels destacats) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": "3×3 Westfield Glòries 2025 — Highlights de l'edició anterior",
+      "description": "Resum de la 3a edició del 3×3 Westfield Glòries (juny 2025) amb partits, ambient i presència del centre comercial Westfield Glòries Barcelona.",
+      "thumbnailUrl": [
+        "https://cbgrupbarna-3x3timechamber.com/og-image.png"
+      ],
+      "uploadDate": "2025-06-08",
+      "contentUrl": "https://www.instagram.com/p/DJNKYiuMOGm/",
+      "embedUrl": "https://www.instagram.com/p/DJNKYiuMOGm/embed",
+      "publisher": {
+        "@type": "Organization",
+        "name": "CB Grup Barna",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://cbgrupbarna-3x3timechamber.com/og-image.png"
+        }
+      }
+    }
+    </script>
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- SEO fallback (visible només sense JS i útil per crawlers antics).
+           Conté les paraules clau i estructura semàntica perquè bots que no executin JS
+           encara puguin indexar el contingut bàsic. Es reemplaça en mountar React. -->
+      <noscript>
+        <header>
+          <h1>3×3 Westfield Glòries 2026 — Torneig de bàsquet 3×3 a Barcelona</h1>
+          <p>El torneig 3×3 més potent del Clot-Glòries, Barcelona. <strong>4ª edició: 6 i 7 de Juny 2026</strong>. Punts FIBA 3×3 oficials. <strong>2.400€ de prize money</strong> en 6 categories. Organitzat per <a href="https://www.instagram.com/cbgrupbarna/">CB Grup Barna</a> · Time Chamber · Eix Clot.</p>
+          <p>Per inscriure el teu equip activa JavaScript al navegador o visita directament <a href="/inscripcion">/inscripcion</a>. Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp +34 698 425 153</a>.</p>
+        </header>
+        <section>
+          <h2>3 seus al barri del Clot-Glòries</h2>
+          <ul>
+            <li><strong>Westfield Glòries</strong> — Av. Diagonal 208, Barcelona (seu principal, FIBA)</li>
+            <li><strong>La Nau del Clot</strong> — Carrer de la Llacuna 172, Barcelona (pavelló oficial CB Grup Barna)</li>
+            <li><strong>Rambleta del Clot</strong> — Rambla del Poblenou / Clot, Barcelona (pista exterior)</li>
+          </ul>
+        </section>
+        <section>
+          <h2>12 categories de joc</h2>
+          <ul>
+            <li>Senior A · Pro Masculí · 800€ + punts FIBA</li>
+            <li>Senior A · Pro Femení · 800€ + punts FIBA</li>
+            <li>Senior B · Amateur Masculí · 300€</li>
+            <li>Senior B · Amateur Femení · 300€</li>
+            <li>Veterans Masculí (+35) · 100€</li>
+            <li>Veterans Femení (+35) · 100€</li>
+            <li>EQUALS · Inclusiva</li>
+            <li>U18 Junior Masculí · U18 Junior Femení · U16 Cadet · U14 Infantil · Prebenjamí/Benjamí/Aleví</li>
+          </ul>
+        </section>
+        <section>
+          <h2>Preus inscripció</h2>
+          <p>De 75€ a 105€ per equip segons categoria i nombre de jugadors. Inclou samarreta oficial.</p>
+        </section>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Core Web Vitals → GA4 (LCP, INP, CLS, FCP, TTFB) -->
+    <script>
+      (function(){
+        if (typeof gtag !== 'function') return;
+        function send(metric){
+          gtag('event', metric.name, {
+            event_category: 'Web Vitals',
+            event_label: metric.id,
+            value: Math.round(metric.name === 'CLS' ? metric.value * 1000 : metric.value),
+            non_interaction: true,
+            metric_value: metric.value,
+            metric_delta: metric.delta,
+            metric_rating: metric.rating || 'unknown',
+          });
+        }
+        // Carrega web-vitals només si el navegador suporta PerformanceObserver
+        if ('PerformanceObserver' in window) {
+          import('https://unpkg.com/web-vitals@4?module').then(function(wv){
+            wv.onLCP(send); wv.onINP(send); wv.onCLS(send); wv.onFCP(send); wv.onTTFB(send);
+          }).catch(function(){});
+        }
+      })();
+    </script>
   </body>
 </html>
