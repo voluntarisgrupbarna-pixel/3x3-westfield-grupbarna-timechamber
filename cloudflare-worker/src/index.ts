@@ -53,9 +53,9 @@ export default {
 /* ───────────────────── /og.svg ───────────────────── */
 
 function handleOgSvg(url: URL): Response {
-  const nom = sanitize(url.searchParams.get("nom") || "EL TEU EQUIP", 28);
-  const cat = sanitize(url.searchParams.get("cat") || "Categoria pendent", 38);
-  const club = sanitize(url.searchParams.get("club") || "", 30);
+  const nom = sanitize(url.searchParams.get("nom") || "EL TEU EQUIP", 36);
+  const cat = sanitize(url.searchParams.get("cat") || "Categoria pendent", 40);
+  const club = sanitize(url.searchParams.get("club") || "", 32);
 
   const svg = renderOgSvg(nom, cat, club);
   return new Response(svg, {
@@ -68,8 +68,8 @@ function handleOgSvg(url: URL): Response {
 }
 
 function renderOgSvg(nom: string, cat: string, club: string): string {
-  // Imatges live al GH Pages
-  const BG_URL = "https://cbgrupbarna-3x3timechamber.com/og-image.png";
+  // Imatges live al GH Pages — pista real del torneig (mostrant el "TIME CHAMBER" pintat al terra)
+  const BG_URL = "https://cbgrupbarna-3x3timechamber.com/og-court-bg.jpg";
   const TC_LOGO_URL = "https://cbgrupbarna-3x3timechamber.com/logos/time-chamber.webp";
   const EC_LOGO_URL = "https://cbgrupbarna-3x3timechamber.com/logos/eix-clot.png";
 
@@ -77,8 +77,9 @@ function renderOgSvg(nom: string, cat: string, club: string): string {
   const safeCat = escapeXml(cat);
   const safeClub = escapeXml(club);
 
+  // Auto-shrink agressiu pels noms llargs perquè càpiguen dins els 1200px d'amplada
   const nomLen = nom.length;
-  const nomFontSize = nomLen <= 8 ? 150 : nomLen <= 14 ? 122 : nomLen <= 20 ? 92 : nomLen <= 26 ? 72 : 56;
+  const nomFontSize = nomLen <= 6 ? 168 : nomLen <= 10 ? 140 : nomLen <= 14 ? 116 : nomLen <= 18 ? 96 : nomLen <= 22 ? 78 : nomLen <= 28 ? 62 : nomLen <= 34 ? 50 : 42;
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="${escapeXml(nom)} · ${escapeXml(cat)} · ${SITE_NAME} 2026">
@@ -103,11 +104,11 @@ function renderOgSvg(nom: string, cat: string, club: string): string {
     </filter>
   </defs>
 
-  <!-- 1. Imatge de fons: cartell oficial del torneig (3×3 + logos brand) -->
+  <!-- 1. Imatge de fons: PISTA REAL del torneig (Westfield Glòries amb "TIME CHAMBER" pintat al terra) -->
   <image x="0" y="0" width="1200" height="630" href="${BG_URL}" xlink:href="${BG_URL}" preserveAspectRatio="xMidYMid slice"/>
 
-  <!-- 2. Vignette dark heavy → l'imatge queda com a textura ambient, no llegible -->
-  <rect x="0" y="0" width="1200" height="630" fill="rgba(11,16,32,0.78)"/>
+  <!-- 2. Overlay fosc + vignette per llegibilitat (la pista queda visible com a context) -->
+  <rect x="0" y="0" width="1200" height="630" fill="rgba(11,16,32,0.55)"/>
   <rect x="0" y="0" width="1200" height="630" fill="url(#vignette)"/>
 
   <!-- 3. Top stripe accent -->
