@@ -457,7 +457,7 @@ export default function Inscripcion() {
 
   /* ─── Gate viral helpers ─── */
   const sharesDone = sharedSlots.filter(Boolean).length;
-  const canUnlockGate = sharesDone >= 5 && igFollowed;
+  const canUnlockGate = sharesDone >= 1 && igFollowed;
   const shareWith = (idx: number) => {
     const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
@@ -687,55 +687,48 @@ export default function Inscripcion() {
               REBAIXA LA INSCRIPCIÓ <span className="text-orange-400">UN 10%</span>
             </h1>
             <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-              Convida <strong className="text-white">5 amics</strong> per WhatsApp i <strong className="text-white">segueix-nos a Instagram</strong> per estar al dia de tot el 3×3.
+              <strong className="text-white">Comparteix el torneig per WhatsApp</strong> (a un grup o a 5 amics) i <strong className="text-white">segueix-nos a Instagram</strong> per estar al dia.
             </p>
           </motion.div>
 
           {/* Progress badge */}
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sharesDone >= 5 ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {sharesDone >= 5 ? "✓" : sharesDone} / 5 amics
+            <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sharesDone >= 1 ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
+              {sharesDone >= 1 ? "✓ Compartit" : "○ WhatsApp"}
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${igFollowed ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
               {igFollowed ? "✓" : "○"} Instagram
             </div>
           </div>
 
-          {/* 5 share slots */}
+          {/* WhatsApp Share — un sol botó (l'usuari tria a qui envia o si ho fa a un grup) */}
           <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-4 flex items-center gap-2">
-              <Users className="w-4 h-4 text-red-400"/> Convida 5 amics per WhatsApp
+            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-3 flex items-center gap-2">
+              <Users className="w-4 h-4 text-red-400"/> Comparteix amb amics per WhatsApp
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {[0,1,2,3,4].map(i => {
-                const done = sharedSlots[i];
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => shareWith(i)}
-                    className={`flex items-center justify-between gap-2 px-4 py-3 rounded-xl border-2 text-left transition-all ${
-                      done
-                        ? "bg-green-500/10 border-green-500/40 text-green-300"
-                        : "bg-[#25D366]/8 border-[#25D366]/30 text-white hover:border-[#25D366]/60 hover:bg-[#25D366]/15 active:scale-[0.98]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${done ? "bg-green-500/30" : "bg-[#25D366]"}`}>
-                        {done ? <Check className="w-4 h-4 text-green-300"/> : (
-                          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                        )}
-                      </div>
-                      <span className="text-sm font-semibold truncate">
-                        {done ? `Amic ${i+1} convidat` : `Convidar amic ${i+1}`}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <p className="text-[10px] text-white/30 mt-3 leading-relaxed">
-              Cada botó obre WhatsApp amb un missatge diferent perquè no soni a spam. Tu tries a qui l'envies.
+            <button
+              type="button"
+              onClick={() => shareWith(0)}
+              className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-xl border-2 font-bold transition-all ${
+                sharesDone >= 1
+                  ? "bg-green-500/10 border-green-500/40 text-green-300"
+                  : "bg-[#25D366] border-[#25D366] text-white hover:bg-[#1da851] hover:scale-[1.02] active:scale-[0.98]"
+              }`}
+            >
+              {sharesDone >= 1 ? (
+                <>
+                  <Check className="w-5 h-5"/>
+                  <span>Compartit · Pots tornar a compartir si vols</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+                  <span>Compartir per WhatsApp</span>
+                </>
+              )}
+            </button>
+            <p className="text-[10px] text-white/40 mt-3 leading-relaxed text-center">
+              S'obrirà WhatsApp amb un missatge llest. Pots <strong className="text-white/70">enviar-ho a un grup d'amics o a 5 contactes</strong>; un sol clic basta per desbloquejar el descompte.
             </p>
           </div>
 
@@ -781,7 +774,9 @@ export default function Inscripcion() {
           >
             {canUnlockGate
               ? "🎉 Reclamar 10% i continuar"
-              : `Et falten ${5 - sharesDone} amic${5 - sharesDone === 1 ? "" : "s"}${!igFollowed ? " + IG" : ""}`}
+              : sharesDone === 0
+                ? `Comparteix per WhatsApp${!igFollowed ? " + Segueix IG" : ""} per desbloquejar`
+                : !igFollowed ? "Falta seguir-nos a Instagram" : "Falta compartir per WhatsApp"}
           </button>
 
           {/* Saltar */}
@@ -1238,28 +1233,45 @@ export default function Inscripcion() {
                       <strong className="text-red-400 text-lg">{total.toFixed(2)}€</strong>
                     </div>
                   </div>
-                  {/* Bases text */}
-                  <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-36 overflow-y-auto text-xs text-white/40 leading-relaxed space-y-2">
-                    <p><strong className="text-white/60">BASES DE LA COMPETICIÓ – 3×3 WESTFIELD GLÒRIES 2025</strong></p>
-                    <p>1. El torneig es celebra els dies 6 i 7 de juny de 2025 a Westfield Glòries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
-                    <p>2. La inscripció té un cost de <strong className="text-red-400">70€ (4 jugadors) o 90€ (5 jugadors)</strong> i inclou samarreta oficial. El pagament s'ha de realitzar per transferència bancària.</p>
+                  {/* Bases del torneig */}
+                  <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-40 overflow-y-auto text-xs text-white/45 leading-relaxed space-y-2">
+                    <p><strong className="text-white/70">BASES DE LA COMPETICIÓ — 3×3 WESTFIELD GLÒRIES 2026</strong></p>
+                    <p>1. El torneig es celebra els dies 6 i 7 de juny de 2026 a 3 seus del barri del Clot-Glòries: Westfield Glòries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
+                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. El pagament s'ha de realitzar per transferència bancària amb concepte únic generat al QR.</p>
                     <p>3. Les regles aplicades seran les oficials FIBA 3×3. Format: fase de grups + fase eliminatòria directa.</p>
-                    <p>4. La categoria Senior Pro requereix llicència federativa en vigor.</p>
-                    <p>5. Els organitzadors no es responsabilitzen de lesions produïdes durant el torneig.</p>
+                    <p>4. La categoria Sèniors atorga punts FIBA 3×3 oficials.</p>
+                    <p>5. Els organitzadors (Timechamber S.L. i C.B. Grup Barna) no es responsabilitzen de lesions produïdes durant el torneig.</p>
                     <p>6. La participació implica l'acceptació de les decisions dels àrbitres com a inapel·lables.</p>
                     <p>7. Els organitzadors es reserven el dret d'admissió i podran descalificar equips per comportament incorrecte.</p>
+                    <p>8. Els menors d'edat necessiten l'autorització del pare/mare/tutor legal (apartat següent).</p>
                   </div>
-                  <div className="space-y-4">
+
+                  {/* Apartat legal · Pares/Tutors (heretat del JotForm Campus Time Chamber) */}
+                  <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mb-4 space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-2">
+                      <span>📑</span> Apartat legal · Pares / Mares / Tutors
+                    </p>
+                    <div className="text-xs text-white/65 leading-relaxed space-y-3">
+                      <p>
+                        Com a tutor/a legal, consento i autoritzo la captació i publicació d'imatges meves i/o del meu fill/a o tutelat/da per part de <strong>Timechamber S.L. i C.B. Grup Barna</strong>, amb finalitats comercials, promocionals o altres, sempre respectant la dignitat i la integritat de la persona captada. Així mateix, declaro que he llegit i accepto la <strong>política de privacitat</strong>, el <strong>tractament de dades</strong>, l'<strong>autorització mèdica</strong> i la <strong>normativa interna</strong> de Timechamber Experience.
+                      </p>
+                      <p>
+                        En completar aquest formulari, declares que has llegit la <strong>informació legal de Timechamber Experience</strong> relativa a la política de privacitat, el tractament de dades, les finalitats, la base legal, la conservació de dades, les persones destinatàries, els drets, les actualitzacions, l'autorització mèdica i la normativa interna.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3.5">
                     {[
-                      { id:"bases", name:"acceptaBases" as keyof FD, label:"He llegit i accepto les bases de la competició i el reglament. *", err: errors.acceptaBases },
-                      { id:"lopd", name:"acceptaLopd" as keyof FD, label:"Accepto la política de privacitat i el tractament de dades (RGPD). *", err: errors.acceptaLopd },
+                      { id:"bases", name:"acceptaBases" as keyof FD, label:"He llegit i accepto les bases de la competició i el reglament del 3×3 Westfield Glòries 2026. *", err: errors.acceptaBases },
+                      { id:"lopd",  name:"acceptaLopd"  as keyof FD, label:"Com a pare, mare o tutor/a legal, declaro que he llegit i accepto l'apartat legal de Timechamber Experience (privacitat, tractament de dades, autorització mèdica, normativa interna i drets d'imatge). *", err: errors.acceptaLopd },
                     ].map(({ id, name, label, err }) => (
                       <div key={id}>
                         <div className="flex items-start gap-3">
                           <Checkbox id={id} checked={!!watch(name)}
                             onCheckedChange={v => setValue(name, v === true as any)}
                             className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
-                          <Label htmlFor={id} className="text-sm leading-relaxed cursor-pointer text-white/60">{label}</Label>
+                          <Label htmlFor={id} className="text-sm leading-relaxed cursor-pointer text-white/70">{label}</Label>
                         </div>
                         {err && <p className="text-red-400 text-xs ml-7 mt-1">{(err as any).message}</p>}
                       </div>
@@ -1268,8 +1280,8 @@ export default function Inscripcion() {
                       <Checkbox id="img" checked={!!watch("acceptaImatge")}
                         onCheckedChange={v => setValue("acceptaImatge", v === true)}
                         className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
-                      <Label htmlFor="img" className="text-sm leading-relaxed cursor-pointer text-white/30">
-                        Autoritzo l'ús de la meva imatge per a la difusió de l'event a xarxes socials. <span className="text-white/20">(opcional)</span>
+                      <Label htmlFor="img" className="text-sm leading-relaxed cursor-pointer text-white/40">
+                        Autoritzo expressament la captació i publicació d'imatges per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. <span className="text-white/25">(opcional · per als drets d'imatge més enllà de l'esdeveniment)</span>
                       </Label>
                     </div>
                   </div>

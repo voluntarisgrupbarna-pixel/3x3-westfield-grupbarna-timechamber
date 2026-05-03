@@ -318,17 +318,31 @@ export default function InscripcioIndividual() {
             <p className="text-white/60 text-[10px] mt-1">Inclou samarreta, dorsal, accés 2 dies</p>
           </div>
 
-          {/* Acceptes */}
+          {/* Apartat legal · text obligatori (heretat del JotForm Campus Time Chamber) */}
+          <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mt-3 mb-2 space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-2">
+              <span>📑</span> Apartat legal
+            </p>
+            <div className="text-xs text-white/65 leading-relaxed space-y-2">
+              <p>
+                Com a tutor/a legal (o jugador/a major d'edat), consento i autoritzo la captació i publicació d'imatges per part de <strong>Timechamber S.L. i C.B. Grup Barna</strong>, amb finalitats promocionals del torneig, respectant la dignitat i la integritat de la persona captada.
+              </p>
+              <p>
+                Declaro que he llegit la <strong>informació legal de Timechamber Experience</strong> relativa a la política de privacitat, tractament de dades, finalitats, base legal, conservació, drets, autorització mèdica i normativa interna.
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-2 text-sm">
             <label className="flex items-start gap-2 cursor-pointer">
               <input type="checkbox" checked={accept.bases} onChange={e => setAccept(s => ({ ...s, bases: e.target.checked }))}
                 className="mt-1 w-4 h-4 accent-red-500"/>
-              <span className="text-white/70 text-xs">Accepto les <Link to="/preguntes-frequents" className="text-red-400 underline">bases del torneig</Link>.</span>
+              <span className="text-white/75 text-xs">He llegit i accepto les <Link to="/preguntes-frequents" className="text-red-400 underline">bases del torneig 3×3 Westfield Glòries 2026</Link>. *</span>
             </label>
             <label className="flex items-start gap-2 cursor-pointer">
               <input type="checkbox" checked={accept.lopd} onChange={e => setAccept(s => ({ ...s, lopd: e.target.checked }))}
                 className="mt-1 w-4 h-4 accent-red-500"/>
-              <span className="text-white/70 text-xs">Accepto la <span className="text-white/90">política de protecció de dades</span> (LOPD).</span>
+              <span className="text-white/75 text-xs">Accepto l'apartat legal de Timechamber Experience: política de privacitat, tractament de dades (RGPD), autorització mèdica, normativa interna i drets d'imatge. *</span>
             </label>
           </div>
 
