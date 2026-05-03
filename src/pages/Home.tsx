@@ -703,7 +703,7 @@ export default function Home() {
               <a key={logo.name} href={logo.url} target={logo.url !== "#" ? "_blank" : undefined}
                 rel="noopener noreferrer" title={logo.name} className="group">
                 <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center group-hover:border-red-400/60 transition-all shadow-md">
-                  <img src={logo.img} alt={logo.name}
+                  <img src={logo.img} alt={logo.name} loading="lazy" decoding="async"
                     className="w-full h-full object-contain p-0.5"
                     style={logo.invert ? { filter: "invert(1)" } : {}} />
                 </div>
@@ -878,7 +878,7 @@ export default function Home() {
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <img src="https://agents-download.skywork.ai/image/rt/4ff8764a3486e125541c12e3b99a264b.jpg"
-                  alt="3x3 Basketball Barcelona" className="w-full h-96 object-cover" />
+                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async" className="w-full h-96 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <div className="absolute bottom-5 left-5">
                   <span className="text-xs font-bold uppercase tracking-wider text-red-400">#1 Esport Urbà del Món</span>
@@ -1177,7 +1177,7 @@ export default function Home() {
                 whileHover={{ scale: 1.03 }}
                 className="relative overflow-hidden rounded-xl aspect-square border border-white/8 group cursor-pointer"
                 onClick={() => openLightbox(i)}>
-                <img src={img.src} alt={img.alt} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-2 left-2 right-2 text-xs font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity">{img.alt}</div>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1">
@@ -1239,7 +1239,7 @@ export default function Home() {
                 className="flex flex-col items-center gap-3 group">
                 <div className="w-28 h-20 bg-white rounded-2xl flex items-center justify-center p-3 border border-transparent group-hover:border-red-400/40 transition-all shadow-md overflow-hidden">
                   {sp.img ? (
-                    <img src={sp.img} alt={sp.name} className="max-w-full max-h-full object-contain"
+                    <img src={sp.img} alt={sp.name} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain"
                       style={(sp as any).invert ? { filter: "invert(1)" } : {}} />
                   ) : (
                     <span className="text-xs font-bold text-zinc-700 text-center leading-tight">{sp.name}</span>
@@ -1273,7 +1273,7 @@ export default function Home() {
                 {LOGOS.map(logo => (
                   <a key={logo.name} href={logo.url} target={logo.url !== "#" ? "_blank" : undefined} rel="noopener noreferrer" title={logo.name}>
                     <div className="w-8 h-8 rounded-lg overflow-hidden bg-white border border-white/20 flex items-center justify-center hover:border-red-400/50 transition-all">
-                      <img src={logo.img} alt={logo.name} className="w-full h-full object-contain p-0.5"
+                      <img src={logo.img} alt={logo.name} loading="lazy" decoding="async" className="w-full h-full object-contain p-0.5"
                         style={logo.invert ? { filter: "invert(1)" } : {}} />
                     </div>
                   </a>
@@ -1290,6 +1290,9 @@ export default function Home() {
                 {[["#evento","El Torneig"],["#ubicacions","Ubicacions"],["#premis","Premis & Trofeus"],["#categories","Categories"],["#regles","Regles FIBA"],["#galeria","Galeria"],["#patrocinadors","Patrocinadors"]].map(([href, label]) => (
                   <a key={href} href={href} className="block text-sm text-white/40 hover:text-white transition-colors">{label}</a>
                 ))}
+                <Link to="/preguntes-frequents" className="block text-sm text-white/40 hover:text-white transition-colors">FAQ · Preguntes freqüents</Link>
+                <Link to="/sobre-nosaltres" className="block text-sm text-white/40 hover:text-white transition-colors">Qui som</Link>
+                <Link to="/premsa" className="block text-sm text-white/40 hover:text-white transition-colors">Premsa & Mitjans</Link>
               </div>
             </div>
             <div>
@@ -1306,8 +1309,8 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/8 pt-5 flex flex-col md:flex-row items-center justify-between gap-2 text-xs text-white/20">
-            <span>© 2025 CB Grup Barna · Time Chamber · Eix Clot. Tots els drets reservats.</span>
-            <span>3×3 WESTFIELD GLÒRIES · <strong className="text-white/40">6-7 Juny 2025</strong></span>
+            <span>© 2026 CB Grup Barna · Time Chamber · Eix Clot. Tots els drets reservats.</span>
+            <span>3×3 WESTFIELD GLÒRIES · <strong className="text-white/40">6-7 Juny 2026</strong></span>
           </div>
         </div>
       </footer>
