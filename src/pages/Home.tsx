@@ -182,7 +182,67 @@ function EquipsProgress() {
   );
 }
 
-/* ─── Gràfic per categoria amb 100 places repartides ─── */
+/* ─── 100 caselles que s'omplen visualment (1 casella = 1 plaça) ─── */
+function CategoryFillGrid() {
+  const { byCategory } = useEquipsInscrits();
+  // Genera la llista de 100 caselles agrupades per categoria.
+  // Cada casella sap a quina categoria pertany i si està ocupada o lliure.
+  type Cell = { cat: typeof CATEGORIES[number]; filled: boolean; index: number };
+  const cells: Cell[] = [];
+  CATEGORIES.forEach(cat => {
+    const inscrits = Math.min(cat.quota, byCategory[cat.name] || 0);
+    for (let i = 0; i < cat.quota; i++) {
+      cells.push({ cat, filled: i < inscrits, index: i });
+    }
+  });
+
+  return (
+    <div className="bg-gradient-to-br from-slate-900/80 to-slate-950 border border-white/10 rounded-3xl p-5 sm:p-7">
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-2">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-400 mb-1">100 places · 1 quadrat = 1 equip</p>
+          <h3 className="font-black text-xl sm:text-2xl text-white" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+            Mira com s'omple el torneig en directe
+          </h3>
+        </div>
+        <span className="text-[10px] uppercase tracking-wider font-bold text-white/40">🔄 Update 30s</span>
+      </div>
+
+      <div className="grid grid-cols-10 sm:grid-cols-[repeat(20,minmax(0,1fr))] gap-1 sm:gap-1.5 mb-5">
+        {cells.map((cell, i) => (
+          <motion.div
+            key={`${cell.cat.name}-${i}`}
+            initial={{ opacity: 0, scale: 0.5 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: i * 0.005, duration: 0.25 }}
+            title={`${cell.cat.emoji} ${cell.cat.name} · ${cell.filled ? "Inscrit" : "Lliure"}`}
+            className={`aspect-square rounded-sm sm:rounded-md transition-all duration-300 bg-gradient-to-br ${cell.cat.color} ${
+              cell.filled ? "opacity-100 shadow-md" : "opacity-15"
+            }`}
+            style={cell.filled ? { boxShadow: `0 0 6px rgba(220,38,38,0.3)` } : {}}
+          />
+        ))}
+      </div>
+
+      {/* Llegenda */}
+      <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] sm:text-xs">
+        {CATEGORIES.map(cat => {
+          const inscrits = Math.min(cat.quota, byCategory[cat.name] || 0);
+          return (
+            <div key={cat.name} className="flex items-center gap-1.5">
+              <span className={`inline-block w-3 h-3 rounded-sm bg-gradient-to-br ${cat.color}`} />
+              <span className="text-white/60">{cat.emoji} {cat.name}</span>
+              <span className="font-mono font-bold text-white/85">{inscrits}/{cat.quota}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Gràfic detallat per categoria amb barres de progrés ─── */
 function CategoryChart() {
   const { byCategory, loaded } = useEquipsInscrits();
   const totalQuota = CATEGORIES.reduce((s, c) => s + c.quota, 0);
@@ -832,8 +892,13 @@ export default function Home() {
             </motion.div>
           </div>
 
-          {/* Gràfic de places per categoria — 100 places repartides */}
+          {/* Visualització "100 caselles" — com s'omple el torneig en directe */}
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-12">
+            <CategoryFillGrid />
+          </motion.div>
+
+          {/* Gràfic detallat per categoria amb barres de progrés */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-6">
             <CategoryChart />
           </motion.div>
         </div>
