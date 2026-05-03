@@ -1313,7 +1313,7 @@ export default function Inscripcion() {
         </div>
 
         <div className="text-center mt-6 text-xs text-white/20">
-          Dubtes? <a href="mailto:info@cbgrupbarna.com" className="text-red-400 hover:underline">info@cbgrupbarna.com</a> · <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">@cbgrupbarna</a>
+          Dubtes? <a href="mailto:voluntaris@grupbarna.info" className="text-red-400 hover:underline">voluntaris@grupbarna.info</a> · <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">@cbgrupbarna</a>
         </div>
       </div>
     </div>

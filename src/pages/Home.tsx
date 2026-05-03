@@ -637,11 +637,11 @@ export default function Home() {
               </motion.div>
 
               {/* CTA */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="flex flex-wrap gap-3 mb-8">
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="flex flex-wrap gap-3 mb-3">
                 <Link to="/inscripcion">
                   <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-7 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl"
                     style={{ boxShadow: "0 8px 30px rgba(220,38,38,0.4)" }}>
-                    🏀 Inscriu el teu Equip — des de 70€
+                    🏀 Inscriu el teu Equip — des de 75€
                   </Button>
                 </Link>
                 <a href="#evento">
@@ -649,6 +649,13 @@ export default function Home() {
                     Saber més <ChevronDown className="w-4 h-4 ml-1" />
                   </Button>
                 </a>
+              </motion.div>
+
+              {/* CTA secundari: inscripció individual (per qui no té equip) */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3.3} className="mb-8">
+                <Link to="/inscripcio-individual" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-300 hover:text-orange-200 bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/30 hover:border-orange-500/50 px-4 py-2 rounded-full transition-all">
+                  👤 No tens equip? Apunta't sol per <span className="font-black">20€</span> · t'assignem un equip →
+                </Link>
               </motion.div>
 
               {/* Counters – page 1 */}
@@ -1088,7 +1095,7 @@ export default function Home() {
           </div>
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mt-12">
             <p className="text-white/30 text-sm mb-3">Vols ser patrocinador del torneig?</p>
-            <a href="mailto:info@cbgrupbarna.com" className="inline-flex items-center gap-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors px-5 py-2.5 rounded-xl font-semibold text-sm">
+            <a href="mailto:voluntaris@grupbarna.info" className="inline-flex items-center gap-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors px-5 py-2.5 rounded-xl font-semibold text-sm">
               Contacta amb nosaltres <ExternalLink className="w-4 h-4" />
             </a>
           </motion.div>
@@ -1129,7 +1136,7 @@ export default function Home() {
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-white/30 mb-3">Contacte</div>
               <div className="space-y-3 text-sm text-white/40">
-                <div><a href="mailto:info@cbgrupbarna.com" className="text-red-400 hover:underline">info@cbgrupbarna.com</a></div>
+                <div><a href="mailto:voluntaris@grupbarna.info" className="text-red-400 hover:underline">voluntaris@grupbarna.info</a></div>
                 <div>
                   <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">@cbgrupbarna</a>
                   <span className="mx-2 opacity-30">·</span>

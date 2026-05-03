@@ -76,6 +76,31 @@ const FAQS: FAQ[] = [
     a: "DNI dels jugadors per validació, sabatilles de bàsquet o pista, samarreta oficial del torneig (la rebràs el dia), aigua i ganes. Hi haurà bar i ambient festiu durant els 2 dies. També us tornem a enviar el QR del vostre equip per email per facilitar el check-in i la recollida de samarretes a l'arribada.",
     tags: ["dia torneig", "qr check-in"],
   },
+  {
+    q: "Puc inscriure'm sense equip? Què passa si no conec a ningú?",
+    a: "Sí! Tens dues opcions: (1) Inscripció individual a /inscripcio-individual per 20€: t'apuntes sol amb les teves dades, talla i posició preferida i nosaltres t'assignem a un equip una setmana abans del torneig segons categoria d'edat i nivell. (2) Pots venir a la pista i preguntar el dia del torneig si algun equip necessita un suplent — sempre hi ha algú que falla.",
+    tags: ["sense equip", "individual", "20€", "solo", "assignar equip"],
+  },
+  {
+    q: "Com funciona la inscripció individual de 20€?",
+    a: "Vas a /inscripcio-individual i omples les teves dades: nom, cognoms, data de naixement, email, telèfon, talla samarreta, posició preferida i nivell. Pagues 20€ per transferència amb un QR que se't genera automàticament. El club et trucarà o enviarà WhatsApp 7 dies abans del torneig per confirmar a quin equip jugues. El preu inclou samarreta oficial, dorsal i accés als 2 dies.",
+    tags: ["individual", "preu", "com funciona", "assignació"],
+  },
+  {
+    q: "Si vinc sol, puc triar la categoria?",
+    a: "No. Per als jugadors individuals, la categoria es decideix automàticament segons l'edat i la posició preferida que indiquis al formulari. Volem assegurar partits equilibrats: si tens 16 anys aniràs a Cadet o Junior, si tens 35+ a Veterans, etc. La teva posició preferida (Base, Aler, Pivot…) ens ajuda a equilibrar l'equip que et toqui.",
+    tags: ["individual", "categoria", "assignació", "edat"],
+  },
+  {
+    q: "Si vaig com a individual i no m'agrada l'equip que m'assignen, què passa?",
+    a: "Et trucarem 1 setmana abans del torneig per confirmar-te els companys d'equip. Si per algun motiu no t'agrada o tens incompatibilitats, ens ho fas saber i intentarem reorganitzar. Si finalment no pots venir, retornem el 50% dels 20€ si avises 72h abans (en cas contrari els 20€ es queden com a despeses de gestió/samarreta encarregada).",
+    tags: ["individual", "cancel·lació", "reembossament"],
+  },
+  {
+    q: "Es pot fer una inscripció individual i pagar el dia del torneig?",
+    a: "No. Tota inscripció requereix pagament confirmat per transferència abans del 31 de maig per garantir que tindràs samarreta de la teva talla. La samarreta s'encarrega 1 setmana abans del torneig i no podem afegir noves talles passada aquesta data.",
+    tags: ["individual", "pagament", "data límit"],
+  },
 ];
 
 export default function Preguntes() {
@@ -169,16 +194,26 @@ export default function Preguntes() {
         {/* CTA inferior */}
         <div className="mt-12 bg-gradient-to-br from-red-600/20 to-orange-500/15 border border-red-500/30 rounded-3xl p-7 text-center">
           <h3 className="font-black text-xl sm:text-2xl mb-2">No has trobat la teva resposta?</h3>
-          <p className="text-white/60 text-sm mb-5">Contacta'ns per WhatsApp i et resolem qualsevol dubte en menys de 24h.</p>
+          <p className="text-white/60 text-sm mb-5">Contacta'ns per email o WhatsApp i et resolem qualsevol dubte en menys de 24h.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <a href="mailto:voluntaris@grupbarna.info?subject=Pregunta%20sobre%203x3%20Westfield%20Gl%C3%B2ries">
+              <Button variant="outline" className="border-white/30 text-white/85 hover:bg-white/10 font-bold uppercase tracking-wider w-full sm:w-auto">
+                ✉️ Email
+              </Button>
+            </a>
             <a href="https://wa.me/+34698425153?text=Hola!%20Tinc%20una%20pregunta%20sobre%20el%203x3%20Westfield%20Gl%C3%B2ries" target="_blank" rel="noopener noreferrer">
               <Button className="bg-[#25D366] hover:bg-[#1da851] text-white font-bold uppercase tracking-wider w-full sm:w-auto">
-                📱 Pregunta'ns per WhatsApp
+                📱 WhatsApp
               </Button>
             </a>
             <Link to="/inscripcion">
               <Button className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider w-full sm:w-auto">
-                🏀 Inscriure el meu equip
+                🏀 Equip
+              </Button>
+            </Link>
+            <Link to="/inscripcio-individual">
+              <Button className="bg-orange-600 hover:bg-orange-500 text-white font-bold uppercase tracking-wider w-full sm:w-auto">
+                👤 Solo (20€)
               </Button>
             </Link>
           </div>

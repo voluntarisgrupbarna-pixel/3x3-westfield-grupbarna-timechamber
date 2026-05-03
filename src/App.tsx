@@ -7,6 +7,7 @@ import Checkin from "@/pages/Checkin";
 import Preguntes from "@/pages/Preguntes";
 import Seu from "@/pages/Seu";
 import LlistaEspera from "@/pages/LlistaEspera";
+import InscripcioIndividual from "@/pages/InscripcioIndividual";
 
 export default function App() {
   return (
@@ -14,6 +15,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/inscripcion" element={<Inscripcion />} />
+        <Route path="/inscripcio-individual" element={<InscripcioIndividual />} />
+        <Route path="/inscripcion-individual" element={<InscripcioIndividual />} />
+        <Route path="/solo" element={<InscripcioIndividual />} />
         <Route path="/equip" element={<Equip />} />
         <Route path="/checkin" element={<Checkin />} />
         <Route path="/preguntes-frequents" element={<Preguntes />} />

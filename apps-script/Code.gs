@@ -14,7 +14,7 @@
  * Configuració REQUERIDA: Script Properties (Project Settings → Script properties → Add):
  *   - SHEET_ID              = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
  *   - SHEET_NAME            = Inscripcions 2026
- *   - ADMIN_EMAIL           = anafernandezduran78@gmail.com
+ *   - ADMIN_EMAIL           = voluntaris@grupbarna.info
  *   - FILLOUT_API_KEY       = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
  *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
  *   - DRIVE_FOLDER_NAME     = (opcional, p. ex. "3x3 Justificants 2026". Si no, "3x3 Justificants 2026")
@@ -130,6 +130,18 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ─── Acció individual (jugador sense equip, 20€) ───
+    if (raw.action === 'individual' && raw.email) {
+      try { addIndividualPlayer_(raw); } catch (err) { Logger.log('individual error: ' + err); }
+      // Continuem el flow normal d'emails (QR check-in personal arriba al jugador)
+      // raw porta teamId/checkinUrl ja generats al frontend
+      const data = normalizeFormData_(raw);
+      try { sendEmails_(data, null); } catch (e) { Logger.log('individual mail err: ' + e); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'individual', teamId: raw.teamId }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const data = normalizeFormData_(raw);
 
     // 1) Si arriba justificant en base64, pujar-lo a Drive primer (per tenir URL al Sheet i Fillout)
@@ -200,20 +212,24 @@ function doPost(e) {
  * a un objecte uniforme que tot el codi pot llegir directament.
  */
 function normalizeFormData_(data) {
+  // Per a inscripcions individuals, "nomEquip" pren el nom del jugador i "capita" igual.
+  const isIndividual = data.action === 'individual' || data.tipus === 'individual';
+  const fullName = ((data.nom || '') + ' ' + (data.cognom || '')).trim();
   return {
+    tipus: isIndividual ? 'individual' : 'equip',
     data: data.data || new Date().toLocaleString('ca-ES'),
     teamId: data.teamId || '',
     checkinUrl: data.checkinUrl || '',
     concepte: data.concepte || '',
     categoria: data.categoria || data.capCategoria || '',
-    nomEquip: data.nomEquip || '',
-    capita: data.capita || ((data.capNom || '') + ' ' + (data.capCognom || '')).trim(),
+    nomEquip: data.nomEquip || (isIndividual ? fullName : ''),
+    capita: data.capita || ((data.capNom || '') + ' ' + (data.capCognom || '')).trim() || fullName,
     poblacio: data.poblacio || data.capPoblacio || '',
     email: data.email || data.capEmail || '',
     telefon: data.telefon || data.capTelefon || '',
-    mida: data.mida || data.capTalla || '',
-    notes: data.notes || data.comentaris || '',
-    total: data.total || 0,
+    mida: data.mida || data.capTalla || data.talla || '',
+    notes: data.notes || data.comentaris || data.observacions || '',
+    total: data.total || (isIndividual ? 20 : 0),
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
     jugadors: Array.isArray(data.jugadors) ? data.jugadors : [],
@@ -258,6 +274,43 @@ function writeToSheet_(data, justificantUpload) {
 }
 
 /**
+ * Desa un jugador individual (sense equip) a una pestanya pròpia "Jugadors_Individuals".
+ * El club l'assignarà a un equip 1 setmana abans del torneig segons categoria/edat/posició.
+ */
+function addIndividualPlayer_(data) {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss = SpreadsheetApp.openById(id);
+  let sheet = ss.getSheetByName('Jugadors_Individuals');
+  if (!sheet) sheet = ss.insertSheet('Jugadors_Individuals');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow([
+      'Data', 'Team ID', 'Concepte', 'Nom', 'Cognom', 'Data naixement', 'Categoria',
+      'Email', 'Telèfon', 'Població', 'Talla', 'Posició preferida', 'Nivell',
+      'Observacions', 'Equip assignat', 'Pagat?', 'Arribat (timestamp)'
+    ]);
+  }
+  sheet.appendRow([
+    data.data || new Date().toLocaleString('ca-ES'),
+    data.teamId || '',
+    data.concepte || '',
+    data.nom || '',
+    data.cognom || '',
+    data.dataNaix || '',
+    data.categoria || '',
+    data.email || '',
+    data.telefon || '',
+    data.poblacio || '',
+    data.talla || '',
+    data.posicio || '',
+    data.nivell || '',
+    data.observacions || '',
+    '',  // Equip assignat (Ana ho omple a mà)
+    'No',
+    '',  // Arribat
+  ]);
+}
+
+/**
  * Apunta un equip a la llista d'espera (pestanya separada del Sheet).
  * Crea la pestanya "Llista_Espera" si no existeix i envia email de confirmació
  * + alerta a admin perquè sàpiga que algú vol entrar quan s'esgotin les places.
@@ -297,7 +350,7 @@ function addToWaitlist_(data) {
     } catch (e) { Logger.log('waitlist mail user err: ' + e); }
   }
   // Alerta a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'anafernandezduran78@gmail.com';
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
   try {
     MailApp.sendEmail({
       to: admin,
@@ -458,7 +511,7 @@ function sendEmails_(data, justificantUpload) {
     }
   }
   // Email a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'anafernandezduran78@gmail.com';
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
   try {
     MailApp.sendEmail({
       to: admin,

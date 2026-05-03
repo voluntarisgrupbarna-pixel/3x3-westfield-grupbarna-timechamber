@@ -170,17 +170,29 @@
           "name": "Eix Clot"
         }
       ],
-      "offers": {
-        "@type": "AggregateOffer",
-        "name": "Inscripció equip 3×3",
-        "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
-        "lowPrice": "75",
-        "highPrice": "105",
-        "priceCurrency": "EUR",
-        "offerCount": "12",
-        "availability": "https://schema.org/InStock",
-        "validFrom": "2026-04-01T00:00:00+02:00"
-      },
+      "offers": [
+        {
+          "@type": "AggregateOffer",
+          "name": "Inscripció equip 3×3",
+          "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
+          "lowPrice": "75",
+          "highPrice": "105",
+          "priceCurrency": "EUR",
+          "offerCount": "10",
+          "availability": "https://schema.org/InStock",
+          "validFrom": "2026-04-01T00:00:00+02:00"
+        },
+        {
+          "@type": "Offer",
+          "name": "Inscripció individual (sense equip)",
+          "description": "Per jugadors que no tenen equip. El club l'assigna a un equip 1 setmana abans del torneig segons edat i posició.",
+          "url": "https://cbgrupbarna-3x3timechamber.com/inscripcio-individual",
+          "price": "20",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock",
+          "validFrom": "2026-04-01T00:00:00+02:00"
+        }
+      ],
       "performer": {
         "@type": "PerformingGroup",
         "name": "Equips participants 3×3"
@@ -205,7 +217,7 @@
         "addressRegion": "Catalunya · Districte de Sant Martí",
         "addressCountry": "ES"
       },
-      "email": "info@cbgrupbarna.com",
+      "email": "voluntaris@grupbarna.info",
       "sameAs": [
         "https://www.instagram.com/cbgrupbarna/"
       ]
@@ -304,6 +316,21 @@
           "@type": "Question",
           "name": "Què he de portar el dia del torneig?",
           "acceptedAnswer": { "@type": "Answer", "text": "DNI dels jugadors per validació, sabatilles de bàsquet o pista, samarreta oficial del torneig (la rebràs el dia), aigua i ganes. Hi haurà bar i ambient festiu durant els 2 dies." }
+        },
+        {
+          "@type": "Question",
+          "name": "Puc inscriure'm sense equip?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Sí. La inscripció individual costa 20€ i és a /inscripcio-individual. Apuntes les teves dades, talla i posició preferida; el club t'assigna a un equip una setmana abans del torneig segons categoria d'edat i nivell. El preu inclou samarreta oficial, dorsal i accés als 2 dies." }
+        },
+        {
+          "@type": "Question",
+          "name": "Com funciona la inscripció individual de 20€?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Omples el formulari a /inscripcio-individual amb nom, cognoms, data de naixement, email, telèfon, talla i posició preferida (Base, Aler, Pivot…). Pagues 20€ per transferència amb un QR EPC pre-omplert que escaneges amb l'app del banc. El club et trucarà o enviarà WhatsApp 7 dies abans del torneig per confirmar l'equip que t'ha tocat." }
+        },
+        {
+          "@type": "Question",
+          "name": "Si vaig com a individual, com em trien la categoria?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Automàticament segons l'edat indicada al formulari (Escola, Premini, Mini, Preinfantil, Infantil, Cadet, Junior, Sèniors, Veterans o Màgics). La posició preferida (Base, Aler, Pivot…) ens ajuda a equilibrar l'equip que et toqui." }
         }
       ]
     }
