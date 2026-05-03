@@ -126,6 +126,67 @@ function _emailT1_(c) {
   ].join('');
 }
 
+/* ─── Notificació de nou article del blog ───
+ *
+ * Quan publiquis un nou article a /blog/<slug>, executa MANUALMENT a Apps Script:
+ *
+ *   notifyAllSubscribers({
+ *     slug: 'historia-3x3-barcelona-del-carrer-als-jjoo',
+ *     title: 'Història del 3×3 a Barcelona: del carrer als JJOO',
+ *     excerpt: 'Com el bàsquet de carrer barceloní va passar de pistes...',
+ *   });
+ *
+ * Envia un email a tots els subscriptors actius de la pestanya "Subscriptors_Blog".
+ */
+
+function notifyAllSubscribers(post) {
+  if (!post || !post.slug || !post.title) {
+    Logger.log('notifyAllSubscribers: cal {slug, title, excerpt}');
+    return;
+  }
+  const subs = _getActiveBlogSubscribers_();
+  Logger.log('Notifying ' + subs.length + ' subscribers about post: ' + post.slug);
+  const url = 'https://cbgrupbarna-3x3timechamber.com/blog/' + post.slug;
+
+  subs.forEach(function(s) {
+    try {
+      MailApp.sendEmail({
+        to: s.email,
+        subject: '📰 Nou article: ' + post.title,
+        htmlBody: '<h2 style="color:#dc2626">📰 Nou article al blog</h2>'
+          + '<p>Hola' + (s.nom ? ' <strong>' + s.nom + '</strong>' : '') + ',</p>'
+          + '<p>Hem publicat un nou article al blog del 3×3 Westfield Glòries:</p>'
+          + '<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:16px 0;border-radius:4px">'
+          + '<h3 style="margin:0 0 8px 0;color:#dc2626">' + post.title + '</h3>'
+          + (post.excerpt ? '<p style="margin:0;color:#444">' + post.excerpt + '</p>' : '')
+          + '</div>'
+          + '<p style="text-align:center;margin:24px 0">'
+          + '<a href="' + url + '" style="background:#dc2626;color:#fff;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">📖 Llegir article</a>'
+          + '</p>'
+          + '<p style="font-size:11px;color:#666">Per cancel·lar les notificacions del blog respon a aquest email amb <strong>BAIXA</strong>.</p>'
+          + '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>',
+      });
+    } catch (e) { Logger.log('notify err for ' + s.email + ': ' + e); }
+  });
+}
+
+function _getActiveBlogSubscribers_() {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss = SpreadsheetApp.openById(id);
+  const sheet = ss.getSheetByName('Subscriptors_Blog');
+  if (!sheet || sheet.getLastRow() < 2) return [];
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const colEmail = headers.indexOf('Email');
+  const colNom = headers.indexOf('Nom');
+  const colActiu = headers.indexOf('Actiu');
+  if (colEmail < 0) return [];
+  const rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+  return rows
+    .filter(r => colActiu < 0 || String(r[colActiu]).trim().toLowerCase() !== 'no')
+    .map(r => ({ email: String(r[colEmail] || '').trim(), nom: colNom >= 0 ? String(r[colNom] || '').trim() : '' }))
+    .filter(s => s.email.includes('@'));
+}
+
 /* ─── Email post-event (T+1) ─── */
 
 function sendPostEventEmails() {

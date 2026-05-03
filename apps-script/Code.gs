@@ -155,6 +155,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ─── Acció subscribe (newsletter del blog) ───
+    if (raw.action === 'subscribe' && raw.email) {
+      try { addBlogSubscriber_(raw); } catch (err) { Logger.log('subscribe error: ' + err); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'subscribe' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ─── Acció individual (jugador sense equip, 20€) ───
     if (raw.action === 'individual' && raw.email) {
       try { addIndividualPlayer_(raw); } catch (err) { Logger.log('individual error: ' + err); }
@@ -333,6 +341,104 @@ function addIndividualPlayer_(data) {
     'No',
     '',  // Arribat
   ]);
+}
+
+/**
+ * Subscripció al blog.
+ * Arquitectura igual que les inscripcions:
+ *   - Sheet pestanya "Subscriptors_Blog" → backup
+ *   - Fillout form (FILLOUT_BLOG_FORM_ID) → font de veritat
+ * Envia email de confirmació a l'usuari.
+ *
+ * Configuració requerida (Script Properties, opcional Fillout):
+ *   - FILLOUT_BLOG_FORM_ID  = ID del form de Fillout específic per a subscriptors
+ *   - FILLOUT_BLOG_QID_EMAIL = ID del camp email
+ *   - FILLOUT_BLOG_QID_NOM   = ID del camp nom (opcional)
+ *   - FILLOUT_BLOG_QID_SRC   = ID del camp source (opcional)
+ */
+function addBlogSubscriber_(data) {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss = SpreadsheetApp.openById(id);
+  let sheet = ss.getSheetByName('Subscriptors_Blog');
+  if (!sheet) sheet = ss.insertSheet('Subscriptors_Blog');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Data', 'Email', 'Nom', 'Source', 'Actiu', 'Fillout submission ID']);
+  }
+  const emailLower = String(data.email).trim().toLowerCase();
+  // Evita duplicats al Sheet
+  if (sheet.getLastRow() >= 2) {
+    const emails = sheet.getRange(2, 2, sheet.getLastRow() - 1, 1).getValues().map(r => String(r[0]).trim().toLowerCase());
+    if (emails.indexOf(emailLower) >= 0) return; // ja subscrit, no fem res
+  }
+
+  // 1) Reenvia a Fillout (font oficial)
+  let filloutSubmissionId = '';
+  const blogAuth = getFilloutBlogAuth_();
+  if (blogAuth) {
+    try {
+      const qidEmail = PROPS.getProperty('FILLOUT_BLOG_QID_EMAIL') || FILLOUT_BLOG_QID_EMAIL_DEFAULT;
+      const qidNom   = PROPS.getProperty('FILLOUT_BLOG_QID_NOM')   || FILLOUT_BLOG_QID_NOM_DEFAULT;
+      const qidSrc   = PROPS.getProperty('FILLOUT_BLOG_QID_SRC')   || FILLOUT_BLOG_QID_SRC_DEFAULT;
+      const questions = [];
+      if (qidEmail) questions.push({ id: qidEmail, value: data.email });
+      if (qidNom && data.nom) questions.push({ id: qidNom, value: data.nom });
+      if (qidSrc && data.source) questions.push({ id: qidSrc, value: data.source });
+      const url = FILLOUT_BASE + '/forms/' + encodeURIComponent(blogAuth.formId) + '/submissions';
+      const resp = UrlFetchApp.fetch(url, {
+        method: 'post',
+        contentType: 'application/json',
+        headers: { 'Authorization': 'Bearer ' + blogAuth.apiKey },
+        payload: JSON.stringify({ submissions: [{ questions: questions }] }),
+        muteHttpExceptions: true,
+      });
+      if (resp.getResponseCode() < 300) {
+        try {
+          const json = JSON.parse(resp.getContentText() || '{}');
+          if (json.submissions && json.submissions[0]) filloutSubmissionId = json.submissions[0].submissionId || '';
+        } catch (parseErr) {}
+      } else {
+        Logger.log('Fillout subscribe error: HTTP ' + resp.getResponseCode() + ' · ' + resp.getContentText().substring(0, 200));
+      }
+    } catch (filErr) { Logger.log('Fillout subscribe exception: ' + filErr); }
+  }
+
+  // 2) Backup al Sheet
+  sheet.appendRow([
+    data.data || new Date().toLocaleString('ca-ES'),
+    data.email,
+    data.nom || '',
+    data.source || 'unknown',
+    'Sí',
+    filloutSubmissionId,
+  ]);
+
+  // 3) Email confirmació al subscriptor
+  try {
+    MailApp.sendEmail({
+      to: data.email,
+      subject: '✓ Estàs subscrit/a al blog del 3×3 Westfield Glòries',
+      htmlBody: '<h2 style="color:#dc2626">Benvingut/da al blog!</h2>'
+        + '<p>Hola' + (data.nom ? ' <strong>' + data.nom + '</strong>' : '') + ',</p>'
+        + '<p>T\'has subscrit a les notificacions del blog del <strong>3×3 Westfield Glòries</strong>. Cada vegada que publiquem un nou article, et n\'enviarem un email amb un resum + l\'enllaç.</p>'
+        + '<p><strong>Cap spam, cap pagament, sempre relevant pel 3×3.</strong></p>'
+        + '<p>Si vols cancel·lar la subscripció en el futur, només respon a un email amb la paraula <strong>BAIXA</strong>.</p>'
+        + '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>',
+    });
+  } catch (e) { Logger.log('subscribe mail err: ' + e); }
+}
+
+/** Auth helper específic per al form de subscriptors.
+ *  Defaults hardcoded del form "Subscriptors Blog 3x3" creat a Fillout. */
+const FILLOUT_BLOG_FORM_ID_DEFAULT = 'mRRK9kAMDhus';
+const FILLOUT_BLOG_QID_EMAIL_DEFAULT = '6vuu';
+const FILLOUT_BLOG_QID_NOM_DEFAULT   = '5t4Y';
+const FILLOUT_BLOG_QID_SRC_DEFAULT   = 'dBdB';
+
+function getFilloutBlogAuth_() {
+  const apiKey = PROPS.getProperty('FILLOUT_API_KEY');
+  const formId = PROPS.getProperty('FILLOUT_BLOG_FORM_ID') || FILLOUT_BLOG_FORM_ID_DEFAULT;
+  if (!apiKey || !formId) return null;
+  return { apiKey: apiKey, formId: formId };
 }
 
 /**
