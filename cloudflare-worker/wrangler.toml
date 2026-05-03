@@ -1,0 +1,10 @@
+name = "og-3x3-glories"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Es desplega a:
+#   https://og-3x3-glories.<el-teu-username>.workers.dev
+#
+# (Si vols un domini més curt o el teu propi, cal afegir-lo a Cloudflare Workers
+# Routes — opcional, gratuït si ja tens el domini a Cloudflare.)

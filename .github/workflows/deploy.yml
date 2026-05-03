@@ -37,6 +37,7 @@ jobs:
             echo "VITE_JOTFORM_FORM_ID=${{ secrets.VITE_JOTFORM_FORM_ID }}"
             echo "VITE_JOTFORM_BASE_URL=${{ secrets.VITE_JOTFORM_BASE_URL }}"
             echo "VITE_GOOGLE_SHEET_WEBHOOK=${{ secrets.VITE_GOOGLE_SHEET_WEBHOOK }}"
+            echo "VITE_SHARE_BASE=${{ secrets.VITE_SHARE_BASE }}"
           } > .env
 
       - run: npm run build

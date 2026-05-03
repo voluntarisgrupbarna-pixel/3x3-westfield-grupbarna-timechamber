@@ -9,11 +9,15 @@ import { Button } from "@/components/ui/button";
    /equip/[slug] que farà fetch del Sheet via Apps Script per data fresca.
 */
 
-const SHARE_URL_BASE = "https://cbgrupbarna-3x3timechamber.com";
+const SPA_URL_BASE = "https://cbgrupbarna-3x3timechamber.com";
+/* Worker URL per compartir — quan algú comparteix l'URL del worker, els crawlers de
+   xarxes socials (WhatsApp/Twitter/IG) reben una imatge OG personalitzada amb el nom
+   de l'equip. Els humans es redirigeixen automàticament a la SPA. */
+const SHARE_URL_BASE = (import.meta.env.VITE_SHARE_BASE as string | undefined) || SPA_URL_BASE;
 
 function buildShareUrl(params: URLSearchParams): string {
   const usp = new URLSearchParams();
-  ["nom", "cap", "cat", "club"].forEach(k => {
+  ["nom", "cap", "cat", "club", "jug"].forEach(k => {
     const v = params.get(k);
     if (v) usp.set(k, v);
   });

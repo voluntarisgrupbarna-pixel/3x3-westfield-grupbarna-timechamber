@@ -1,0 +1,16 @@
+{
+  "name": "og-3x3-glories",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloudflare Worker que genera previews dinàmiques d'Open Graph per als enllaços d'equip del 3×3 Westfield Glòries.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.5.0",
+    "wrangler": "^3.90.0"
+  }
+}
