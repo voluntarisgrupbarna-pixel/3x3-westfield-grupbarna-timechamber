@@ -6,6 +6,7 @@ import Equip from "@/pages/Equip";
 import Checkin from "@/pages/Checkin";
 import Preguntes from "@/pages/Preguntes";
 import Seu from "@/pages/Seu";
+import LlistaEspera from "@/pages/LlistaEspera";
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/preguntes-frequents" element={<Preguntes />} />
         <Route path="/faq" element={<Preguntes />} />
         <Route path="/seu/:slug" element={<Seu />} />
+        <Route path="/llista-espera" element={<LlistaEspera />} />
       </Routes>
       <Toaster />
     </BrowserRouter>

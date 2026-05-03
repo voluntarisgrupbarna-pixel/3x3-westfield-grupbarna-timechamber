@@ -43,12 +43,15 @@ export default {
     if (pathname === "/qr.svg") {
       return handleQrSvg(url);
     }
+    if (pathname === "/cartell.svg") {
+      return handleCartellSvg(url);
+    }
     if (pathname === "/equip" || pathname.startsWith("/equip/")) {
       return handleEquipShare(url, request);
     }
     if (pathname === "/" || pathname === "") {
       return new Response(
-        `3×3 Glòries OG Worker · OK\n\nEndpoints:\n  /og.svg?nom=X&cat=Y       (Open Graph preview image)\n  /qr.svg?data=<text-or-url>  (QR code as SVG)\n  /equip?nom=X&cat=Y&cap=Z   (HTML with OG tags + redirect)`,
+        `3×3 Glòries OG Worker · OK\n\nEndpoints:\n  /og.svg?nom=X&cat=Y                       (Open Graph preview, 1200×630)\n  /qr.svg?data=<text-or-url>                (QR code as SVG)\n  /cartell.svg?nom=X&cat=Y&format=story     (downloadable share artwork)\n     format = story (1080×1920) | square (1080×1080) | landscape (1200×675)\n  /equip?nom=X&cat=Y&cap=Z                  (HTML with OG tags + redirect)`,
         { headers: { "content-type": "text/plain; charset=utf-8" } }
       );
     }
@@ -198,6 +201,185 @@ function renderOgSvg(nom: string, cat: string, club: string): string {
   <image x="950" y="568" width="76" height="24" href="${TC_LOGO_URL}" xlink:href="${TC_LOGO_URL}" preserveAspectRatio="xMidYMid meet"/>
   <image x="1050" y="565" width="60" height="30" href="${EC_LOGO_URL}" xlink:href="${EC_LOGO_URL}" preserveAspectRatio="xMidYMid meet"/>
   <text x="1120" y="615" text-anchor="end" font-family="Helvetica, Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="2" fill="rgba(255,255,255,0.35)">cbgrupbarna-3x3timechamber.com</text>
+</svg>`;
+}
+
+/* ───────────────────── /cartell.svg ─────────────────────
+ * Cartell descarregable (IG story / IG post / landscape).
+ * Pure SVG sense referències a imatges externes → es pot
+ * convertir a PNG via canvas client-side sense problemes CORS.
+ */
+
+function handleCartellSvg(url: URL): Response {
+  const nom = sanitize(url.searchParams.get("nom") || "EL TEU EQUIP", 40);
+  const cat = sanitize(url.searchParams.get("cat") || "Categoria pendent", 42);
+  const format = (url.searchParams.get("format") || "story").toLowerCase();
+  const layout = format === "square" ? { w: 1080, h: 1080, kind: "square" as const }
+                : format === "landscape" ? { w: 1200, h: 675, kind: "landscape" as const }
+                : { w: 1080, h: 1920, kind: "story" as const };
+  const svg = renderCartellSvg(nom, cat, layout);
+  return new Response(svg, {
+    headers: {
+      "content-type": "image/svg+xml; charset=utf-8",
+      "cache-control": "public, max-age=600, s-maxage=86400",
+      "access-control-allow-origin": "*",
+    },
+  });
+}
+
+function renderCartellSvg(nom: string, cat: string, layout: { w: number; h: number; kind: "story" | "square" | "landscape" }): string {
+  const { w, h, kind } = layout;
+  const safeNom = escapeXml(nom).toUpperCase();
+  const safeCat = escapeXml(cat);
+  const nomLen = nom.length;
+
+  // Mida nom per format
+  const nomFontSize = (() => {
+    if (kind === "story") {
+      return nomLen <= 8 ? 220 : nomLen <= 14 ? 168 : nomLen <= 20 ? 130 : nomLen <= 28 ? 100 : 80;
+    }
+    if (kind === "square") {
+      return nomLen <= 8 ? 180 : nomLen <= 14 ? 140 : nomLen <= 20 ? 110 : nomLen <= 28 ? 86 : 68;
+    }
+    // landscape
+    return nomLen <= 8 ? 150 : nomLen <= 14 ? 116 : nomLen <= 20 ? 92 : nomLen <= 28 ? 72 : 56;
+  })();
+
+  // Posicions per format (vertical/horitzontal)
+  const cx = w / 2;
+  const headerY = kind === "story" ? 200 : kind === "square" ? 130 : 90;
+  const inscritY = kind === "story" ? 360 : kind === "square" ? 240 : 180;
+  const eyebrowY = kind === "story" ? h * 0.42 : kind === "square" ? h * 0.45 : h * 0.42;
+  const nameY = kind === "story" ? h * 0.52 : kind === "square" ? h * 0.55 : h * 0.55;
+  const accentY = kind === "story" ? nameY + 80 : kind === "square" ? nameY + 60 : nameY + 50;
+  const catY = kind === "story" ? accentY + 100 : kind === "square" ? accentY + 80 : accentY + 70;
+  const dateY = kind === "story" ? h - 360 : kind === "square" ? h - 200 : h - 130;
+  const cityY = dateY + (kind === "story" ? 60 : 40);
+  const brandY = h - (kind === "story" ? 80 : kind === "square" ? 60 : 50);
+
+  // Court-line decorative pattern (3x3 court hint, sense imatge externa)
+  const courtLines = kind === "story" ? `
+    <g opacity="0.08" stroke="#ffffff" stroke-width="3" fill="none">
+      <circle cx="${cx}" cy="${h / 2}" r="${w * 0.35}"/>
+      <line x1="${cx - w * 0.4}" y1="${h / 2}" x2="${cx + w * 0.4}" y2="${h / 2}"/>
+      <path d="M ${cx - w * 0.32} ${h / 2 - w * 0.32} A ${w * 0.32} ${w * 0.32} 0 0 1 ${cx + w * 0.32} ${h / 2 - w * 0.32}" />
+      <path d="M ${cx - w * 0.32} ${h / 2 + w * 0.32} A ${w * 0.32} ${w * 0.32} 0 0 0 ${cx + w * 0.32} ${h / 2 + w * 0.32}" />
+    </g>
+  ` : `
+    <g opacity="0.07" stroke="#ffffff" stroke-width="2" fill="none">
+      <circle cx="${cx}" cy="${h * 0.55}" r="${Math.min(w, h) * 0.32}"/>
+      <line x1="${cx - w * 0.4}" y1="${h * 0.55}" x2="${cx + w * 0.4}" y2="${h * 0.55}"/>
+    </g>
+  `;
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escapeXml(nom)} · ${escapeXml(cat)} · 3×3 Westfield Glòries 2026">
+  <defs>
+    <linearGradient id="bgCartell" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a0a14"/>
+      <stop offset="50%" stop-color="#0b1020"/>
+      <stop offset="100%" stop-color="#1a0a14"/>
+    </linearGradient>
+    <radialGradient id="redGlow" cx="0.5" cy="0.45" r="0.6">
+      <stop offset="0%" stop-color="rgba(220,38,38,0.45)"/>
+      <stop offset="100%" stop-color="rgba(220,38,38,0)"/>
+    </radialGradient>
+    <radialGradient id="orangeGlow" cx="0.85" cy="0.85" r="0.5">
+      <stop offset="0%" stop-color="rgba(249,115,22,0.35)"/>
+      <stop offset="100%" stop-color="rgba(249,115,22,0)"/>
+    </radialGradient>
+    <linearGradient id="accentLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <filter id="ds${kind}" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="${kind === "story" ? 18 : 14}"/>
+      <feOffset dx="0" dy="6" result="ob"/>
+      <feFlood flood-color="rgba(0,0,0,0.95)"/>
+      <feComposite in2="ob" operator="in"/>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="${w}" height="${h}" fill="url(#bgCartell)"/>
+  <rect width="${w}" height="${h}" fill="url(#redGlow)"/>
+  <rect width="${w}" height="${h}" fill="url(#orangeGlow)"/>
+  ${courtLines}
+
+  <!-- Top accent stripe -->
+  <rect x="0" y="0" width="${w}" height="8" fill="url(#accentLine)"/>
+
+  <!-- Brand header -->
+  <text x="${cx}" y="${headerY}" text-anchor="middle"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="${kind === "story" ? 36 : 28}" font-weight="900" letter-spacing="${kind === "story" ? 12 : 8}" fill="#fca5a5">
+    3×3 WESTFIELD GLÒRIES
+  </text>
+  <text x="${cx}" y="${headerY + (kind === "story" ? 50 : 36)}" text-anchor="middle"
+    font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="${kind === "story" ? 26 : 20}" font-weight="700" letter-spacing="6" fill="rgba(255,255,255,0.55)">
+    4ª EDICIÓ · 2026
+  </text>
+
+  <!-- INSCRIT pill (centred) -->
+  <g transform="translate(${cx - (kind === "story" ? 200 : 150)}, ${inscritY})">
+    <rect width="${kind === "story" ? 400 : 300}" height="${kind === "story" ? 70 : 56}" rx="${kind === "story" ? 35 : 28}" fill="#dc2626"/>
+    <circle cx="${kind === "story" ? 36 : 28}" cy="${kind === "story" ? 35 : 28}" r="${kind === "story" ? 8 : 6}" fill="#ffffff"/>
+    <text x="${(kind === "story" ? 400 : 300) / 2 + (kind === "story" ? 18 : 14)}" y="${kind === "story" ? 47 : 37}" text-anchor="middle"
+      font-family="Helvetica, Arial, sans-serif" font-size="${kind === "story" ? 26 : 18}" font-weight="900" letter-spacing="4" fill="#ffffff">
+      INSCRIT · LIVE
+    </text>
+  </g>
+
+  <!-- Eyebrow -->
+  <text x="${cx}" y="${eyebrowY}" text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif"
+    font-size="${kind === "story" ? 32 : kind === "square" ? 26 : 20}" font-weight="800" letter-spacing="${kind === "story" ? 12 : 8}" fill="rgba(252,165,165,0.85)">
+    EL TEU EQUIP JUGA AL TORNEIG
+  </text>
+
+  <!-- Team name (HERO) -->
+  <text x="${cx}" y="${nameY}" text-anchor="middle"
+    font-family="'Rajdhani', 'Helvetica Neue', Helvetica, Arial, sans-serif"
+    font-size="${nomFontSize}" font-weight="900" letter-spacing="-3" fill="#ffffff" filter="url(#ds${kind})">
+    ${safeNom}
+  </text>
+
+  <!-- Accent line -->
+  <rect x="${cx - (kind === "story" ? 180 : 130)}" y="${accentY}" width="${kind === "story" ? 360 : 260}" height="${kind === "story" ? 6 : 4}" fill="url(#accentLine)"/>
+
+  <!-- Category pill -->
+  <g transform="translate(${cx - Math.min(kind === "story" ? 480 : 400, Math.max(kind === "story" ? 240 : 180, safeCat.length * (kind === "story" ? 22 : 16))) / 2}, ${catY})">
+    <rect width="${Math.min(kind === "story" ? 480 : 400, Math.max(kind === "story" ? 240 : 180, safeCat.length * (kind === "story" ? 22 : 16)))}"
+      height="${kind === "story" ? 72 : 54}"
+      rx="${kind === "story" ? 36 : 27}"
+      fill="rgba(220,38,38,0.20)" stroke="rgba(252,165,165,0.6)" stroke-width="2"/>
+    <text x="${Math.min(kind === "story" ? 480 : 400, Math.max(kind === "story" ? 240 : 180, safeCat.length * (kind === "story" ? 22 : 16))) / 2}"
+      y="${kind === "story" ? 47 : 35}" text-anchor="middle"
+      font-family="Helvetica, Arial, sans-serif" font-size="${kind === "story" ? 30 : 22}" font-weight="800" fill="#ffffff">
+      ${safeCat}
+    </text>
+  </g>
+
+  <!-- Date + city -->
+  <text x="${cx}" y="${dateY}" text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif" font-size="${kind === "story" ? 56 : 36}" font-weight="900" letter-spacing="${kind === "story" ? 6 : 4}" fill="#f97316">
+    📅  6-7 JUNY 2026
+  </text>
+  <text x="${cx}" y="${cityY + (kind === "story" ? 20 : 10)}" text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif" font-size="${kind === "story" ? 30 : 22}" font-weight="600" fill="rgba(255,255,255,0.7)">
+    📍 Barcelona · Clot-Glòries
+  </text>
+
+  <!-- Brand footer -->
+  <text x="${cx}" y="${brandY}" text-anchor="middle"
+    font-family="Helvetica, Arial, sans-serif" font-size="${kind === "story" ? 22 : 14}" font-weight="700" letter-spacing="3" fill="rgba(255,255,255,0.4)">
+    @cbgrupbarna · cbgrupbarna-3x3timechamber.com
+  </text>
+
+  <!-- Bottom accent stripe -->
+  <rect x="0" y="${h - 8}" width="${w}" height="8" fill="url(#accentLine)"/>
 </svg>`;
 }
 

@@ -115,6 +115,11 @@ function useEquipsInscrits(): EquipsState {
   return state;
 }
 
+/* Helper: està el torneig ple? */
+function isFullyBooked(count: number, capacity: number | null): boolean {
+  return capacity != null && count >= capacity;
+}
+
 function EquipsBadge() {
   const { count, capacity, loaded } = useEquipsInscrits();
   if (!loaded) {
@@ -124,7 +129,18 @@ function EquipsBadge() {
       </span>
     );
   }
+  const ple = isFullyBooked(count, capacity);
   const pctLabel = capacity ? ` · ${Math.min(100, Math.round((count / capacity) * 100))}%` : "";
+  if (ple) {
+    return (
+      <Link to="/llista-espera">
+        <span className="inline-flex items-center gap-1.5 bg-orange-600 border border-orange-400 text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full hover:bg-orange-500 transition-colors">
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+          PLACES ESGOTADES · LLISTA D'ESPERA
+        </span>
+      </Link>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />

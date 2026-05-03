@@ -122,6 +122,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ─── Acció waitlist (algú s'apunta a la llista d'espera) ───
+    if (raw.action === 'waitlist' && raw.email) {
+      try { addToWaitlist_(raw); } catch (err) { Logger.log('waitlist error: ' + err); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'waitlist' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const data = normalizeFormData_(raw);
 
     // 1) Si arriba justificant en base64, pujar-lo a Drive primer (per tenir URL al Sheet i Fillout)
@@ -247,6 +255,61 @@ function writeToSheet_(data, justificantUpload) {
     d.checkinUrl,
     ''   // "Arribat" buit fins que algú escanegi el QR el dia del torneig
   ]);
+}
+
+/**
+ * Apunta un equip a la llista d'espera (pestanya separada del Sheet).
+ * Crea la pestanya "Llista_Espera" si no existeix i envia email de confirmació
+ * + alerta a admin perquè sàpiga que algú vol entrar quan s'esgotin les places.
+ */
+function addToWaitlist_(data) {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss = SpreadsheetApp.openById(id);
+  let sheet = ss.getSheetByName('Llista_Espera');
+  if (!sheet) sheet = ss.insertSheet('Llista_Espera');
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(['Data', 'Nom equip', 'Categoria', 'Capità', 'Email', 'Telèfon', 'Població', 'Notificat?']);
+  }
+  sheet.appendRow([
+    data.data || new Date().toLocaleString('ca-ES'),
+    data.nomEquip || '',
+    data.categoria || '',
+    data.capita || '',
+    data.email || '',
+    data.telefon || '',
+    data.poblacio || '',
+    'No',
+  ]);
+  // Email a l'usuari
+  if (data.email) {
+    try {
+      MailApp.sendEmail({
+        to: data.email,
+        subject: '📋 Estàs a la llista d\'espera · 3×3 Westfield Glòries 2026',
+        htmlBody: '<h2 style="color:#f97316">📋 Llista d\'espera confirmada</h2>'
+          + '<p>Hola <strong>' + (data.capita || '') + '</strong>,</p>'
+          + '<p>Hem rebut la teva petició per a l\'equip <strong>' + (data.nomEquip || '') + '</strong> (' + (data.categoria || '') + ').</p>'
+          + '<p>El torneig està ple, però si una plaça queda lliure et trucarem o enviarem WhatsApp <strong>per ordre d\'arribada</strong> a la teva categoria.</p>'
+          + '<p>Mentrestant, <strong>comparteix el torneig</strong> amb els teus amics — els equips que comparteixen passen davant a la cua!</p>'
+          + '<p>Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp del club</a>.</p>'
+          + '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>',
+      });
+    } catch (e) { Logger.log('waitlist mail user err: ' + e); }
+  }
+  // Alerta a admin
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'anafernandezduran78@gmail.com';
+  try {
+    MailApp.sendEmail({
+      to: admin,
+      subject: '📋 Llista d\'espera: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
+      htmlBody: '<h3>Nou apunt a la llista d\'espera</h3>'
+        + '<p>Equip: <strong>' + (data.nomEquip || '') + '</strong> · Categoria: ' + (data.categoria || '') + '</p>'
+        + '<p>Capità: ' + (data.capita || '') + '</p>'
+        + '<p>Email: <a href="mailto:' + (data.email || '') + '">' + (data.email || '') + '</a></p>'
+        + '<p>Telèfon: <a href="tel:' + (data.telefon || '') + '">' + (data.telefon || '') + '</a></p>'
+        + '<p>Població: ' + (data.poblacio || '') + '</p>',
+    });
+  } catch (e) { Logger.log('waitlist mail admin err: ' + e); }
 }
 
 /**

@@ -100,6 +100,68 @@ function buildCheckinUrl(data: {
   return `${spa}/checkin?${usp.toString()}`;
 }
 
+/* URL del Worker (Cloudflare) que genera els cartells PNG/SVG personalitzats. */
+const CARTELL_WORKER_BASE = "https://og-3x3-glories.cbgrupbarna.workers.dev";
+
+/* Construeix slug per al filename del cartell descarregat. */
+function buildCartellFilename(nomEquip: string | undefined, format: "story" | "square" | "landscape"): string {
+  const slug = String(nomEquip || "equip").toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "").toLowerCase();
+  return `cartell-${slug}-${format}.png`;
+}
+
+/* Descarrega el cartell de l'equip com a PNG.
+   El worker retorna un SVG pure (sense imatges externes) → es renderitza al canvas
+   i es converteix a PNG sense problemes CORS. Funciona amb qualsevol mida (story / square / landscape). */
+async function downloadCartell(opts: { nomEquip: string; categoria: string; format: "story" | "square" | "landscape" }): Promise<void> {
+  const usp = new URLSearchParams({
+    nom: opts.nomEquip,
+    cat: opts.categoria,
+    format: opts.format,
+  });
+  const svgUrl = `${CARTELL_WORKER_BASE}/cartell.svg?${usp.toString()}`;
+  // Mides per format
+  const dims: Record<typeof opts.format, { w: number; h: number }> = {
+    story: { w: 1080, h: 1920 },
+    square: { w: 1080, h: 1080 },
+    landscape: { w: 1200, h: 675 },
+  };
+  const { w, h } = dims[opts.format];
+
+  // Fetch SVG → blob → object URL → <img> → canvas → PNG
+  const resp = await fetch(svgUrl);
+  if (!resp.ok) throw new Error("Error generant el cartell");
+  const svgText = await resp.text();
+  const svgBlob = new Blob([svgText], { type: "image/svg+xml;charset=utf-8" });
+  const url = URL.createObjectURL(svgBlob);
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("No s'ha pogut carregar el cartell"));
+      img.src = url;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas no suportat");
+    ctx.drawImage(img, 0, 0, w, h);
+    const blob: Blob | null = await new Promise(res => canvas.toBlob(res, "image/png", 0.95));
+    if (!blob) throw new Error("Error convertint a PNG");
+    const dlUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = dlUrl;
+    a.download = buildCartellFilename(opts.nomEquip, opts.format);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(dlUrl);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 /* Codifica un File com a payload {name, mimeType, base64} per enviar al webhook (Apps Script
    el desa a Drive i en passa la URL al Fillout). Limita a 8 MB per estabilitat d'Apps Script. */
 const MAX_JUSTIFICANT_BYTES = 8 * 1024 * 1024;
@@ -778,6 +840,10 @@ export default function Inscripcion() {
             </div>
           )}
 
+          {/* CARTELL DEL MEU EQUIP — descarrega PNG personalitzat per IG/TikTok story + post */}
+          <CartellSection nomEquip={watch("nomEquip") || ""} categoria={watch("capCategoria") || ""} />
+
+
           {/* QR pagament EPC — escaneig amb app del banc */}
           <div className="bg-white border border-white/10 rounded-2xl p-5 mb-3 flex flex-col items-center">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">💳 Pagar amb el banc · QR</p>
@@ -1250,6 +1316,71 @@ export default function Inscripcion() {
           Dubtes? <a href="mailto:info@cbgrupbarna.com" className="text-red-400 hover:underline">info@cbgrupbarna.com</a> · <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">@cbgrupbarna</a>
         </div>
       </div>
+    </div>
+  );
+}
+
+/* ─── Component: secció de descàrrega del cartell personalitzat (UGC viral) ─── */
+function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: string }) {
+  const [downloading, setDownloading] = useState<null | "story" | "square" | "landscape">(null);
+  const [error, setError] = useState<string>("");
+
+  const handleDownload = async (format: "story" | "square" | "landscape") => {
+    setDownloading(format);
+    setError("");
+    try {
+      await downloadCartell({ nomEquip, categoria, format });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconegut");
+    } finally {
+      setDownloading(null);
+    }
+  };
+
+  return (
+    <div className="bg-gradient-to-br from-orange-600/20 to-red-600/20 border border-orange-500/40 rounded-2xl p-5 mb-3">
+      <div className="flex items-start gap-3 mb-3">
+        <span className="text-3xl">📲</span>
+        <div className="flex-1">
+          <p className="text-sm font-black uppercase tracking-wider text-orange-300 mb-1">Cartell del teu equip</p>
+          <p className="text-xs text-white/70 leading-relaxed">
+            Descarrega el cartell amb el nom del teu equip. Penja'l a IG, TikTok o WhatsApp story per compartir que ja jugueu.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <button
+          type="button"
+          onClick={() => handleDownload("story")}
+          disabled={downloading !== null}
+          className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
+        >
+          <div className="text-lg mb-0.5">📱</div>
+          <p className="text-xs font-bold text-white">{downloading === "story" ? "Generant..." : "IG/TikTok Story"}</p>
+          <p className="text-[10px] text-white/40">1080×1920 vertical</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDownload("square")}
+          disabled={downloading !== null}
+          className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
+        >
+          <div className="text-lg mb-0.5">🟪</div>
+          <p className="text-xs font-bold text-white">{downloading === "square" ? "Generant..." : "IG Post"}</p>
+          <p className="text-[10px] text-white/40">1080×1080 quadrat</p>
+        </button>
+        <button
+          type="button"
+          onClick={() => handleDownload("landscape")}
+          disabled={downloading !== null}
+          className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
+        >
+          <div className="text-lg mb-0.5">🖥️</div>
+          <p className="text-xs font-bold text-white">{downloading === "landscape" ? "Generant..." : "Twitter/X"}</p>
+          <p className="text-[10px] text-white/40">1200×675 horitzontal</p>
+        </button>
+      </div>
+      {error && <p className="text-red-400 text-xs mt-2">⚠️ {error}</p>}
     </div>
   );
 }
