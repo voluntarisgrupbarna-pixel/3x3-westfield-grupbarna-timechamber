@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { QRCodeSVG } from "qrcode.react";
 
 /* ─── Config ─── */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
@@ -51,8 +52,52 @@ function precioByCat(cat: string | undefined, mida: string): number {
   if (mida === "5") return senior ? PRECIO_SENIOR_5 : PRECIO_GEN_5;
   return senior ? PRECIO_SENIOR_4 : PRECIO_GEN_4;
 }
-const COD_DESC  = "3X3AVIAT";
-const IBAN      = "ES42 0182 1797 3902 0409 9747";
+const COD_DESC    = "3X3AVIAT";
+const IBAN        = "ES42 0182 1797 3902 0409 9747";
+const BENEFICIARI = "CB Grup Barna";
+
+/* Concepte únic per identificar la transferència */
+function buildConcepte(nomEquip: string | undefined): string {
+  const clean = (nomEquip || "EQUIP").toUpperCase().replace(/[^A-Z0-9]+/g, "_").replace(/^_|_$/g, "");
+  return `3X3+${clean}`;
+}
+
+/* Codifica un File com a payload {name, mimeType, base64} per enviar al webhook (Apps Script
+   el desa a Drive i en passa la URL al Fillout). Limita a 8 MB per estabilitat d'Apps Script. */
+const MAX_JUSTIFICANT_BYTES = 8 * 1024 * 1024;
+async function fileToBase64Payload(file: File): Promise<{ name: string; mimeType: string; base64: string }> {
+  if (file.size > MAX_JUSTIFICANT_BYTES) {
+    throw new Error(`Justificant massa gran (${(file.size/1024/1024).toFixed(1)} MB). Màxim 8 MB.`);
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string; // "data:<mime>;base64,<...>"
+      const base64 = result.split(",")[1] || "";
+      resolve({ name: file.name, mimeType: file.type || "application/octet-stream", base64 });
+    };
+    reader.onerror = () => reject(new Error("Error llegint el fitxer"));
+    reader.readAsDataURL(file);
+  });
+}
+
+/* EPC QR (EPC069-12 v002) — escanejable amb qualsevol app de banc UE per pre-omplir transferència */
+function buildEpcQr(amount: number, nomEquip: string | undefined): string {
+  const ibanClean = IBAN.replace(/\s/g, "");
+  return [
+    "BCD",                          // service tag
+    "002",                          // version
+    "1",                            // charset UTF-8
+    "SCT",                          // SEPA credit transfer
+    "",                             // BIC (opcional dins UE)
+    BENEFICIARI,                    // beneficiari
+    ibanClean,                      // IBAN
+    `EUR${amount.toFixed(2)}`,      // import
+    "",                             // purpose
+    "",                             // structured reference
+    buildConcepte(nomEquip),        // unstructured remittance info
+  ].join("\n");
+}
 
 /* ─── Zod Schema ─── */
 const jugSchema = z.object({
@@ -374,9 +419,14 @@ export default function Inscripcion() {
   const onSubmit = async (data: FD) => {
     setSending(true);
     try {
-      // Submit to Apps Script webhook (primary backend: Sheet + emails)
-      // Replaced JotForm REST API to avoid exposing API key in public bundle.
+      // Submit to Apps Script webhook (primary backend: Sheet + Fillout + emails)
+      // Apps Script s'encarrega de pujar el justificant a Drive i passar la URL a Fillout.
       if (GOOGLE_WEBHOOK) {
+        // Codifica el fitxer com a base64 si n'hi ha
+        let justificantPayload: null | { name: string; mimeType: string; base64: string } = null;
+        if (justFile) {
+          justificantPayload = await fileToBase64Payload(justFile);
+        }
         await fetch(GOOGLE_WEBHOOK, {
           method: "POST",
           mode: "no-cors",
@@ -386,7 +436,8 @@ export default function Inscripcion() {
             total,
             descAplicat,
             descInvitacions,
-            justificant: justFile?.name || "",
+            concepte: buildConcepte(data.nomEquip),
+            justificant: justificantPayload,    // { name, mimeType, base64 } o null
             data: new Date().toLocaleString("ca-ES"),
           }),
         });
@@ -627,6 +678,14 @@ export default function Inscripcion() {
           <p className="text-white/50 mb-8 leading-relaxed">
             Hem rebut la inscripció del teu equip al <strong className="text-white">3×3 Westfield Glòries</strong>. Comprova que la transferència s'hagi realitzat correctament.
           </p>
+          {/* QR pagament EPC — escaneig amb app del banc */}
+          <div className="bg-white border border-white/10 rounded-2xl p-5 mb-3 flex flex-col items-center">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">Escaneja amb la teva app del banc</p>
+            <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={180} level="M" includeMargin={false} />
+            <p className="text-[10px] text-slate-500 mt-2 text-center max-w-[220px]">
+              Obre l'app del banc → "Pagar amb QR" → confirma. Tot pre-omplert.
+            </p>
+          </div>
           {/* Dades pagament */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-5 text-left space-y-3">
             <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Dades de la transferència</p>
@@ -641,7 +700,7 @@ export default function Inscripcion() {
             </div>
             <div className="flex justify-between items-center">
               <span className="text-white/40 text-sm">Concepte</span>
-              <span className="text-sm font-semibold text-white">3x3 + {watch("nomEquip") || "NOM EQUIP"}</span>
+              <span className="text-sm font-semibold text-white">{buildConcepte(watch("nomEquip"))}</span>
             </div>
             <div className="flex justify-between items-center border-t border-white/10 pt-3 mt-1">
               <span className="text-white/40 text-sm">Import</span>
@@ -911,6 +970,14 @@ export default function Inscripcion() {
                       {descInvitacions && <p className="text-white/80 text-xs mt-1 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
                       {descAplicat && <p className="text-white/60 text-xs mt-1">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
                     </div>
+                    {/* QR EPC per pagar amb app del banc */}
+                    <div className="bg-white rounded-xl p-4 flex items-center gap-4">
+                      <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={120} level="M" includeMargin={false} />
+                      <div className="flex-1">
+                        <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Pagar amb QR</p>
+                        <p className="text-xs text-slate-600 leading-snug">Obre l'app del banc, escaneja el QR i tot quedarà pre-omplert (compte, import i concepte).</p>
+                      </div>
+                    </div>
                     {/* Transferència */}
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
                       <p className="text-xs font-bold uppercase tracking-wider text-red-400">Instruccions de transferència</p>
@@ -930,7 +997,7 @@ export default function Inscripcion() {
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-white/40 uppercase tracking-wider">Concepte</span>
                           <span className="font-semibold text-white bg-white/8 rounded-lg px-3 py-2 border border-white/10 text-sm">
-                            3x3 + {watch("nomEquip") || "NOM EQUIP"}
+                            {buildConcepte(watch("nomEquip"))}
                           </span>
                         </div>
                       </div>

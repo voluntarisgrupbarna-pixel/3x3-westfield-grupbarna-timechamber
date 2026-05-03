@@ -12,12 +12,13 @@
  *  - doGet(e):   retorna {count, capacity} llegit DE FILLOUT (font de veritat), no del Sheet.
  *
  * Configuració REQUERIDA: Script Properties (Project Settings → Script properties → Add):
- *   - SHEET_ID            = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
- *   - SHEET_NAME          = Inscripcions 2026
- *   - ADMIN_EMAIL         = anafernandezduran78@gmail.com
- *   - FILLOUT_API_KEY     = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
- *   - FILLOUT_FORM_ID     = qHCxiyaw5bus (form "My form" a Fillout)
- *   - CAPACITAT_TOTAL     = (opcional, p. ex. "48". Si no, mostra només "X equips inscrits")
+ *   - SHEET_ID              = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
+ *   - SHEET_NAME            = Inscripcions 2026
+ *   - ADMIN_EMAIL           = anafernandezduran78@gmail.com
+ *   - FILLOUT_API_KEY       = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
+ *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
+ *   - DRIVE_FOLDER_NAME     = (opcional, p. ex. "3x3 Justificants 2026". Si no, "3x3 Justificants 2026")
+ *   - CAPACITAT_TOTAL       = (opcional, p. ex. "48". Si no, mostra només "X equips inscrits")
  *
  * Per què aquesta arquitectura:
  *  - Fillout és la BASE DE DADES OFICIAL (no es pot modificar manualment, segura)
@@ -113,18 +114,28 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents || '{}');
 
-    // 1) Backup al Sheet
+    // 1) Si arriba justificant en base64, pujar-lo a Drive primer (per tenir URL al Sheet i Fillout)
+    let justificantUpload = null;
+    if (data.justificant && data.justificant.base64) {
+      try {
+        justificantUpload = uploadJustificantToDrive_(data.justificant, data.nomEquip);
+      } catch (driveErr) {
+        Logger.log('Drive upload error: ' + driveErr);
+      }
+    }
+
+    // 2) Backup al Sheet (amb la URL del justificant si existeix)
     try {
-      writeToSheet_(data);
+      writeToSheet_(data, justificantUpload);
     } catch (sheetErr) {
       Logger.log('Sheet write error (no critic): ' + sheetErr);
     }
 
-    // 2) Reenviar a Fillout (font oficial)
+    // 3) Reenviar a Fillout (font oficial) amb la URL del justificant
     const auth = getFilloutAuth_();
     if (auth) {
       try {
-        const filloutBody = buildFilloutBody_(data);
+        const filloutBody = buildFilloutBody_(data, justificantUpload);
         const url = FILLOUT_BASE + '/forms/' + encodeURIComponent(auth.formId) + '/submissions';
         const resp = UrlFetchApp.fetch(url, {
           method: 'post',
@@ -148,11 +159,16 @@ function doPost(e) {
       filloutError = 'FILLOUT_API_KEY o FILLOUT_FORM_ID no configurats';
     }
 
-    // 3) Emails (al capità + admin)
-    sendEmails_(data);
+    // 4) Emails (al capità + admin)
+    sendEmails_(data, justificantUpload);
 
     return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, fillout: filloutOk, filloutError: filloutError }))
+      .createTextOutput(JSON.stringify({
+        ok: true,
+        fillout: filloutOk,
+        filloutError: filloutError,
+        driveUploaded: !!justificantUpload,
+      }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     return ContentService
@@ -161,18 +177,20 @@ function doPost(e) {
   }
 }
 
-function writeToSheet_(data) {
+function writeToSheet_(data, justificantUpload) {
   const sheet = getSheet_();
   if (sheet.getLastRow() === 0) {
     sheet.appendRow([
-      'Data', 'Categoria', 'Nom equip', 'Capità', 'Email', 'Telèfon',
+      'Data', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Email', 'Telèfon',
       'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
-      'Desc. aplicat?', 'Desc. invitacions?', 'Justificant'
+      'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL'
     ]);
   }
   const jugadors = formatJugadors_(data);
+  const justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
   sheet.appendRow([
     data.data || new Date().toLocaleString('ca-ES'),
+    data.concepte || '',
     data.categoria || '',
     data.nomEquip || '',
     data.capita || '',
@@ -184,7 +202,7 @@ function writeToSheet_(data) {
     data.total || '',
     data.descAplicat ? 'Sí' : 'No',
     data.descInvitacions ? 'Sí' : 'No',
-    data.justificant || ''
+    justifUrl
   ]);
 }
 
@@ -195,19 +213,64 @@ function formatJugadors_(data) {
 }
 
 /**
+ * Puja el justificant base64 a una carpeta de Drive i el comparteix per link.
+ * Retorna { url, filename, fileId } o null en cas d'error.
+ *
+ * El nom del fitxer porta el codi de inscripció ("3X3+EQUIPNAME") perquè
+ * Ana els pugui agrupar visualment a la carpeta.
+ */
+function uploadJustificantToDrive_(justificant, nomEquip) {
+  if (!justificant || !justificant.base64) return null;
+  const folderName = PROPS.getProperty('DRIVE_FOLDER_NAME') || '3x3 Justificants 2026';
+  const folder = getOrCreateFolder_(folderName);
+
+  const codi = '3X3+' + (String(nomEquip || 'EQUIP').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, ''));
+  const safeName = (justificant.name || 'justificant').replace(/[^a-zA-Z0-9._-]+/g, '_');
+  const fname = codi + '_' + safeName;
+
+  const blob = Utilities.newBlob(
+    Utilities.base64Decode(justificant.base64),
+    justificant.mimeType || 'application/octet-stream',
+    fname
+  );
+  const file = folder.createFile(blob);
+
+  // Compartit "anyone with link can view" perquè Fillout pugui mostrar la preview
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (shareErr) {
+    Logger.log('No s\'ha pogut compartir el fitxer: ' + shareErr);
+  }
+
+  return {
+    url: file.getUrl(),
+    filename: file.getName(),
+    fileId: file.getId(),
+  };
+}
+
+function getOrCreateFolder_(name) {
+  const it = DriveApp.getFoldersByName(name);
+  if (it.hasNext()) return it.next();
+  return DriveApp.createFolder(name);
+}
+
+/**
  * Construeix el body per Fillout API.
  * Mapping (form qHCxiyaw5bus "My form"):
  *   - nfnP → nomEquip
  *   - wJSK → capita
  *   - g54s → email
  *   - cfVA → JSON amb la resta (categoria, telefon, total, jugadors, mida, notes, etc.)
+ *   - 9jeb → FileUpload [{url, filename}] (justificant pujat a Drive)
  *
  * Si afegeixes camps al form de Fillout, mira el seu ID a la resposta de
  * GET /v1/api/forms/qHCxiyaw5bus i amplia el mapping aquí.
  */
-function buildFilloutBody_(data) {
+function buildFilloutBody_(data, justificantUpload) {
   const jugadors = formatJugadors_(data);
   const detalls = {
+    concepte: data.concepte || ('3X3+' + String(data.nomEquip || 'EQUIP').toUpperCase()),
     categoria: data.categoria || '',
     telefon: data.telefon || '',
     total: data.total || 0,
@@ -216,22 +279,25 @@ function buildFilloutBody_(data) {
     notes: data.notes || '',
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
-    justificant: data.justificant || '',
+    justificantDriveUrl: justificantUpload ? justificantUpload.url : '',
     data: data.data || new Date().toLocaleString('ca-ES'),
   };
-  return {
-    submissions: [{
-      questions: [
-        { id: 'nfnP', value: data.nomEquip || '' },
-        { id: 'wJSK', value: data.capita || '' },
-        { id: 'g54s', value: data.email || '' },
-        { id: 'cfVA', value: JSON.stringify(detalls) },
-      ]
-    }]
-  };
+  const questions = [
+    { id: 'nfnP', value: data.nomEquip || '' },
+    { id: 'wJSK', value: data.capita || '' },
+    { id: 'g54s', value: data.email || '' },
+    { id: 'cfVA', value: JSON.stringify(detalls) },
+  ];
+  if (justificantUpload && justificantUpload.url) {
+    questions.push({
+      id: '9jeb',
+      value: [{ url: justificantUpload.url, filename: justificantUpload.filename }],
+    });
+  }
+  return { submissions: [{ questions: questions }] };
 }
 
-function sendEmails_(data) {
+function sendEmails_(data, justificantUpload) {
   if (data.email) {
     try {
       MailApp.sendEmail({
@@ -248,7 +314,7 @@ function sendEmails_(data) {
     MailApp.sendEmail({
       to: admin,
       subject: '📩 Nova inscripció: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
-      htmlBody: buildEmailAdmin_(data, formatJugadors_(data)),
+      htmlBody: buildEmailAdmin_(data, formatJugadors_(data), justificantUpload),
     });
   } catch (mailErr) {
     Logger.log('Error email admin: ' + mailErr);
@@ -267,10 +333,15 @@ function buildEmailCapita_(data) {
   ].join('');
 }
 
-function buildEmailAdmin_(data, jugadors) {
+function buildEmailAdmin_(data, jugadors, justificantUpload) {
+  const justifCell = justificantUpload && justificantUpload.url
+    ? '<a href="' + justificantUpload.url + '">' + (justificantUpload.filename || 'Veure justificant') + '</a>'
+    : '—';
+  const concepte = '3X3+' + String(data.nomEquip || 'EQUIP').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
   return [
     '<h2>📩 Nova inscripció</h2>',
     '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">',
+    '<tr><td><strong>Concepte</strong></td><td><code>' + concepte + '</code></td></tr>',
     '<tr><td><strong>Equip</strong></td><td>' + (data.nomEquip || '') + '</td></tr>',
     '<tr><td><strong>Categoria</strong></td><td>' + (data.categoria || '') + '</td></tr>',
     '<tr><td><strong>Capità</strong></td><td>' + (data.capita || '') + '</td></tr>',
@@ -280,7 +351,7 @@ function buildEmailAdmin_(data, jugadors) {
     '<tr><td><strong>Mida</strong></td><td>' + (data.mida || '') + '</td></tr>',
     '<tr><td><strong>Total</strong></td><td>' + (data.total || '') + ' €</td></tr>',
     '<tr><td><strong>Notes</strong></td><td>' + (data.notes || '') + '</td></tr>',
-    '<tr><td><strong>Justificant</strong></td><td>' + (data.justificant || '—') + '</td></tr>',
+    '<tr><td><strong>Justificant</strong></td><td>' + justifCell + '</td></tr>',
     '</table>'
   ].join('');
 }
