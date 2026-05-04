@@ -20,6 +20,7 @@ const SobreNosaltres      = lazy(() => import("@/pages/SobreNosaltres"));
 const Premsa              = lazy(() => import("@/pages/Premsa"));
 const Blog                = lazy(() => import("@/pages/Blog"));
 const BlogPost            = lazy(() => import("@/pages/BlogPost"));
+const Contacte            = lazy(() => import("@/pages/Contacte"));
 
 function PageLoader() {
   return (
@@ -51,6 +52,8 @@ export default function App() {
           <Route path="/press" element={<Premsa />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/contacte" element={<Contacte />} />
+          <Route path="/contacto" element={<Contacte />} />
         </Routes>
       </Suspense>
       <Toaster />

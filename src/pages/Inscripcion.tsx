@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
 import { tracker } from "@/lib/track";
 import { CAT_NAMES } from "@/lib/categories";
+import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 /* ─── Config ─── */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
@@ -397,6 +398,8 @@ export default function Inscripcion() {
   const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">("active");
   const [sharedSlots, setSharedSlots] = useState<boolean[]>([false, false, false, false, false]);
   const [igFollowed, setIgFollowed]   = useState(false);
+  // Lead capture WhatsApp post-submit
+  const [waLeadOpen, setWaLeadOpen] = useState(false);
   const [descInvitacions, setDescInvitacions] = useState(false);
   // Queue simulator (Ticketmaster-style anti-bot + urgency)
   const [queueState, setQueueState] = useState<"queueing" | "passed">("queueing");
@@ -885,11 +888,10 @@ export default function Inscripcion() {
           })()}
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <a href={`https://wa.me/34600000000?text=Hola!%20Acabo%20d'enviar%20la%20inscripci%C3%B3%20del%20meu%20equip%20al%203x3%20Westfield%20Gl%C3%B2ries.%20Podeu%20confirmar%20la%20recepci%C3%B3%3F`}
-              target="_blank" rel="noopener noreferrer"
+            <button type="button" onClick={() => setWaLeadOpen(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl transition-all hover:scale-105">
               📱 WhatsApp
-            </a>
+            </button>
             <Link to="/" className="flex-1">
               <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl hover:scale-105 transition-all h-auto">
                 Tornar a l'inici
@@ -897,6 +899,7 @@ export default function Inscripcion() {
             </Link>
           </div>
         </motion.div>
+        <WhatsAppLeadForm open={waLeadOpen} onClose={() => setWaLeadOpen(false)} source="post_inscripcio" />
       </div>
     );
   }
