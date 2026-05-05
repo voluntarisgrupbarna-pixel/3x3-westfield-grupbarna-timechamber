@@ -366,64 +366,135 @@ function addIndividualPlayer_(data) {
  *
  * Dedupe per telèfon (normalitzat). Notifica admin del primer contacte.
  */
+/**
+ * Mapeja el camp `event` a un nom de pestanya humà del Sheet.
+ * "tres_x_tres" → Llista_Difusio_3x3 (la històrica, no canviem el nom)
+ * "campus"      → Llista_Difusio_Campus
+ * "portes_obertes" → Llista_Difusio_PortesObertes
+ * Per defecte (event no enviat o "general") → Llista_Difusio_3x3 (compat)
+ */
+function getLeadSheetName_(event) {
+  switch (String(event || '').toLowerCase()) {
+    case 'campus':         return 'Llista_Difusio_Campus';
+    case 'portes_obertes': return 'Llista_Difusio_PortesObertes';
+    case 'tres_x_tres':    return 'Llista_Difusio_3x3';
+    case 'general':        return 'Llista_Difusio_3x3';
+    default:               return 'Llista_Difusio_3x3';
+  }
+}
+
 function addWhatsAppLead_(data) {
   const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
   const ss = SpreadsheetApp.openById(id);
-  let sheet = ss.getSheetByName('Llista_Difusio_3x3');
-  if (!sheet) sheet = ss.insertSheet('Llista_Difusio_3x3');
+  const sheetName = getLeadSheetName_(data.event);
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) sheet = ss.insertSheet(sheetName);
+
+  const HEADERS = [
+    'Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta',
+    'Source', 'Event', 'Intent',
+    'Edat', 'Nivell', 'Setmanes',  // respostes ràpides més comunes
+    'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'code',
+    'Consentiment RGPD', 'Estat', 'Últim contacte', 'Següent seguiment', 'Notes',
+  ];
+
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow(['Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta', 'Source', 'Consentiment RGPD', 'Notificat broadcast?']);
+    sheet.appendRow(HEADERS);
   } else {
-    // Migració: si la capçalera no té encara la columna RGPD, l'afegim entre
-    // "Source" i "Notificat broadcast?". Una sola vegada.
-    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    if (headers.indexOf('Consentiment RGPD') < 0) {
-      const notifIdx = headers.indexOf('Notificat broadcast?');
-      const insertAt = (notifIdx >= 0 ? notifIdx : headers.length) + 1;
-      sheet.insertColumnBefore(insertAt);
-      sheet.getRange(1, insertAt).setValue('Consentiment RGPD');
-    }
+    // Migració incremental: afegim columnes que faltin a la dreta sense
+    // alterar les existents (per no trencar res si ja hi ha files).
+    const existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    HEADERS.forEach(function(h) {
+      if (existing.indexOf(h) < 0) {
+        const col = sheet.getLastColumn() + 1;
+        sheet.getRange(1, col).setValue(h);
+        existing.push(h);
+      }
+    });
   }
 
+  // Re-llegim headers ja amb totes les columnes garantides
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
   const phoneClean = String(data.telefon || '').replace(/[^0-9+]/g, '');
-  // Dedupe per telèfon
-  if (phoneClean && sheet.getLastRow() >= 2) {
-    const phones = sheet.getRange(2, 3, sheet.getLastRow() - 1, 1).getValues()
-      .map(r => String(r[0]).replace(/[^0-9+]/g, ''));
+
+  // Dedupe per telèfon (busca a la columna "Telèfon")
+  const telCol = headers.indexOf('Telèfon') + 1;
+  if (phoneClean && telCol > 0 && sheet.getLastRow() >= 2) {
+    const phones = sheet.getRange(2, telCol, sheet.getLastRow() - 1, 1).getValues()
+      .map(function(r) { return String(r[0]).replace(/[^0-9+]/g, ''); });
     if (phones.indexOf(phoneClean) >= 0) {
-      // ja està a la llista; no afegim però fem que el flow continuï (l'usuari
-      // sí podrà obrir WhatsApp sense fricció)
+      // Ja està a la llista. No duplicar però sí continuar el flow (deixem
+      // que l'usuari obri WhatsApp sense fricció).
       return;
     }
   }
 
-  sheet.appendRow([
-    data.data || new Date().toLocaleString('ca-ES'),
-    data.nom || '',
-    phoneClean,
-    data.email || '',
-    data.dubte || '',
-    data.source || 'home_fab',
-    data.acceptaRgpd === true ? 'Sí' : (data.acceptaRgpd === false ? 'No' : '—'),
-    'No',
-  ]);
+  // Construïm la fila respectant l'ordre real dels headers
+  const ans = data.answers || {};
+  const valueByHeader = {
+    'Data':              data.data || new Date().toLocaleString('ca-ES'),
+    'Nom':               data.nom || '',
+    'Telèfon':           phoneClean,
+    'Email':             data.email || '',
+    'Dubte / Consulta':  data.dubte || '',
+    'Source':            data.source || '',
+    'Event':             data.event || '',
+    'Intent':            data.intent || '',
+    'Edat':              ans.edat || '',
+    'Nivell':            ans.nivell || '',
+    'Setmanes':          ans.setmanes || '',
+    'utm_source':        data.utm_source || '',
+    'utm_medium':        data.utm_medium || '',
+    'utm_campaign':      data.utm_campaign || '',
+    'utm_content':       data.utm_content || '',
+    'code':              data.code || '',
+    'Consentiment RGPD': data.acceptaRgpd === true ? 'Sí' : (data.acceptaRgpd === false ? 'No' : '—'),
+    'Estat':             'Nou',
+    'Últim contacte':    '',
+    'Següent seguiment': '',
+    'Notes':             '',
+  };
+  const row = headers.map(function(h) { return valueByHeader[h] !== undefined ? valueByHeader[h] : ''; });
+  sheet.appendRow(row);
 
-  // Alerta admin (només la primera vegada que aquest lead apareix)
+  // Alerta admin
   const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
+  const eventLabel = ({
+    'campus':         'Campus',
+    'portes_obertes': 'Portes Obertes',
+    'tres_x_tres':    '3x3',
+    'general':        '',
+  })[String(data.event || '').toLowerCase()] || (data.event || '3x3');
+  const intentLabel = ({
+    'info': 'Vol info', 'prueba': 'Vol provar', 'reserva': 'Vol reservar', 'general': 'Contacte general',
+  })[String(data.intent || '').toLowerCase()] || '';
+  const subjectIntent = intentLabel ? ' · ' + intentLabel : '';
+
   try {
+    const ansRows = Object.keys(ans).map(function(k) {
+      return '<tr><td><strong>' + k + '</strong></td><td>' + ans[k] + '</td></tr>';
+    }).join('');
+    const utmRows = ['utm_source','utm_medium','utm_campaign','utm_content','code']
+      .filter(function(k) { return data[k]; })
+      .map(function(k) { return '<tr><td><strong>' + k + '</strong></td><td>' + data[k] + '</td></tr>'; })
+      .join('');
     MailApp.sendEmail({
       to: admin,
-      subject: '💬 Nou contacte WhatsApp · ' + (data.nom || 'sense nom') + ' · 3x3',
+      subject: '💬 Nou lead WhatsApp · ' + eventLabel + subjectIntent + ' · ' + (phoneClean || 'sense tel'),
       htmlBody: '<h3>Nou contacte per WhatsApp</h3>'
-        + '<p>Algú està a punt de contactar-te per WhatsApp. Ara està al teu chat.</p>'
+        + '<p>Algú acaba de deixar el seu telèfon des de <strong>' + (eventLabel || 'la web') + '</strong>'
+        + (intentLabel ? ' (<strong>' + intentLabel + '</strong>)' : '') + '.</p>'
         + '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">'
-        + '<tr><td><strong>Nom</strong></td><td>' + (data.nom || '—') + '</td></tr>'
         + '<tr><td><strong>Telèfon</strong></td><td><a href="https://wa.me/' + phoneClean + '">' + phoneClean + '</a></td></tr>'
-        + '<tr><td><strong>Email</strong></td><td>' + (data.email || '—') + '</td></tr>'
-        + '<tr><td><strong>Dubte</strong></td><td>' + (data.dubte || '—') + '</td></tr>'
-        + '<tr><td><strong>Source</strong></td><td>' + (data.source || 'home_fab') + '</td></tr>'
+        + '<tr><td><strong>Source (botó)</strong></td><td>' + (data.source || '—') + '</td></tr>'
+        + '<tr><td><strong>Event</strong></td><td>' + (data.event || '—') + '</td></tr>'
+        + '<tr><td><strong>Intent</strong></td><td>' + (data.intent || '—') + '</td></tr>'
+        + ansRows
+        + utmRows
         + '</table>'
-        + '<p style="font-size:11px;color:#666;margin-top:14px">Ja s\'ha afegit a la pestanya <strong>Llista_Difusio_3x3</strong> del Sheet. Pots usar-la per fer broadcast quan tinguis novetats del torneig.</p>',
+        + '<p style="font-size:11px;color:#666;margin-top:14px">Pestanya <strong>' + sheetName
+        + '</strong> del Sheet. Estat inicial: <strong>Nou</strong> — actualitza\'l a mesura que el contactis.</p>',
     });
   } catch (e) { Logger.log('lead admin mail err: ' + e); }
 }

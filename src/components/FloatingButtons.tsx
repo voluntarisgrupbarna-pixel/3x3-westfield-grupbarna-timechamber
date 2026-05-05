@@ -157,8 +157,30 @@ export default function FloatingButtons() {
         <span className="text-sm font-bold hidden sm:inline">Pregunta'ns</span>
       </button>
 
-      {/* Modal: captura nom + telèfon abans d'obrir WhatsApp */}
-      <WhatsAppLeadForm open={leadOpen} onClose={() => setLeadOpen(false)} />
+      {/* Modal: captura tel + RGPD + 3 opcions de dubte abans d'obrir WhatsApp */}
+      <WhatsAppLeadForm
+        open={leadOpen}
+        onClose={() => setLeadOpen(false)}
+        source="home_fab"
+        event="tres_x_tres"
+        dubteOptions={[
+          {
+            id: "inscripcio",
+            label: "Vull inscriure el meu equip",
+            waText: "Hola! Vull inscriure el meu equip al 3×3 Westfield Glòries. Pots passar-me els passos?",
+          },
+          {
+            id: "categories_preus",
+            label: "Tinc dubtes sobre categories o preus",
+            waText: "Hola! Tinc dubtes sobre les categories i preus del 3×3 Westfield Glòries.",
+          },
+          {
+            id: "altre",
+            label: "Altre dubte general",
+            waText: "Hola! Tinc una pregunta sobre el 3×3 Westfield Glòries.",
+          },
+        ]}
+      />
     </>
   );
 }

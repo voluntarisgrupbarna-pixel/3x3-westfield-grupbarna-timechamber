@@ -94,7 +94,7 @@ export const SEUS: Seu[] = [
     coords: { lat: 41.4063, lng: 2.1921 },
     description:
       "El pavelló històric del CB Grup Barna al Clot. Pista coberta on es disputen totes les categories formatives (Escola → Junior). És el pavelló on entrenen els equips del club tot l'any: ambient familiar, grades acollidores i molta energia base.",
-    heroImage: "https://agents-download.skywork.ai/image/rt/abf2a458a2c24a2cc542ae6b9230b456.jpg",
+    heroImage: "/images/hero-edicio-anterior.jpg",
     categories: ["Escola", "Premini", "Mini", "Preinfantil", "Infantil", "Cadet", "Junior"],
     horari: "Dissabte 6 i diumenge 7 de juny · 08:30 - 20:00",
     metro: {
@@ -132,7 +132,7 @@ export const SEUS: Seu[] = [
     coords: { lat: 41.4074, lng: 2.1876 },
     description:
       "La pista exterior del barri del Clot, sobre la rambla, amb arbres i terrasses al voltant. Espai d'exhibicions, partits oberts d'Open Day i activitats per a famílies. La més 'streetball' del torneig: ambient festiu, públic de pas, ideal per veure 3×3 amb una canya a la mà.",
-    heroImage: "https://agents-download.skywork.ai/image/rt/2aba554291787da075962040ea38559f.jpg",
+    heroImage: "/images/streetball-urba.jpg",
     categories: ["Open Day", "Exhibicions", "Concursos (mate, triple)"],
     horari: "Dissabte 6 i diumenge 7 de juny · 11:00 - 22:00",
     metro: {

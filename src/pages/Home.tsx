@@ -472,27 +472,27 @@ const stats = [
 
 /* Logo order: Westfield → Grup Barna → Time Chamber → Eix Clot */
 const LOGOS = [
-  { name: "Westfield Glòries", img: "https://agents-download.skywork.ai/image/rt/82e0492292ae633f612cb4115e85e4d7.jpg", url: "https://es.westfield.com/glories", invert: false },
-  { name: "CB Grup Barna", img: "https://agents-download.skywork.ai/image/rt/e6b78ef71e7bdca6e1f9a999f5824f24.jpg", url: "https://cbgrupbarna.com", invert: false },
+  { name: "Westfield Glòries", img: "/images/seu-westfield-glories.jpg", url: "https://es.westfield.com/glories", invert: false },
+  { name: "CB Grup Barna", img: "/images/cb-grup-barna.jpg", url: "https://cbgrupbarna.com", invert: false },
   { name: "Time Chamber", img: "/logos/time-chamber.webp", url: "https://timechamber.es", invert: true },
   { name: "Eix Clot", img: "/logos/eix-clot.png", url: "#", invert: false },
 ];
 
 const sponsors = [
-  { name: "Westfield Glòries", img: "https://agents-download.skywork.ai/image/rt/82e0492292ae633f612cb4115e85e4d7.jpg", url: "https://es.westfield.com/glories", role: "Seu oficial" },
-  { name: "CB Grup Barna", img: "https://agents-download.skywork.ai/image/rt/e6b78ef71e7bdca6e1f9a999f5824f24.jpg", url: "https://cbgrupbarna.com", role: "Organitzador" },
+  { name: "Westfield Glòries", img: "/images/seu-westfield-glories.jpg", url: "https://es.westfield.com/glories", role: "Seu oficial" },
+  { name: "CB Grup Barna", img: "/images/cb-grup-barna.jpg", url: "https://cbgrupbarna.com", role: "Organitzador" },
   { name: "Time Chamber", img: "/logos/time-chamber.webp", url: "https://timechamber.es", role: "Organitzador", invert: true },
   { name: "Eix Clot", img: "/logos/eix-clot.png", url: "#", role: "Patrocinador" },
-  { name: "Ajuntament de Barcelona", img: "https://agents-download.skywork.ai/image/rt/07c3cb97d349a947b5ca072602fa18da.jpg", url: "https://www.barcelona.cat", role: "Institucional" },
+  { name: "Ajuntament de Barcelona", img: "/images/ajuntament-barcelona.jpg", url: "https://www.barcelona.cat", role: "Institucional" },
 ];
 
 const galleryImages = [
-  { src: "https://agents-download.skywork.ai/image/rt/abf2a458a2c24a2cc542ae6b9230b456.jpg", alt: "3x3 Glòries – Edició anterior" },
-  { src: "https://agents-download.skywork.ai/image/rt/4ff8764a3486e125541c12e3b99a264b.jpg", alt: "Bàsquet 3x3 Barcelona" },
-  { src: "https://agents-download.skywork.ai/image/rt/a56b1d65f865a7b807b5776fc6135d78.jpg", alt: "3x3 Olímpic – Paris 2024" },
-  { src: "https://agents-download.skywork.ai/image/rt/9831a1dc3871aea2d826f9aaca4aed54.jpg", alt: "Mate espectacular 3x3" },
-  { src: "https://agents-download.skywork.ai/image/rt/2aba554291787da075962040ea38559f.jpg", alt: "Streetball urbà" },
-  { src: "https://agents-download.skywork.ai/image/rt/0e4d1ddb575f5178071510b0c98947a0.jpg", alt: "FIBA 3x3 urban" },
+  { src: "/images/hero-edicio-anterior.jpg", alt: "3x3 Glòries – Edició anterior" },
+  { src: "/images/basquet-3x3-barcelona.jpg", alt: "Bàsquet 3x3 Barcelona" },
+  { src: "/images/3x3-olimpic-paris-2024.jpg", alt: "3x3 Olímpic – Paris 2024" },
+  { src: "/images/mate-3x3.jpg", alt: "Mate espectacular 3x3" },
+  { src: "/images/streetball-urba.jpg", alt: "Streetball urbà" },
+  { src: "/images/fiba-3x3-urban.jpg", alt: "FIBA 3x3 urban" },
 ];
 
 /* Ubicacions: La Nau first, then Westfield, then Rambleta */
@@ -736,7 +736,7 @@ export default function Home() {
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
         {/* BG */}
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
-          style={{ backgroundImage: `url(https://agents-download.skywork.ai/image/rt/abf2a458a2c24a2cc542ae6b9230b456.jpg)`, transform: `translateY(${heroOffset}px)` }} />
+          style={{ backgroundImage: `url(/images/hero-edicio-anterior.jpg)`, transform: `translateY(${heroOffset}px)` }} />
         {/* Elegant gradient overlay – less black, more refined */}
         <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,10,30,0.88) 0%, rgba(20,10,20,0.72) 50%, rgba(10,5,20,0.92) 100%)" }} />
         <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(220,38,38,0.12) 0%, transparent 60%)" }} />
@@ -868,7 +868,7 @@ export default function Home() {
 
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <img src="https://agents-download.skywork.ai/image/rt/4ff8764a3486e125541c12e3b99a264b.jpg"
+                <img src="/images/basquet-3x3-barcelona.jpg"
                   alt="3x3 Basketball Barcelona" loading="lazy" decoding="async" className="w-full h-96 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <div className="absolute bottom-5 left-5">

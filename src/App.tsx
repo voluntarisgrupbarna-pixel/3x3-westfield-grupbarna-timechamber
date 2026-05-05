@@ -21,6 +21,9 @@ const Premsa              = lazy(() => import("@/pages/Premsa"));
 const Blog                = lazy(() => import("@/pages/Blog"));
 const BlogPost            = lazy(() => import("@/pages/BlogPost"));
 const Contacte            = lazy(() => import("@/pages/Contacte"));
+const Campus              = lazy(() => import("@/pages/Campus"));
+const PortesObertes       = lazy(() => import("@/pages/PortesObertes"));
+const Hub                 = lazy(() => import("@/pages/Hub"));
 
 function PageLoader() {
   return (
@@ -54,6 +57,11 @@ export default function App() {
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/contacte" element={<Contacte />} />
           <Route path="/contacto" element={<Contacte />} />
+          <Route path="/campus" element={<Campus />} />
+          <Route path="/portes-obertes" element={<PortesObertes />} />
+          <Route path="/portas-abiertas" element={<PortesObertes />} />
+          <Route path="/hub" element={<Hub />} />
+          <Route path="/links" element={<Hub />} />
         </Routes>
       </Suspense>
       <Toaster />
