@@ -144,8 +144,11 @@ function EquipsBadge() {
     );
   }
   const ple = isFullyBooked(count, capacity);
-  // Llançament: % fix a INSCRIPTIONS_PCT (20%) per evitar mostrar valors alts a la fase d'arrencada.
-  const pctLabel = ` · ${INSCRIPTIONS_PCT}%`;
+  // Llançament: terra al INSCRIPTIONS_PCT (20%) perquè no es vegi buit a l'arrencada,
+  // però quan les inscripcions superen el terra el comptador ja mostra dades reals.
+  const realPct = capacity ? Math.min(100, Math.round((count / capacity) * 100)) : 0;
+  const displayPct = Math.max(INSCRIPTIONS_PCT, realPct);
+  const pctLabel = ` · ${displayPct}%`;
   if (ple) {
     return (
       <Link to="/llista-espera">
@@ -167,8 +170,10 @@ function EquipsBadge() {
 function EquipsProgress() {
   const { count, capacity, loaded } = useEquipsInscrits();
   const hasLive = loaded && capacity != null;
-  // Llançament: % fix a INSCRIPTIONS_PCT (20%) — la fase inicial mostra "només queda el 80%".
-  const pct = INSCRIPTIONS_PCT;
+  // Llançament: terra al INSCRIPTIONS_PCT (20%) per no mostrar buit a l'arrencada;
+  // a partir d'aquí la barra puja amb les inscripcions reals.
+  const realPct = hasLive ? Math.min(100, Math.round((count / capacity!) * 100)) : 0;
+  const pct = Math.max(INSCRIPTIONS_PCT, realPct);
   const titol = hasLive ? `${count} equips inscrits de ${capacity}` : "Places ocupades";
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
