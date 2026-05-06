@@ -1207,7 +1207,11 @@ export default function Inscripcion() {
               }
             }}
           >
-            <AnimatePresence mode="wait" custom={dir}>
+            {/* mode="wait" causava que el motion.div del pas anterior es quedés estancat en
+                estat exit i el següent no es muntés mai (regressió detectada 2026-05-07).
+                Sense mode, els passos es reemplacen sincrònicament — sense animació de
+                transició completa però funcional. */}
+            <AnimatePresence custom={dir}>
 
               {/* ══ PAS 1: EQUIP ══ */}
               {step === 1 && (
