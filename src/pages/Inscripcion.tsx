@@ -159,9 +159,49 @@ const slide = {
   exit:    (d:number) => ({ opacity:0, x: d*-40, transition:{ duration:0.25 } }),
 };
 
+/* ─── Persistència local (gate viral + form state) ─── */
+const GATE_LS_KEY = "3x3_gate_state_v1";
+const FORM_LS_KEY = "3x3_form_v1";
+const LS_TTL_MS = 24 * 60 * 60 * 1000;
+type PersistedGate = {
+  sharedSlots: boolean[];
+  igFollowed: boolean;
+  igTimechamberFollowed: boolean;
+  gateState: "active" | "unlocked" | "skipped";
+  descInvitacions: boolean;
+  ts: number;
+};
+function loadGateState(): PersistedGate | null {
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(GATE_LS_KEY) : null;
+    if (!raw) return null;
+    const p = JSON.parse(raw) as PersistedGate;
+    if (!p.ts || Date.now() - p.ts > LS_TTL_MS) return null;
+    return p;
+  } catch { return null; }
+}
+function saveGateState(p: Omit<PersistedGate, "ts">): void {
+  try { localStorage.setItem(GATE_LS_KEY, JSON.stringify({ ...p, ts: Date.now() })); } catch {}
+}
+function loadFormState(): { data: any; ts: number } | null {
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(FORM_LS_KEY) : null;
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (!p?.ts || Date.now() - p.ts > LS_TTL_MS) return null;
+    return p;
+  } catch { return null; }
+}
+function saveFormState(data: any): void {
+  try { localStorage.setItem(FORM_LS_KEY, JSON.stringify({ data, ts: Date.now() })); } catch {}
+}
+function clearPersisted(): void {
+  try { localStorage.removeItem(GATE_LS_KEY); localStorage.removeItem(FORM_LS_KEY); } catch {}
+}
+
 /* ─── Textos de WhatsApp (variados para no parecer spam) ─── */
 const SHARE_TEXTS = [
-  "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 2.400€ Prize Money (Sèniors M/F · Veterans M/F) i punts FIBA. T'apuntes?",
+  "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 2.000€ Prize Money (Sèniors M/F) i punts FIBA. T'apuntes?",
   "🔥 Quintet o què? 3×3 al barri del Clot els 6-7 Juny. Premis, samarretes i festa. Necessito gent!",
   "Hey! Inscripcions obertes 3×3 Westfield Glòries 2026 · Barcelona. Em vens?",
   "🏆 3×3 Barcelona 6-7 Juny · 1.000€ al guanyador Sèniors, FIBA points. Apunta't amb mi!",
@@ -314,13 +354,15 @@ export default function Inscripcion() {
   const [copied, setCopied]       = useState(false);
   // Gate viral: comparteix per WhatsApp + segueix @cbgrupbarna → 10% descompte.
   // Camí alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
-  const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">("active");
-  const [sharedSlots, setSharedSlots] = useState<boolean[]>([false, false, false, false, false]);
-  const [igFollowed, setIgFollowed]   = useState(false);
-  const [igTimechamberFollowed, setIgTimechamberFollowed] = useState(false);
+  // Lazy initializers: si tornem d'una pestanya WhatsApp/Instagram que el SO ha matat,
+  // restaurem el progrés persistit en localStorage.
+  const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">(() => loadGateState()?.gateState ?? "active");
+  const [sharedSlots, setSharedSlots] = useState<boolean[]>(() => loadGateState()?.sharedSlots ?? [false, false, false, false, false]);
+  const [igFollowed, setIgFollowed]   = useState(() => loadGateState()?.igFollowed ?? false);
+  const [igTimechamberFollowed, setIgTimechamberFollowed] = useState(() => loadGateState()?.igTimechamberFollowed ?? false);
   // Lead capture WhatsApp post-submit
   const [waLeadOpen, setWaLeadOpen] = useState(false);
-  const [descInvitacions, setDescInvitacions] = useState(false);
+  const [descInvitacions, setDescInvitacions] = useState(() => loadGateState()?.descInvitacions ?? false);
   // Queue simulator (Ticketmaster-style anti-bot + urgency)
   const [queueState, setQueueState] = useState<"queueing" | "passed">("queueing");
   const [queuePos, setQueuePos]     = useState(0);
@@ -330,6 +372,13 @@ export default function Inscripcion() {
   useEffect(() => {
     tracker.inscripcioIniciada();
   }, []);
+
+  // Persistim el progrés del gate cada vegada que canvia (defensa belt-and-braces:
+  // els handlers ja escriuen a LS abans de window.open, però aquest effect cobreix
+  // qualsevol setState que se'ns hagi escapat).
+  useEffect(() => {
+    saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions });
+  }, [sharedSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions]);
 
   // Tick down queue position
   useEffect(() => {
@@ -400,31 +449,41 @@ export default function Inscripcion() {
   const pathShareDone   = sharesDone >= 1 && igFollowed;
   const pathFollowsDone = igFollowed && igTimechamberFollowed;
   const canUnlockGate = pathShareDone || pathFollowsDone;
+  // Persistim a localStorage ABANS d'obrir l'app externa: en mòbil el SO pot matar
+  // la pestanya mentre l'usuari és a WhatsApp/Instagram, i sense aquest pre-write
+  // el progrés in-memory es perdria en tornar.
   const shareWith = (idx: number) => {
     const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
-    setSharedSlots(prev => prev.map((v, i) => i === idx ? true : v));
+    const nextSlots = sharedSlots.map((v, i) => i === idx ? true : v);
+    saveGateState({ sharedSlots: nextSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions });
+    setSharedSlots(nextSlots);
     tracker.shareWhatsApp(idx);
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
   const followInstagram = () => {
-    window.open(IG_URL, "_blank", "noopener,noreferrer");
+    saveGateState({ sharedSlots, igFollowed: true, igTimechamberFollowed, gateState, descInvitacions });
     setIgFollowed(true);
     tracker.igFollowed();
+    window.open(IG_URL, "_blank", "noopener,noreferrer");
   };
   const followTimechamber = () => {
-    window.open(IG_TIMECHAMBER_URL, "_blank", "noopener,noreferrer");
+    saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed: true, gateState, descInvitacions });
     setIgTimechamberFollowed(true);
     tracker.igTimechamberFollowed();
+    window.open(IG_TIMECHAMBER_URL, "_blank", "noopener,noreferrer");
   };
   const unlockGate = () => {
     if (!canUnlockGate) return;
+    saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState: "unlocked", descInvitacions: true });
     setDescInvitacions(true);
     setGateState("unlocked");
     tracker.gateViralPassat(sharesDone);
     toast({ title: "🎉 10% de descompte desbloquejat!", description: "Continua omplint el formulari." });
   };
   const skipGate = () => {
+    saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState: "skipped", descInvitacions: false });
     setGateState("skipped");
+    setDescInvitacions(false);
     tracker.gateViralSkipped();
   };
 
