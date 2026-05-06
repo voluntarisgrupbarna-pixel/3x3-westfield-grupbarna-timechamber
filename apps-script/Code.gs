@@ -130,7 +130,7 @@ function toMailAppOpts_(opts) {
 function getAdminEmails_() {
   const csv = PROPS.getProperty('ADMIN_EMAILS')
     || PROPS.getProperty('ADMIN_EMAIL')
-    || 'voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info';
+    || 'anafernandezduran78@gmail.com,voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info';
   return String(csv).split(',').map(function(s) { return s.trim(); }).filter(Boolean);
 }
 
