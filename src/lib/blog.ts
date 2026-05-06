@@ -6,6 +6,7 @@ import { ComponentType } from "react";
 import PostComPreparar from "@/blog/post-com-preparar";
 import PostDiferencies from "@/blog/post-diferencies-3x3-5x5";
 import PostHistoria from "@/blog/post-historia-3x3-barcelona";
+import PostSeusComArribar from "@/blog/post-seus-com-arribar";
 
 export type BlogPost = {
   slug: string;
@@ -48,6 +49,16 @@ export const POSTS: BlogPost[] = [
     tags: ["3x3", "història", "barcelona", "olímpics", "streetball"],
     cover: "https://cbgrupbarna-3x3timechamber.com/og-image.png",
     Component: PostHistoria,
+  },
+  {
+    slug: "seus-3x3-westfield-glories-com-arribar",
+    title: "Les 3 seus del 3×3 Westfield Glòries 2026: com arribar i què fer al voltant",
+    excerpt: "Guia pràctica de les tres seus del torneig (Westfield Glòries · La Nau del Clot · Rambleta del Clot): metro, bus, bicing, parking, on menjar, on dormir si vens de fora i què fer a Barcelona entre partits.",
+    date: "2026-05-07",
+    readingMinutes: 11,
+    tags: ["3x3", "barcelona", "clot", "glòries", "transport", "guia visitant"],
+    cover: "https://cbgrupbarna-3x3timechamber.com/images/seu-westfield-glories.jpg",
+    Component: PostSeusComArribar,
   },
 ];
 
