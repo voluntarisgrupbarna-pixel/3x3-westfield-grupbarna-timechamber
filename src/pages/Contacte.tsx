@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
+import SEO from "@/components/SEO";
 
 /**
  * Landing simple "Contacta'ns per WhatsApp" pensada perquè el botó WhatsApp
@@ -20,7 +21,6 @@ export default function Contacte() {
   const [waOpen, setWaOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "Contacta'ns · CB Grup Barna · 3×3 Westfield Glòries";
     // Auto-obrir el modal a l'arribar (l'usuari ja ha clicat amb la intenció
     // de contactar; no cal una segona acció per obrir-lo).
     const t = setTimeout(() => setWaOpen(true), 250);
@@ -29,6 +29,11 @@ export default function Contacte() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden flex flex-col">
+      <SEO
+        title="Contacta'ns · CB Grup Barna · 3×3 Westfield Glòries"
+        description="Escriu-nos pel WhatsApp del club: 3×3 Westfield Glòries, Campus, Portes Obertes, premsa i col·laboracions. Resposta ràpida durant l'horari del club."
+        path="/contacte"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-green-950/20 via-slate-950 to-slate-950 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-[#25D366]/10 rounded-full blur-3xl pointer-events-none" />
 

@@ -1,7 +1,7 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trophy, Sun, DoorOpen, Mail, Instagram, ExternalLink } from "lucide-react";
+import SEO from "@/components/SEO";
 
 /**
  * Landing /hub — substitut de Linktree.
@@ -12,12 +12,13 @@ import { Trophy, Sun, DoorOpen, Mail, Instagram, ExternalLink } from "lucide-rea
  * traslladar-s'hi tal qual. Mentrestant viu sota el domini del 3x3.
  */
 export default function Hub() {
-  useEffect(() => {
-    document.title = "CB Grup Barna · Bàsquet al barri del Clot";
-  }, []);
-
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="CB Grup Barna · Bàsquet al barri del Clot"
+        description="Tots els enllaços del CB Grup Barna en un sol lloc: torneig 3×3 Time Chamber, Campus d'Estiu, Portes Obertes i contacte directe."
+        path="/hub"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/15 via-slate-950 to-orange-950/15 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-red-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />

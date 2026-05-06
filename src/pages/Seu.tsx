@@ -1,9 +1,9 @@
-import { useEffect } from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MapPin, Train, Bus, Bike, Car, Trophy, Calendar, Wrench, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getSeuBySlug, SEUS } from "@/lib/seus";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina dedicada a una seu del torneig (3 seus al barri del Clot-Glòries).
@@ -11,7 +11,7 @@ import { getSeuBySlug, SEUS } from "@/lib/seus";
  *
  * SEO:
  *  - Cada seu té URL pròpia → rànqueja per "torneig 3x3 + nom barri/seu"
- *  - JSON-LD Place injectat al document head per local SEO + Google Maps
+ *  - JSON-LD Place injectat per local SEO + Google Maps
  *  - Internal links creuats (entre seus + cap a /inscripcion)
  */
 
@@ -19,59 +19,59 @@ export default function Seu() {
   const { slug } = useParams<{ slug: string }>();
   const seu = getSeuBySlug(slug);
 
-  // SEO: actualitza title + description + JSON-LD per a la seu específica
-  useEffect(() => {
-    if (!seu) return;
-    const baseTitle = `${seu.nom} · Seu 3×3 Westfield Glòries 2026`;
-    document.title = baseTitle;
-    setMeta("description",
-      `${seu.nom} (${seu.tipus}) · ${seu.adreca}. Seu del torneig 3×3 Westfield Glòries 2026. Categories: ${seu.categories.join(", ")}. Com arribar amb metro ${seu.metro.linies.join("/")}, bus, tram. Parking proper.`);
-    setOg("og:title", baseTitle);
-    setOg("og:description", `${seu.tipus} · ${seu.adreca} · Categories: ${seu.categories.slice(0,3).join(", ")}…`);
-    setOg("og:url", `https://cbgrupbarna-3x3timechamber.com/seu/${seu.slug}`);
-
-    // JSON-LD Place schema (local SEO)
-    const placeJsonLd = {
-      "@context": "https://schema.org",
-      "@type": "SportsActivityLocation",
-      "name": seu.nom,
-      "description": seu.description,
-      "url": `https://cbgrupbarna-3x3timechamber.com/seu/${seu.slug}`,
-      "address": {
-        "@type": "PostalAddress",
-        "streetAddress": seu.adreca,
-        "addressLocality": "Barcelona",
-        "addressRegion": "Catalunya",
-        "postalCode": seu.codiPostal,
-        "addressCountry": "ES",
-      },
-      "geo": {
-        "@type": "GeoCoordinates",
-        "latitude": seu.coords.lat,
-        "longitude": seu.coords.lng,
-      },
-      "publicAccess": true,
-      "isAccessibleForFree": false,
-      "image": seu.heroImage,
-      "containedInPlace": {
-        "@type": "Place",
-        "name": "Districte de Sant Martí, Barcelona",
-      },
-    };
-    setJsonLd("seu-place", placeJsonLd);
-
-    return () => {
-      // Reverteix els overrides quan es desmunta (per si l'usuari navega a una altra ruta)
-      removeJsonLd("seu-place");
-    };
-  }, [seu]);
-
   if (!seu) return <Navigate to="/" replace />;
 
   const otherSeus = SEUS.filter(s => s.slug !== seu.slug);
+  const seuUrl = `https://cbgrupbarna-3x3timechamber.com/seu/${seu.slug}`;
+  const heroAbs = seu.heroImage.startsWith("http") ? seu.heroImage : `https://cbgrupbarna-3x3timechamber.com${seu.heroImage}`;
+
+  const placeJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "SportsActivityLocation",
+    "name": seu.nom,
+    "description": seu.description,
+    "url": seuUrl,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": seu.adreca,
+      "addressLocality": "Barcelona",
+      "addressRegion": "Catalunya",
+      "postalCode": seu.codiPostal,
+      "addressCountry": "ES",
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": seu.coords.lat,
+      "longitude": seu.coords.lng,
+    },
+    "publicAccess": true,
+    "isAccessibleForFree": false,
+    "image": heroAbs,
+    "containedInPlace": {
+      "@type": "Place",
+      "name": "Districte de Sant Martí, Barcelona",
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inici", "item": "https://cbgrupbarna-3x3timechamber.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Seus", "item": "https://cbgrupbarna-3x3timechamber.com/#seus" },
+      { "@type": "ListItem", "position": 3, "name": seu.nom, "item": seuUrl },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title={`${seu.nom} · Seu 3×3 Westfield Glòries 2026`}
+        description={`${seu.nom} (${seu.tipus}) · ${seu.adreca}. Seu del torneig 3×3 Westfield Glòries 2026. Categories: ${seu.categories.join(", ")}. Com arribar amb metro ${seu.metro.linies.join("/")}, bus, tram. Parking proper.`}
+        path={`/seu/${seu.slug}`}
+        ogImage={heroAbs}
+        jsonLd={[placeJsonLd, breadcrumbJsonLd]}
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/15 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}
@@ -254,29 +254,3 @@ function Transport({ icon: Icon, label, value }: { icon: any; label: string; val
   );
 }
 
-/* ─── DOM helpers per actualitzar SEO meta tags + JSON-LD a la pàgina ─── */
-
-function setMeta(name: string, content: string) {
-  let el = document.head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-  if (!el) { el = document.createElement("meta"); el.name = name; document.head.appendChild(el); }
-  el.content = content;
-}
-function setOg(property: string, content: string) {
-  let el = document.head.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
-  if (!el) { el = document.createElement("meta"); el.setAttribute("property", property); document.head.appendChild(el); }
-  el.content = content;
-}
-function setJsonLd(id: string, data: object) {
-  let el = document.head.querySelector(`script[data-jsonld="${id}"]`) as HTMLScriptElement | null;
-  if (!el) {
-    el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.setAttribute("data-jsonld", id);
-    document.head.appendChild(el);
-  }
-  el.textContent = JSON.stringify(data);
-}
-function removeJsonLd(id: string) {
-  const el = document.head.querySelector(`script[data-jsonld="${id}"]`);
-  if (el) el.remove();
-}

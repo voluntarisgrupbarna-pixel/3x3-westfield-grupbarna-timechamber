@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Download, Mail, Phone, Image as ImageIcon, FileText, Trophy, Calendar, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina /premsa — Press kit públic.
@@ -16,10 +17,14 @@ import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 export default function Premsa() {
   const [waOpen, setWaOpen] = useState(false);
-  useEffect(() => { document.title = "Press kit · 3×3 Westfield Glòries 2026"; }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Press kit · 3×3 Westfield Glòries 2026"
+        description="Kit de premsa del torneig 3×3 FIBA Barcelona: cartell oficial, logos, dossier, contacte i mètriques. CB Grup Barna · Time Chamber · Eix Clot."
+        path="/premsa"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-orange-950/15 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}

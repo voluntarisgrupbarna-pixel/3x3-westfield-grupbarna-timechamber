@@ -1,8 +1,8 @@
-import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Calendar, ArrowRight } from "lucide-react";
 import { POSTS } from "@/lib/blog";
+import SEO from "@/components/SEO";
 
 /**
  * /blog — Index de tots els articles. Seu SEO long-tail per intents informacionals.
@@ -10,13 +10,33 @@ import { POSTS } from "@/lib/blog";
  */
 
 export default function Blog() {
-  useEffect(() => {
-    document.title = "Blog · Articles 3×3 · CB Grup Barna · Time Chamber 2026";
-    setMeta("description", "Articles sobre bàsquet 3×3: regles oficials FIBA, com preparar el teu primer torneig i la història del 3×3 a Barcelona, dels carrers als Jocs Olímpics.");
-  }, []);
-
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Blog · Articles 3×3 · CB Grup Barna · Time Chamber 2026"
+        description="Articles sobre bàsquet 3×3: regles oficials FIBA, com preparar el teu primer torneig i la història del 3×3 a Barcelona, dels carrers als Jocs Olímpics."
+        path="/blog"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Blog",
+          "name": "Blog 3×3 Westfield Glòries",
+          "url": "https://cbgrupbarna-3x3timechamber.com/blog",
+          "publisher": {
+            "@type": "SportsOrganization",
+            "name": "CB Grup Barna",
+            "url": "https://cbgrupbarna-3x3timechamber.com/",
+            "logo": "https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-512.png",
+          },
+          "blogPost": POSTS.map(p => ({
+            "@type": "BlogPosting",
+            "headline": p.title,
+            "description": p.excerpt,
+            "url": `https://cbgrupbarna-3x3timechamber.com/blog/${p.slug}`,
+            "datePublished": p.date,
+            "image": p.cover,
+          })),
+        }}
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/15 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}
@@ -90,10 +110,4 @@ function formatDate(iso: string): string {
   const [y, m, d] = iso.split("-");
   const meses = ["", "Gen","Feb","Mar","Abr","Mai","Jun","Jul","Ago","Set","Oct","Nov","Des"];
   return `${parseInt(d, 10)} ${meses[parseInt(m, 10)]} ${y}`;
-}
-
-function setMeta(name: string, content: string) {
-  let el = document.head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-  if (!el) { el = document.createElement("meta"); el.name = name; document.head.appendChild(el); }
-  el.content = content;
 }

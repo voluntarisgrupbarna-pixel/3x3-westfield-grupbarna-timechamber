@@ -109,7 +109,6 @@ export default function Preguntes() {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const [waOpen, setWaOpen] = useState(false);
 
-  useEffect(() => { document.title = "Preguntes freqüents · 3×3 Westfield Glòries 2026"; }, []);
 
   const filtered = FAQS.filter(({ q, a, tags }) => {
     if (!search.trim()) return true;

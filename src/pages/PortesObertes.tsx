@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MessageCircle, Sparkles, Calendar, MapPin, Users, Heart } from "lucide-react";
 import WhatsAppLeadForm, { type LeadIntent, type LeadQuestion } from "@/components/WhatsAppLeadForm";
+import SEO from "@/components/SEO";
 
 /**
  * Landing /portes-obertes — Sessions de prova del CB Grup Barna.
@@ -19,12 +20,13 @@ const PO_QUESTIONS: LeadQuestion[] = [
 export default function PortesObertes() {
   const [openIntent, setOpenIntent] = useState<LeadIntent | null>(null);
 
-  useEffect(() => {
-    document.title = "Portes Obertes · CB Grup Barna · Bàsquet al Clot";
-  }, []);
-
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Portes Obertes · CB Grup Barna · Bàsquet al Clot"
+        description="Sessions de prova gratuïtes per als equips federats del CB Grup Barna. Bàsquet base al barri del Clot, Barcelona. Reserva pel WhatsApp."
+        path="/portes-obertes"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-slate-950 to-slate-950 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-red-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-rose-700/10 rounded-full blur-3xl pointer-events-none" />

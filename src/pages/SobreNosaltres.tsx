@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Trophy, Users, Heart, Calendar, MapPin, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina /sobre-nosaltres — Història del club + organitzadors del torneig.
@@ -13,10 +14,14 @@ import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 
 export default function SobreNosaltres() {
   const [waOpen, setWaOpen] = useState(false);
-  useEffect(() => { document.title = "Qui som · CB Grup Barna · 3×3 Westfield Glòries 2026"; }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Qui som · CB Grup Barna · 3×3 Westfield Glòries 2026"
+        description="CB Grup Barna, Time Chamber i Eix Clot: qui hi ha darrere del torneig 3×3 FIBA Barcelona. Història del club, valors i equip organitzador."
+        path="/sobre-nosaltres"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/20 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}

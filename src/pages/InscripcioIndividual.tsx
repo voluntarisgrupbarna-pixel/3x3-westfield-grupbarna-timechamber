@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { QRCodeSVG } from "qrcode.react";
 import { tracker } from "@/lib/track";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina d'inscripció INDIVIDUAL.
@@ -56,7 +57,6 @@ function buildEpcQr(amount: number, concepte: string): string {
 
 export default function InscripcioIndividual() {
   useEffect(() => {
-    document.title = "Inscripció individual · 20€ · 3×3 Westfield Glòries 2026";
     tracker.inscripcioIniciada();
   }, []);
 
@@ -208,6 +208,11 @@ export default function InscripcioIndividual() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Inscripció individual · 20€ · 3×3 Westfield Glòries 2026"
+        description="No tens equip? Apunta't sol al torneig 3×3 FIBA Barcelona per 20€. Et trobem equip o el muntem amb altres jugadors individuals. 6-7 juny 2026."
+        path="/inscripcio-individual"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/15 via-slate-950 to-slate-950 pointer-events-none"/>
 
       {/* Header */}

@@ -1,69 +1,81 @@
-import { useEffect } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Clock, Calendar, ArrowRight, Tag } from "lucide-react";
 import { getPostBySlug, POSTS } from "@/lib/blog";
+import SEO from "@/components/SEO";
 
 /**
  * /blog/:slug — Pàgina d'article individual.
- * Renderitza el component associat al slug, injecta JSON-LD Article + meta tags
- * dinàmicament al <head>.
+ * Renderitza el component associat al slug i injecta SEO + JSON-LD Article.
  */
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const post = getPostBySlug(slug);
 
-  useEffect(() => {
-    if (!post) return;
-    document.title = `${post.title} · Blog 3×3 Westfield Glòries`;
-    setMeta("description", post.excerpt);
-    setOg("og:type", "article");
-    setOg("og:title", post.title);
-    setOg("og:description", post.excerpt);
-    setOg("og:url", `https://cbgrupbarna-3x3timechamber.com/blog/${post.slug}`);
-    setOg("og:image", post.cover);
-    setOg("article:published_time", new Date(post.date).toISOString());
-    setOg("article:author", "CB Grup Barna · Time Chamber");
-
-    setJsonLd("blog-article", {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": `https://cbgrupbarna-3x3timechamber.com/blog/${post.slug}`,
-      },
-      "headline": post.title,
-      "description": post.excerpt,
-      "image": post.cover,
-      "datePublished": post.date,
-      "dateModified": post.date,
-      "author": {
-        "@type": "Organization",
-        "name": "CB Grup Barna",
-        "url": "https://cbgrupbarna-3x3timechamber.com/sobre-nosaltres",
-      },
-      "publisher": {
-        "@type": "SportsOrganization",
-        "name": "CB Grup Barna · Time Chamber · Eix Clot",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://cbgrupbarna-3x3timechamber.com/og-image.png",
-        },
-      },
-      "keywords": post.tags.join(", "),
-    });
-
-    return () => removeJsonLd("blog-article");
-  }, [post]);
-
   if (!post) return <Navigate to="/blog" replace />;
 
   const Article = post.Component;
   const others = POSTS.filter(p => p.slug !== post.slug);
+  const postUrl = `https://cbgrupbarna-3x3timechamber.com/blog/${post.slug}`;
+  const coverAbs = post.cover.startsWith("http") ? post.cover : `https://cbgrupbarna-3x3timechamber.com${post.cover}`;
+  const publishedISO = new Date(post.date).toISOString();
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+    "headline": post.title,
+    "description": post.excerpt,
+    "image": coverAbs,
+    "datePublished": post.date,
+    "dateModified": post.date,
+    "author": {
+      "@type": "Organization",
+      "name": "CB Grup Barna",
+      "url": "https://cbgrupbarna-3x3timechamber.com/sobre-nosaltres",
+    },
+    "publisher": {
+      "@type": "SportsOrganization",
+      "name": "CB Grup Barna · Time Chamber · Eix Clot",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-512.png",
+      },
+    },
+    "keywords": post.tags.join(", "),
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Inici", "item": "https://cbgrupbarna-3x3timechamber.com/" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://cbgrupbarna-3x3timechamber.com/blog" },
+      { "@type": "ListItem", "position": 3, "name": post.title, "item": postUrl },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title={`${post.title} · Blog 3×3 Westfield Glòries`}
+        description={post.excerpt}
+        path={`/blog/${post.slug}`}
+        ogImage={coverAbs}
+        ogType="article"
+        articleMeta={{
+          publishedTime: publishedISO,
+          modifiedTime: publishedISO,
+          author: "CB Grup Barna · Time Chamber",
+          section: "Bàsquet 3×3",
+          tags: post.tags,
+        }}
+        jsonLd={[articleJsonLd, breadcrumbJsonLd]}
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/10 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}
@@ -136,29 +148,4 @@ function formatDate(iso: string): string {
   const [y, m, d] = iso.split("-");
   const meses = ["", "Gener","Febrer","Març","Abril","Maig","Juny","Juliol","Agost","Setembre","Octubre","Novembre","Desembre"];
   return `${parseInt(d, 10)} ${meses[parseInt(m, 10)]} ${y}`;
-}
-
-function setMeta(name: string, content: string) {
-  let el = document.head.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
-  if (!el) { el = document.createElement("meta"); el.name = name; document.head.appendChild(el); }
-  el.content = content;
-}
-function setOg(property: string, content: string) {
-  let el = document.head.querySelector(`meta[property="${property}"]`) as HTMLMetaElement | null;
-  if (!el) { el = document.createElement("meta"); el.setAttribute("property", property); document.head.appendChild(el); }
-  el.content = content;
-}
-function setJsonLd(id: string, data: object) {
-  let el = document.head.querySelector(`script[data-jsonld="${id}"]`) as HTMLScriptElement | null;
-  if (!el) {
-    el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.setAttribute("data-jsonld", id);
-    document.head.appendChild(el);
-  }
-  el.textContent = JSON.stringify(data);
-}
-function removeJsonLd(id: string) {
-  const el = document.head.querySelector(`script[data-jsonld="${id}"]`);
-  if (el) el.remove();
 }

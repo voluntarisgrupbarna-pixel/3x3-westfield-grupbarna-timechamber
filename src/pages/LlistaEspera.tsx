@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, AlertTriangle, Check, Loader2, Mail, Phone, User, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tracker } from "@/lib/track";
 import { CAT_NAMES as CATS } from "@/lib/categories";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina de llista d'espera.
@@ -16,8 +17,6 @@ import { CAT_NAMES as CATS } from "@/lib/categories";
 const GOOGLE_WEBHOOK = (import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK as string | undefined) || "";
 
 export default function LlistaEspera() {
-  useEffect(() => { document.title = "Llista d'espera · 3×3 Westfield Glòries 2026"; }, []);
-
   const [form, setForm] = useState({
     nomEquip: "", capita: "", categoria: "", email: "", telefon: "", poblacio: "",
   });
@@ -89,6 +88,11 @@ export default function LlistaEspera() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Llista d'espera · 3×3 Westfield Glòries 2026"
+        description="Apunta't a la llista d'espera del torneig 3×3 FIBA Barcelona. Si una categoria es plena, t'avisem si s'allibera plaça. 6-7 juny 2026 al Clot-Glòries."
+        path="/llista-espera"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/15 via-slate-950 to-slate-950 pointer-events-none" />
 
       {/* Header */}

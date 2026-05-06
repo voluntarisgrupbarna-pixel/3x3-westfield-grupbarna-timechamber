@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Trophy, User, MapPin, Calendar, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tracker } from "@/lib/track";
+import SEO from "@/components/SEO";
 
 /* ─── Page d'equip · llegeix params de la URL ───
    Format URL: /equip?nom=Barcelona+Ballers&cap=Joan+Garcia&cat=Senior+Pro+Masculí
@@ -59,6 +60,13 @@ export default function Equip() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title={`${nom} · 3×3 Westfield Glòries 2026`}
+        description={`${nom} (${cat}) participa al torneig 3×3 FIBA Barcelona, 6-7 juny 2026. Comparteix l'equip i porta-hi els teus per animar al Clot-Glòries.`}
+        path="/equip"
+        ogType="article"
+        noindex
+      />
       {/* Background ambient */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-slate-950 to-slate-950 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-red-600/15 rounded-full blur-3xl pointer-events-none" />

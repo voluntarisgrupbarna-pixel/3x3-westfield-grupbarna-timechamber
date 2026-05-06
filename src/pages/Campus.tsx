@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, MessageCircle, Sparkles, Calendar, Users, Trophy, Heart, Check } from "lucide-react";
 import WhatsAppLeadForm, { type LeadIntent, type LeadQuestion } from "@/components/WhatsAppLeadForm";
+import SEO from "@/components/SEO";
 
 /**
  * Landing /campus — Campus d'Estiu Time Chamber 2026.
@@ -24,12 +25,13 @@ const CAMPUS_QUESTIONS: LeadQuestion[] = [
 export default function Campus() {
   const [openIntent, setOpenIntent] = useState<LeadIntent | null>(null);
 
-  useEffect(() => {
-    document.title = "Campus d'Estiu · CB Grup Barna · Time Chamber 2026";
-  }, []);
-
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Campus d'Estiu · CB Grup Barna · Time Chamber 2026"
+        description="Campus d'estiu de bàsquet del CB Grup Barna a Barcelona: tecnificació, joc, valors. Setmanes flexibles, prova gratuïta. Apunta't pel WhatsApp."
+        path="/campus"
+      />
       <div className="absolute inset-0 bg-gradient-to-br from-orange-950/30 via-slate-950 to-slate-950 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-orange-500/15 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-[24rem] h-[24rem] bg-amber-600/10 rounded-full blur-3xl pointer-events-none" />

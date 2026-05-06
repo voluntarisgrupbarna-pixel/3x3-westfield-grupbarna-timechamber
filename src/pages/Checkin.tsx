@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Check, MapPin, Phone, Mail, User, Users, Calendar, Trophy, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { tracker } from "@/lib/track";
+import SEO from "@/components/SEO";
 
 /**
  * Pàgina de check-in del torneig.
@@ -85,6 +86,12 @@ export default function Checkin() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white relative overflow-hidden">
+      <SEO
+        title="Check-in · 3×3 Westfield Glòries 2026"
+        description="Pàgina de check-in per QR a l'arribada al torneig."
+        path="/checkin"
+        noindex
+      />
       {/* Background ambient */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-950/30 via-slate-950 to-slate-950 pointer-events-none" />
       <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-red-600/15 rounded-full blur-3xl pointer-events-none" />
