@@ -174,3 +174,51 @@ Quan estiguin les 2 Script Properties, **TOTS** els emails del backend van via R
 ## Suport
 
 Si algun pas no funciona, fes una captura del que veus i envia-me-la — soluciono al següent torn. **No avancis amb workarounds** que puguin trencar producció (per exemple: NO modifiquis manualment URLs de webhook si no et dic com).
+
+---
+
+## Pre-llançament 2026 — Bateria de proves del formulari (2026-05-07)
+
+Cal completar TOT el següent abans d'obrir inscripcions al públic. Marca cada test quan passi en local (`npm run dev`). Si algun falla → fix → re-test.
+
+### Validacions (Pas 1-3)
+
+- [ ] **T01** Pas 1: deixa el nom d'equip buit i prem "Següent" → ha d'aparèixer "El nom de l'equip ha de tenir almenys 2 caràcters".
+- [ ] **T02** Pas 1: tria mida d'equip de 4 → l'array de jugadors al pas 3 mostra exactament 3 (capità + 3). Tria 5 → mostra 4.
+- [ ] **T03** Pas 2: introdueix data de naixement < 18 anys com a capità → apareixen els camps obligatoris de tutor.
+- [ ] **T04** Pas 3: deixa la talla del jugador 2 buida i avança → error "Selecciona talla".
+
+### Gate viral (resilient)
+
+- [ ] **T05** Al gate, clica "Compartir per WhatsApp" → s'obre wa.me en pestanya nova → torna a la pestanya original → mostra "✓ Compartit" persistit.
+- [ ] **T05b** Tanca la pestanya completament després de compartir (Cmd+W) → torna a obrir `/inscripcion` → el progrés del gate segueix desat (gràcies a localStorage `3x3_gate_state_v1`).
+- [ ] **T06** Clica el botó "**No vull descompte — continuar al preu complet**" → entres directament al formulari, `descInvitacions=false`, `gateState=skipped`.
+
+### Pas 4 — Pagament + samarretes extra
+
+- [ ] **T07** Afegeix 3 samarretes addicionals (talles M/L/XL) → el total puja exactament `base + 75€`. Els descomptes s'apliquen només sobre `base`.
+- [ ] **T08** Codi `3X3AVIAT` + 5 amics + IG → veuràs `-5%` i `-10%` (sobre quota base; ordre: base − 5% − 10% + extras).
+- [ ] **T09** Adjunta un PDF de 9 MB → toast "Justificant massa gran". Mai s'envia.
+- [ ] **T10** Adjunta un PDF de 2 MB → es codifica a base64 i s'envia al webhook (Apps Script el puja a Drive).
+
+### Pas 5 — Bases / cancel·lació
+
+- [ ] **T11** Deixa `acceptaCancellacio` desmarcat i prem "Enviar Inscripció" → error "Has d'acceptar la política de cancel·lació".
+
+### Submit + backend
+
+- [ ] **T12** Submit complet → el webhook rep payload amb `samarretesExtra: [...]`, `total`, `concepte: "3X3+TEST_TEAM"`. Comprova al Sheet "Inscripcions 2026" que les noves columnes "Samarretes extra", "Talles extra" i "Pagament estat" s'omplen.
+
+### QR check-in (post-submit)
+
+- [ ] **T13** Escaneja el QR descarregat → la URL `/checkin?...` inclou `talles=M-L-XL-S|XL-XL`, `extras=2`, `total=140.00`, `pag=pendent`.
+
+### QR EPC (transferència)
+
+- [ ] **T14** Escaneja el QR del pagament amb una app de banc real → preomplena IBAN `ES2501821797300203878558`, import correcte i concepte `3X3+TEST_TEAM`.
+
+### Mobile
+
+- [ ] **T15** DevTools → 375×667 (iPhone SE) → tot el formulari accessible sense overflow horitzontal. Botons del gate full-width. Resum del pas 5 sense scroll estrany.
+
+Quan tots 15 estan verds → `git push origin main` → CI desplega → hard-reload (`Cmd+Shift+R`) cbgrupbarna-3x3timechamber.com per verificar producció.

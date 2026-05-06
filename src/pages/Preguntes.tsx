@@ -94,8 +94,13 @@ const FAQS: FAQ[] = [
   },
   {
     q: "Si vaig com a individual i no m'agrada l'equip que m'assignen, què passa?",
-    a: "Et trucarem 1 setmana abans del torneig per confirmar-te els companys d'equip. Si per algun motiu no t'agrada o tens incompatibilitats, ens ho fas saber i intentarem reorganitzar. Si finalment no pots venir, retornem el 50% dels 20€ si avises 72h abans (en cas contrari els 20€ es queden com a despeses de gestió/samarreta encarregada).",
+    a: "Et trucarem 1 setmana abans del torneig per confirmar-te els companys d'equip. Si per algun motiu no t'agrada o tens incompatibilitats, ens ho fas saber i intentarem reorganitzar. Important: una vegada confirmada la inscripció no es pot cancel·lar i no es retorna l'import; conserves la samarreta com a única compensació.",
     tags: ["individual", "cancel·lació", "reembossament"],
+  },
+  {
+    q: "Si un jugador del meu equip es lesiona o no pot venir, em retorneu part del preu?",
+    a: "No. Una vegada confirmada la inscripció no és cancel·lable i no es retorna ni es prorrateja cap import. L'equip continua jugant amb la resta de jugadors i el lesionat conserva la samarreta com a única compensació. Aquesta política és la que ens permet mantenir els preus baixos i tenir el material preparat per a tots els equips inscrits.",
+    tags: ["equip", "cancel·lació", "lesió", "reembossament"],
   },
   {
     q: "Es pot fer una inscripció individual i pagar el dia del torneig?",
