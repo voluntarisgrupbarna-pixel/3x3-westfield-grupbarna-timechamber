@@ -12,6 +12,10 @@
   "categories": ["sports", "lifestyle", "events"],
   "icons": [
     { "src": "/favicon.ico", "sizes": "48x48 64x64 96x96", "type": "image/x-icon" },
+    { "src": "/cb-grup-barna-logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/cb-grup-barna-logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/cb-grup-barna-logo-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/cb-grup-barna-logo-1024.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
     { "src": "/og-image.png", "sizes": "1200x630", "type": "image/png", "purpose": "any" }
   ],
   "shortcuts": [
@@ -19,6 +23,16 @@
       "name": "Inscriu el teu equip",
       "url": "/inscripcion",
       "description": "Inscripció ràpida al torneig 3×3 Westfield Glòries 2026"
+    },
+    {
+      "name": "Inscripció individual",
+      "url": "/inscripcio-individual",
+      "description": "Inscripció sense equip — el club t'assigna a un equip"
+    },
+    {
+      "name": "Preguntes freqüents",
+      "url": "/preguntes-frequents",
+      "description": "Resposta a les 15 preguntes més comunes"
     }
   ]
 }
