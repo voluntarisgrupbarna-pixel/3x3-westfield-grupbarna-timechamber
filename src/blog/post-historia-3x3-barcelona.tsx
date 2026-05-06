@@ -95,7 +95,7 @@ export default function PostHistoria() {
         El nostre torneig va néixer el <strong>2024</strong> com una iniciativa modesta del CB Grup Barna i del centre comercial Westfield Glòries per donar visibilitat al 3×3 al barri. La primera edició va tenir 24 equips. La segona, 35. La tercera (2026 és la 4ª), 65.
       </p>
       <p>
-        El 2026 obrim a <strong>100 equips</strong>, distribuïts en <strong>10 categories</strong> des d'<em>Escola</em> fins a <em>Veterans (+35)</em>, més la categoria inclusiva <strong>Màgics</strong>. La categoria Sèniors té punts FIBA 3×3 oficials. El prize money és de 4.400€ totals (1.000€ per cada categoria Sènior + 200€ Veterans M/F).
+        El 2026 obrim a <strong>100 equips</strong>, distribuïts en <strong>10 categories</strong> des d'<em>Escola</em> fins a <em>Veterans (+35)</em>, més la categoria inclusiva <strong>Màgics</strong>. La categoria Sèniors té punts FIBA 3×3 oficials. El prize money és de 2.400€ totals (1.000€ Sèniors Masculí + 1.000€ Sèniors Femení + 200€ Veterans Masculí + 200€ Veterans Femení).
       </p>
       <p>
         És una passa més cap a un objectiu: que <strong>Barcelona sigui reconeguda com a capital mediterrània del 3×3</strong>. Tenim el clima, les pistes, el talent i la cultura urbana. Falta consolidar la presència en el calendari mundial.

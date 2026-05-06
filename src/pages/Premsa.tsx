@@ -52,7 +52,7 @@ export default function Premsa() {
             <li>📅 <strong className="text-white">6 i 7 de juny de 2026</strong> · 4ª edició anual del torneig.</li>
             <li>📍 <strong className="text-white">3 seus al barri del Clot-Glòries de Barcelona</strong>: Westfield Glòries (FIBA), La Nau del Clot (formatives), Rambleta del Clot (Open Day).</li>
             <li>🏀 <strong className="text-white">100 equips · 10 categories</strong>: Escola, Premini, Mini, Preinfantil, Infantil, Cadet, Junior, Sèniors, Veterans, Màgics (inclusiva).</li>
-            <li>💰 <strong className="text-white">4.400 € de prize money</strong>: 1.000€ per cada categoria Sèniors (A·M, A·F, B·M, B·F) + 200€ Veterans M/F.</li>
+            <li>💰 <strong className="text-white">2.400 € de prize money</strong>: 1.000€ Sèniors Masculí + 1.000€ Sèniors Femení + 200€ Veterans Masculí + 200€ Veterans Femení.</li>
             <li>⭐ Punts FIBA 3×3 oficials a la categoria Sèniors.</li>
             <li>🏢 Organitzat per <Link to="/sobre-nosaltres" className="text-orange-300 hover:underline">CB Grup Barna · Time Chamber · Eix Clot</Link>.</li>
             <li>🎯 Inscripcions: <strong className="text-white">75-105€/equip</strong> + opció individual <strong className="text-white">20€</strong> (assignació automàtica a equip).</li>

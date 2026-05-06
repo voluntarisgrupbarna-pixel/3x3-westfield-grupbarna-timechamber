@@ -144,7 +144,8 @@ function EquipsBadge() {
     );
   }
   const ple = isFullyBooked(count, capacity);
-  const pctLabel = capacity ? ` · ${Math.min(100, Math.round((count / capacity) * 100))}%` : "";
+  // Llançament: % fix a INSCRIPTIONS_PCT (20%) per evitar mostrar valors alts a la fase d'arrencada.
+  const pctLabel = ` · ${INSCRIPTIONS_PCT}%`;
   if (ple) {
     return (
       <Link to="/llista-espera">
@@ -166,7 +167,8 @@ function EquipsBadge() {
 function EquipsProgress() {
   const { count, capacity, loaded } = useEquipsInscrits();
   const hasLive = loaded && capacity != null;
-  const pct = hasLive ? Math.min(100, Math.round((count / capacity!) * 100)) : INSCRIPTIONS_PCT;
+  // Llançament: % fix a INSCRIPTIONS_PCT (20%) — la fase inicial mostra "només queda el 80%".
+  const pct = INSCRIPTIONS_PCT;
   const titol = hasLive ? `${count} equips inscrits de ${capacity}` : "Places ocupades";
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
@@ -432,8 +434,7 @@ const fadeUp = {
 };
 
 const categories = [
-  { name: "SENIOR A · PRO", gender: "♂ ♀", desc: "Prize Money 1.000€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)" },
-  { name: "SENIOR B · AMATEUR", gender: "♂ ♀", desc: "Prize Money 1.000€ · Per a tots els nivells", color: "from-amber-500/15 to-yellow-500/10", badge: "OBERT", price: "70€ (4 jug.)" },
+  { name: "SÈNIORS", gender: "♂ ♀", desc: "Prize Money 1.000€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)" },
   { name: "VETERANS", gender: "♂ ♀", desc: "Prize Money 200€ · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "70€ (4 jug.)" },
   { name: "EQUALS · INCLUSIVA", gender: "♂ ♀", desc: "Specials i jugadors sense discapacitat compartint pista. NOVETAT 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "NOU 2026", price: "70€ (4 jug.)" },
   { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "70€ (4 jug.)" },
@@ -443,16 +444,14 @@ const categories = [
 ];
 
 /* Premi econòmic per categoria — només pel 1r classificat. 2n: copa. 3r: medalles.
-   Total Prize Money 2026: 4.400€ */
+   Total Prize Money 2026: 2.400€ */
 const prizes = [
-  { cat: "Senior A · Femení",   amount: "1.000€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
-  { cat: "Senior A · Masculí",  amount: "1.000€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
-  { cat: "Senior B · Femení",   amount: "1.000€", color: "from-amber-500/15 to-yellow-500/10 border-amber-400/40",   featured: false },
-  { cat: "Senior B · Masculí",  amount: "1.000€", color: "from-amber-500/15 to-yellow-500/10 border-amber-400/40",   featured: false },
-  { cat: "Veterans · Femení",   amount: "200€",   color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
-  { cat: "Veterans · Masculí",  amount: "200€",   color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
+  { cat: "Sèniors · Femení",   amount: "1.000€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
+  { cat: "Sèniors · Masculí",  amount: "1.000€", color: "from-red-500/25 to-orange-500/15 border-red-400/50",       featured: true },
+  { cat: "Veterans · Femení",  amount: "200€",   color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
+  { cat: "Veterans · Masculí", amount: "200€",   color: "from-slate-400/15 to-slate-500/10 border-slate-300/30",    featured: false },
 ];
-const PRIZE_MONEY_TOTAL = "4.400€";
+const PRIZE_MONEY_TOTAL = "2.400€";
 
 const rules = [
   { icon: "🏀", title: "Mitja pista", desc: "Pista de 15×11 m amb un sol aro" },
@@ -1007,11 +1006,11 @@ export default function Home() {
               <span className="text-2xl font-black font-mono text-white">{PRIZE_MONEY_TOTAL}</span>
             </div>
             <p className="text-white/40 text-sm mt-4 max-w-xl mx-auto">
-              Repartit en 6 categories. Premi econòmic <strong className="text-white/70">només pel 1r classificat</strong> de cada categoria.
+              Repartit en 4 categories (Sèniors M/F · Veterans M/F). Premi econòmic <strong className="text-white/70">només pel 1r classificat</strong> de cada categoria.
             </p>
           </motion.div>
 
-          {/* Grid 6 categories */}
+          {/* Grid 4 categories */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-5xl mx-auto mb-10">
             {prizes.map((prize, i) => (
               <motion.div
