@@ -29,6 +29,67 @@
 
 const PROPS = PropertiesService.getScriptProperties();
 const FILLOUT_BASE = 'https://api.fillout.com/v1/api';
+const RESEND_BASE = 'https://api.resend.com/emails';
+
+/**
+ * Wrapper d'enviament d'email. Si hi ha RESEND_API_KEY i RESEND_FROM
+ * configurats com a Script Properties, envia via Resend (millor deliverability,
+ * no va a spam, supporta domini propi). Si no, fallback a MailApp.
+ *
+ * Accepta el mateix format que MailApp.sendEmail({to, subject, htmlBody, attachments, inlineImages}).
+ * `inlineImages` (Blob amb cid) només funciona via MailApp; via Resend els
+ * adjunts es passen com a attachments base64.
+ */
+function sendMail_(opts) {
+  const apiKey = PROPS.getProperty('RESEND_API_KEY');
+  const from = PROPS.getProperty('RESEND_FROM'); // ex: "3x3 Westfield Glòries <noreply@grupbarna.info>"
+  const useResend = apiKey && from;
+
+  if (!useResend) {
+    // Fallback: MailApp (comportament històric)
+    return MailApp.sendEmail(opts);
+  }
+
+  // Build Resend payload
+  const payload = {
+    from: from,
+    to: Array.isArray(opts.to) ? opts.to : [opts.to],
+    subject: opts.subject || '',
+    html: opts.htmlBody || opts.body || '',
+  };
+  if (opts.replyTo) payload.reply_to = opts.replyTo;
+  if (opts.bcc) payload.bcc = Array.isArray(opts.bcc) ? opts.bcc : [opts.bcc];
+  if (opts.cc) payload.cc = Array.isArray(opts.cc) ? opts.cc : [opts.cc];
+
+  // Attachments (Blobs) → base64
+  if (opts.attachments && opts.attachments.length) {
+    payload.attachments = opts.attachments.map(function(blob) {
+      return {
+        filename: blob.getName ? blob.getName() : 'attachment',
+        content: Utilities.base64Encode(blob.getBytes()),
+      };
+    });
+  }
+
+  try {
+    const resp = UrlFetchApp.fetch(RESEND_BASE, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'Authorization': 'Bearer ' + apiKey },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    });
+    const code = resp.getResponseCode();
+    if (code >= 200 && code < 300) {
+      return; // èxit
+    }
+    Logger.log('Resend error ' + code + ': ' + resp.getContentText() + ' — fallback a MailApp');
+  } catch (err) {
+    Logger.log('Resend exception: ' + err + ' — fallback a MailApp');
+  }
+  // Si Resend falla, fallback a MailApp per no perdre l'email
+  return MailApp.sendEmail(opts);
+}
 
 function getSheet_() {
   const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
@@ -479,7 +540,7 @@ function addWhatsAppLead_(data) {
       .filter(function(k) { return data[k]; })
       .map(function(k) { return '<tr><td><strong>' + k + '</strong></td><td>' + data[k] + '</td></tr>'; })
       .join('');
-    MailApp.sendEmail({
+    sendMail_({
       to: admin,
       subject: '💬 Nou lead WhatsApp · ' + eventLabel + subjectIntent + ' · ' + (phoneClean || 'sense tel'),
       htmlBody: '<h3>Nou contacte per WhatsApp</h3>'
@@ -570,7 +631,7 @@ function addBlogSubscriber_(data) {
 
   // 3) Email confirmació al subscriptor
   try {
-    MailApp.sendEmail({
+    sendMail_({
       to: data.email,
       subject: '✓ Estàs subscrit/a al blog del 3×3 Westfield Glòries',
       htmlBody: '<h2 style="color:#dc2626">Benvingut/da al blog!</h2>'
@@ -623,7 +684,7 @@ function addToWaitlist_(data) {
   // Email a l'usuari
   if (data.email) {
     try {
-      MailApp.sendEmail({
+      sendMail_({
         to: data.email,
         subject: '📋 Estàs a la llista d\'espera · 3×3 Westfield Glòries 2026',
         htmlBody: '<h2 style="color:#f97316">📋 Llista d\'espera confirmada</h2>'
@@ -639,7 +700,7 @@ function addToWaitlist_(data) {
   // Alerta a admin
   const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
   try {
-    MailApp.sendEmail({
+    sendMail_({
       to: admin,
       subject: '📋 Llista d\'espera: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
       htmlBody: '<h3>Nou apunt a la llista d\'espera</h3>'
@@ -785,9 +846,7 @@ function sendEmails_(data, justificantUpload) {
   // Email al capità
   if (data.email) {
     try {
-      const opts = { htmlBody: buildEmailCapita_(data) };
-      if (qrBlob) opts.inlineImages = { checkinQr: qrBlob };
-      MailApp.sendEmail({
+      sendMail_({
         to: data.email,
         subject: '✅ Inscripció rebuda · 3×3 Westfield Glòries 2026',
         htmlBody: buildEmailCapita_(data),
@@ -800,7 +859,7 @@ function sendEmails_(data, justificantUpload) {
   // Email a admin
   const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
   try {
-    MailApp.sendEmail({
+    sendMail_({
       to: admin,
       subject: '📩 Nova inscripció: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
       htmlBody: buildEmailAdmin_(data, formatJugadors_(data), justificantUpload),

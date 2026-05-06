@@ -64,7 +64,7 @@ function sendT7Reminders() {
   Logger.log('Sending T-7 to ' + captains.length + ' captains');
   captains.forEach(c => {
     try {
-      MailApp.sendEmail({
+      sendMail_({
         to: c.email,
         subject: '🏀 Falta 1 setmana per al 3×3 Westfield Glòries 2026',
         htmlBody: _emailT7_(c),
@@ -105,7 +105,7 @@ function sendT1Reminders() {
   const captains = _getCaptains_();
   captains.forEach(c => {
     try {
-      MailApp.sendEmail({
+      sendMail_({
         to: c.email,
         subject: '⏰ Demà comença el 3×3 Westfield Glòries 2026',
         htmlBody: _emailT1_(c),
@@ -157,7 +157,7 @@ function notifyAllSubscribers(post) {
 
   subs.forEach(function(s) {
     try {
-      MailApp.sendEmail({
+      sendMail_({
         to: s.email,
         subject: '📰 Nou article: ' + post.title,
         htmlBody: '<h2 style="color:#dc2626">📰 Nou article al blog</h2>'
@@ -203,7 +203,7 @@ function sendPostEventEmails() {
   const captains = _getCaptains_();
   captains.forEach(c => {
     try {
-      MailApp.sendEmail({
+      sendMail_({
         to: c.email,
         subject: '🙌 Gràcies per jugar! · Comparteix la teva experiència 3×3',
         htmlBody: _emailPostEvent_(c),

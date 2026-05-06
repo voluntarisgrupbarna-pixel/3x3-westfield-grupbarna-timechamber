@@ -71,13 +71,31 @@ Aquesta és la llista de **passos manuals** que NO es poden automatitzar (requer
 
 ---
 
-## 4. Google Business Profile · CB Grup Barna
+## 4. Google Business Profile · CB Grup Barna · ✅ JA TENS COMPTE
 
-**Per què cal:** Si la gent busca "CB Grup Barna" o "3×3 Barcelona" a Google, sortim al panell lateral amb fotos, horaris i ressenyes. Ranquejarem millor en local SEO i tindrem llistat directe a Maps.
+> Tens compte actiu. Toca **publicar contingut** + **completar fitxa**. Veure document separat amb 5 posts ready-to-paste i optimitzacions de fitxa: **`GOOGLE-BUSINESS-POSTS.md`** al root del repo.
 
-> No puc crear comptes per tu (regla de seguretat). Els passos manuals duren ~10 min.
+### Passos ràpids
 
-### Passos
+- [x] Crear compte ✅
+- [ ] Publicar Post #1 "Inscripcions obertes" (avui)
+- [ ] Programar Posts #2, #3, #4, #5 (Calendar a la mà — té sentit fer-ho ara mateix)
+- [ ] Pegar la descripció del negoci de 750 chars
+- [ ] Pujar les 8 fotos de `/public/images/`
+- [ ] Crear les 5 Q&A predefinides per al SEO
+
+> Veure GOOGLE-BUSINESS-POSTS.md per al text exacte de tot.
+
+---
+
+## ARXIU · Steps originals (per història)
+
+### Crear el compte (ja fet)
+
+- [x] Ja completat — Ana té el compte actiu.
+
+<details>
+<summary>Steps originals (collapsable, per referència)</summary>
 
 - [ ] Ves a https://www.google.com/business amb el compte Gmail del club.
 - [ ] **Manage now** → cerca "CB Grup Barna" (per veure si ja existeix). Si no, **Add your business to Google**.
@@ -98,6 +116,25 @@ Aquesta és la llista de **passos manuals** que NO es poden automatitzar (requer
   ```
 - [ ] **Verificació:** Google enviarà una postal o un PIN per SMS. La rebràs en 5-7 dies.
 - [ ] Quan estigui verificat, crea un **Post** (tipus "Event") amb data 6-7 juny 2026, foto del cartell i CTA "Inscriu-te" → enllaç a la web.
+
+</details>
+
+---
+
+## 6. Resend (transactional email) · ✅ JA TENS COMPTE
+
+> Tens compte actiu a Resend. El backend ja està refactoritzat per usar-lo amb fallback automàtic a MailApp. **Veure document separat: `RESEND-SETUP.md` al root del repo.**
+
+### Passos ràpids
+
+- [x] Compte Resend creat ✅
+- [ ] Verificar domini (`grupbarna.info` o equivalent) — afegir 3 registres DNS
+- [ ] Generar API key amb permís "Sending access"
+- [ ] Enganxar `RESEND_API_KEY` i `RESEND_FROM` a Apps Script Script Properties
+- [ ] Test: fer una inscripció de prova i verificar que l'email arriba sense passar per spam
+
+Quan estiguin les 2 Script Properties, **TOTS** els emails del backend van via Resend automàticament. Sense canvis de codi.
+
 
 ---
 
