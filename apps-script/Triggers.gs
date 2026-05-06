@@ -4,12 +4,19 @@
  * Pega aquest fitxer al teu projecte d'Apps Script com a fitxer addicional
  * (no reemplaça Code.gs; conviuen).
  *
- * SETUP (un cop):
- *   1. Apps Script editor → "Triggers" (icona de rellotge a l'esquerra) → "Add Trigger"
- *   2. Function to run: sendT7Reminders   · Time-based · Day timer · 9h-10h
- *      Configura-ho perquè s'executi cada dia. La funció comprova internament
- *      si avui és exactament T-7 i envia mails.
- *   3. Repeteix per sendT1Reminders i sendPostEventEmails.
+ * SETUP (un cop, automàtic):
+ *   1. Pega aquest fitxer a Apps Script.
+ *   2. Selecciona la funció `setupTriggers` al desplegable de funcions de l'editor.
+ *   3. Clica "Run". La primera vegada autoritza permisos.
+ *   4. Llest: instal·la els 3 triggers diaris (idempotent — es pot executar
+ *      més d'un cop sense duplicar res).
+ *
+ *   Si vols veure'ls, "Triggers" (rellotge a l'esquerra) llistarà:
+ *     · sendT7Reminders     · cada dia 9h-10h
+ *     · sendT1Reminders     · cada dia 9h-10h
+ *     · sendPostEventEmails · cada dia 10h-11h (només actua l'endemà del torneig)
+ *
+ *   Cada funció comprova internament la data; si no toca, surt sense fer res.
  *
  * Funcions:
  *   - sendT7Reminders():    7 dies abans del torneig → "Falta 1 setmana!"
@@ -220,4 +227,70 @@ function _emailPostEvent_(c) {
     '<p style="color:#dc2626;font-weight:bold">Fins l\'any que ve! 🏀</p>',
     '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>'
   ].join('');
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SETUP AUTOMÀTIC DE TRIGGERS
+ * ────────────────────────────────────────────────────────────────────────────
+ * Executa això UNA vegada des de l'editor d'Apps Script:
+ *   1. Selecciona "setupTriggers" al desplegable de funcions
+ *   2. Clica Run
+ *   3. Autoritza permisos (script.scriptapp + script.send_mail)
+ *
+ * Idempotent: si ja existeixen, els elimina i els torna a crear (no duplica).
+ * Tornar-lo a executar després de canvis al codi també és segur.
+ */
+function setupTriggers() {
+  const desired = [
+    { handler: 'sendT7Reminders',     hour: 9,  label: 'T-7 reminder · 9h' },
+    { handler: 'sendT1Reminders',     hour: 9,  label: 'T-1 reminder · 9h' },
+    { handler: 'sendPostEventEmails', hour: 10, label: 'Post-event · 10h' },
+  ];
+  const handlerSet = new Set(desired.map(d => d.handler));
+
+  // 1. Esborra triggers existents que coincideixin (per evitar duplicats)
+  const existing = ScriptApp.getProjectTriggers();
+  let removed = 0;
+  existing.forEach(t => {
+    if (handlerSet.has(t.getHandlerFunction())) {
+      ScriptApp.deleteTrigger(t);
+      removed++;
+    }
+  });
+
+  // 2. Crea els triggers desitjats (cada dia, finestra horària indicada)
+  const created = [];
+  desired.forEach(d => {
+    ScriptApp.newTrigger(d.handler)
+      .timeBased()
+      .everyDays(1)
+      .atHour(d.hour)
+      .nearMinute(0)
+      .create();
+    created.push(d.label);
+  });
+
+  const msg = 'Triggers instal·lats correctament:\n  · ' + created.join('\n  · ') +
+              (removed ? '\n\n(Eliminats ' + removed + ' triggers antics per evitar duplicats.)' : '');
+  Logger.log(msg);
+  return msg;
+}
+
+/** Llista els triggers actuals (debug). */
+function listTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  if (!triggers.length) { Logger.log('Cap trigger instal·lat.'); return 'Cap trigger instal·lat.'; }
+  const lines = triggers.map(t => '· ' + t.getHandlerFunction() + ' (' + t.getEventType() + ')');
+  const out = 'Triggers actius:\n' + lines.join('\n');
+  Logger.log(out);
+  return out;
+}
+
+/** Elimina TOTS els triggers del projecte (clean slate). */
+function clearAllTriggers() {
+  const triggers = ScriptApp.getProjectTriggers();
+  triggers.forEach(t => ScriptApp.deleteTrigger(t));
+  const msg = 'Eliminats ' + triggers.length + ' triggers.';
+  Logger.log(msg);
+  return msg;
 }

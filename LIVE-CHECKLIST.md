@@ -1,0 +1,139 @@
+# LIVE-CHECKLIST · 3×3 Westfield Glòries 2026
+
+Aquesta és la llista de **passos manuals** que NO es poden automatitzar (requereixen el teu login i clic). Tot el codi ja està desplegat. Marca cada caixa quan ho hagis fet.
+
+---
+
+## 1. Apps Script · pegar Code.gs i instal·lar triggers
+
+**Per què cal:** Apps Script és el backend que rep les inscripcions, envia mails i pinta el comptador d'equips. Cada vegada que actualitzo `apps-script/Code.gs` o `apps-script/Triggers.gs` al repo, **has de pegar-ho manualment** a l'editor d'Apps Script.
+
+> ⚠️ Per què no es pot automatitzar: el toggle "Apps Script API" del teu compte
+> Google està desactivat per defecte. Per habilitar `clasp push` automàtic, has
+> d'anar a https://script.google.com/home/usersettings i activar el toggle. Un
+> cop activat, et passo les comandes `clasp push` per actualitzar des del repo.
+
+### Passos
+
+- [ ] Obre https://script.google.com/home → projecte "3x3-grupbarna-backend" (o crea'n un de nou si no existeix).
+- [ ] Pega el contingut de `apps-script/Code.gs` al fitxer `Code.gs` (substitueix tot).
+- [ ] **Add file** → "Script" → nom `Triggers` → pega `apps-script/Triggers.gs`.
+- [ ] **Add file** → "Script" → nom `appsscript` està implícit (el manifest ja existeix; si no, copia `apps-script/appsscript.json` al fitxer manifest des de "Project settings → Show 'appsscript.json'").
+- [ ] Save (Cmd+S).
+- [ ] Selecciona la funció `setupTriggers` al desplegable de funcions de la barra superior.
+- [ ] Clica **Run**. Autoritza permisos quan demani.
+- [ ] Verifica al panell esquerre **Triggers** (icona de rellotge) que apareixen 3 triggers: `sendT7Reminders`, `sendT1Reminders`, `sendPostEventEmails`.
+- [ ] **Deploy → Manage deployments** → edita el desplegament actual o crea'n un de nou tipus "Web app" amb `Execute as: Me` i `Who has access: Anyone`.
+- [ ] Copia el **Web app URL** que et dóna i, si ha canviat respecte la versió anterior, ho pots actualitzar al GitHub secret `VITE_GOOGLE_SHEET_WEBHOOK` (Settings → Secrets and variables → Actions).
+
+**Idempotent:** `setupTriggers` es pot tornar a executar tantes vegades com vulguis. Esborra els triggers existents amb el mateix nom i els torna a crear, així que mai duplica.
+
+---
+
+## 2. Microsoft Clarity · ID del projecte
+
+**Per què cal:** Clarity és la nostra eina d'analytics gratuïta (heatmaps + session replays). El codi de tracking ja està a `index.html`, només falta l'ID del projecte.
+
+> Si NO el configures, la web funciona igual: el codi té un fallback que no fa res quan l'ID està buit (`if (CLARITY_ID === "YOUR_CLARITY_ID" || !CLARITY_ID) return;`). Per tant pots saltar-te aquest pas si no vols usar Clarity.
+
+### Passos
+
+- [ ] Ves a https://clarity.microsoft.com → "Sign in with Google" amb un compte teu.
+- [ ] **Add new project** → nom `3x3 Westfield Glòries` · domini `cbgrupbarna-3x3timechamber.com`.
+- [ ] Settings → Setup → copia el `Project ID` (cadena curta tipus `abc123xyz`).
+- [ ] Obre `index.html` al repo, busca `var CLARITY_ID = "YOUR_CLARITY_ID"` i substitueix `YOUR_CLARITY_ID` pel teu ID.
+- [ ] Commit + push (`git add index.html && git commit -m "Set Clarity ID" && git push`).
+- [ ] GH Pages farà el deploy automàticament. En 24h Clarity començarà a recollir dades.
+
+---
+
+## 3. Premsa · enviar emails de difusió
+
+**Per què cal:** Tens 7 plantilles llestes a `apps-script/PressOutreach.md`. **No puc enviar emails per tu** (necessita el teu login a Gmail i la teva firma).
+
+### Calendari
+
+| Quan | A qui | Plantilla a usar |
+|---|---|---|
+| **T-30** (7 de maig) | Betevé · El Periódico · Time Out | Press release inicial |
+| **T-21** (16 de maig) | Eix Clot · BasquetCatala.cat | Recordatori + dades inscripció |
+| **T-14** (23 de maig) | Rookies.es · El Día Barcelona | "Últimes places" + angle inclusiu (Màgics) |
+| **T-7** (30 de maig) | Tots els no-respostes | Pinga ràpida + invitació a cobrir el cap de setmana |
+
+### Passos per enviar
+
+- [ ] Obre `apps-script/PressOutreach.md` al repo.
+- [ ] Per a cada email: copia el bloc `Assumpte:` i el cos.
+- [ ] Personalitza el saludo amb el nom del periodista (cerca a Twitter/LinkedIn de cada mitjà qui escriu d'esports).
+- [ ] Adjunta el press kit (cartell + dossier — descàrregues a `/premsa` o als fitxers de `/public/images/`).
+- [ ] Envia des de `voluntaris@grupbarna.info`.
+- [ ] Marca la caixa al calendari quan l'enviïs.
+
+---
+
+## 4. Google Business Profile · CB Grup Barna
+
+**Per què cal:** Si la gent busca "CB Grup Barna" o "3×3 Barcelona" a Google, sortim al panell lateral amb fotos, horaris i ressenyes. Ranquejarem millor en local SEO i tindrem llistat directe a Maps.
+
+> No puc crear comptes per tu (regla de seguretat). Els passos manuals duren ~10 min.
+
+### Passos
+
+- [ ] Ves a https://www.google.com/business amb el compte Gmail del club.
+- [ ] **Manage now** → cerca "CB Grup Barna" (per veure si ja existeix). Si no, **Add your business to Google**.
+- [ ] **Nom:** `CB Grup Barna · 3×3 Westfield Glòries`
+- [ ] **Categoria primària:** `Esdeveniment esportiu`
+- [ ] **Categories secundàries:** `Club de bàsquet`, `Organitzador d'esdeveniments`
+- [ ] **Adreça:** Av. Diagonal 208, 08018 Barcelona (Westfield Glòries)
+- [ ] **Àrea de servei:** Barcelona ciutat + àrea metropolitana
+- [ ] **Telèfon:** +34 698 425 153
+- [ ] **Web:** https://cbgrupbarna-3x3timechamber.com
+- [ ] **Hores:** "Per esdeveniment". Marca el 6-7 juny 2026 com a horari especial 9:00-21:00.
+- [ ] **Foto perfil:** logo del club (`/public/images/cb-grup-barna.jpg`)
+- [ ] **Foto portada:** `/public/images/hero-edicio-anterior.jpg`
+- [ ] **Galeria:** afegeix totes les imatges de `/public/images/` (8 fotos).
+- [ ] **Descripció (750 chars):**
+  ```
+  CB Grup Barna organitza el 3×3 Westfield Glòries, el torneig oficial FIBA 3×3 més gran del Clot-Glòries de Barcelona. La 4ª edició es disputa els 6 i 7 de juny 2026 a 3 seus del barri (Westfield Glòries, La Nau del Clot, Rambleta del Clot) amb 100 equips i 10 categories des d'Escola fins a Veterans, més la categoria inclusiva Màgics. Premis: 2.400€ de prize money (Sèniors M/F i Veterans M/F) + premis dels comerços d'Eix Clot per a tots els equips. Punts FIBA 3×3 oficials a la categoria Sèniors. Inscripcions a cbgrupbarna-3x3timechamber.com.
+  ```
+- [ ] **Verificació:** Google enviarà una postal o un PIN per SMS. La rebràs en 5-7 dies.
+- [ ] Quan estigui verificat, crea un **Post** (tipus "Event") amb data 6-7 juny 2026, foto del cartell i CTA "Inscriu-te" → enllaç a la web.
+
+---
+
+## 5. (Opcional) Setup `clasp` per fer push automàtic d'Apps Script
+
+**Per què cal:** Si actives això, cada vegada que actualitzo Code.gs al repo no caldrà que ho enganxis manualment a Apps Script — un `clasp push` ho fa des del terminal.
+
+### Passos
+
+- [ ] Activa el toggle a https://script.google.com/home/usersettings (cal una vegada · 30 segons).
+- [ ] Al teu mac, dins de `/Users/ana/WEB 3X3/apps-script`:
+  ```bash
+  npm install -g @google/clasp
+  clasp login
+  clasp pull   # baixa el projecte actual i crea .clasp.json
+  ```
+- [ ] Comprova que `.clasp.json` apareix al directori.
+- [ ] A partir d'ara, cada vegada que jo actualitzi Code.gs o Triggers.gs:
+  ```bash
+  cd apps-script && clasp push
+  ```
+  (Si vols, ho podem afegir a una GitHub Action perquè es faci sol al fer push a main.)
+
+---
+
+## Enllaços ràpids
+
+- **Web live:** https://cbgrupbarna-3x3timechamber.com
+- **Repo:** https://github.com/voluntarisgrupbarna-pixel/3x3-westfield-grupbarna-timechamber
+- **GH Pages config:** Settings → Pages
+- **Secrets:** Settings → Secrets and variables → Actions
+- **Apps Script editor:** https://script.google.com/home
+- **Cloudflare Worker:** https://dash.cloudflare.com (compte `cbgrupbarna`) → Workers & Pages → `og-3x3-glories`
+
+---
+
+## Suport
+
+Si algun pas no funciona, fes una captura del que veus i envia-me-la — soluciono al següent torn. **No avancis amb workarounds** que puguin trencar producció (per exemple: NO modifiquis manualment URLs de webhook si no et dic com).
