@@ -301,10 +301,10 @@ export default function WhatsAppLeadForm({
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 50, opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className={`w-full max-w-md bg-slate-950 border-2 ${accent.ring} rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden`}
+            className={`w-full max-w-md bg-slate-950 border-2 ${accent.ring} rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh] sm:max-h-[88vh] overflow-hidden`}
             onClick={e => e.stopPropagation()}
           >
-            <div className={`bg-gradient-to-br ${accent.from} ${accent.to} p-5 relative`}>
+            <div className={`bg-gradient-to-br ${accent.from} ${accent.to} p-5 relative shrink-0`}>
               <button onClick={onClose}
                 className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/20 hover:bg-black/40 flex items-center justify-center text-white transition-colors"
                 aria-label="Tancar">
@@ -330,7 +330,7 @@ export default function WhatsAppLeadForm({
             </div>
 
             {step === 1 ? (
-              <form onSubmit={submitTel} className="p-5 space-y-4">
+              <form onSubmit={submitTel} className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
                 <label className="block">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
                     <User className="w-3.5 h-3.5 text-[#25D366]"/>
@@ -427,7 +427,7 @@ export default function WhatsAppLeadForm({
                 </button>
               </form>
             ) : (
-              <form onSubmit={submitQuestions} className="p-5 space-y-4">
+              <form onSubmit={submitQuestions} className="p-5 space-y-4 overflow-y-auto flex-1 min-h-0">
                 <p className="text-xs text-white/55 leading-relaxed">
                   Per recomanar-te millor (et responem més ràpid):
                 </p>
