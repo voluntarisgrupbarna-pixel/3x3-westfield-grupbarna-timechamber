@@ -1552,6 +1552,12 @@ export default function Inscripcion() {
                         <strong className="text-white">{v}</strong>
                       </div>
                     ))}
+                    {numExtraShirts > 0 && (
+                      <div className="flex gap-2">
+                        <span className="text-white/30 w-20 shrink-0">Extres:</span>
+                        <strong className="text-orange-300">{numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} (+{extras.toFixed(2)}€)</strong>
+                      </div>
+                    )}
                     {descInvitacions && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) 🎁</strong></div>}
                     {descAplicat && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
                     <div className="flex gap-2 border-t border-white/8 pt-2 mt-1">
@@ -1560,16 +1566,17 @@ export default function Inscripcion() {
                     </div>
                   </div>
                   {/* Bases del torneig */}
-                  <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-40 overflow-y-auto text-xs text-white/45 leading-relaxed space-y-2">
+                  <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-48 overflow-y-auto text-xs text-white/45 leading-relaxed space-y-2">
                     <p><strong className="text-white/70">BASES DE LA COMPETICIÓ — 3×3 WESTFIELD GLÒRIES 2026</strong></p>
                     <p>1. El torneig es celebra els dies 6 i 7 de juny de 2026 a 3 seus del barri del Clot-Glòries: Westfield Glòries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
-                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. El pagament s'ha de realitzar per transferència bancària amb concepte únic generat al QR.</p>
-                    <p>3. Les regles aplicades seran les oficials FIBA 3×3. Format: fase de grups + fase eliminatòria directa.</p>
-                    <p>4. La categoria Sèniors atorga punts FIBA 3×3 oficials.</p>
-                    <p>5. Els organitzadors (Timechamber S.L. i C.B. Grup Barna) no es responsabilitzen de lesions produïdes durant el torneig.</p>
-                    <p>6. La participació implica l'acceptació de les decisions dels àrbitres com a inapel·lables.</p>
-                    <p>7. Els organitzadors es reserven el dret d'admissió i podran descalificar equips per comportament incorrecte.</p>
-                    <p>8. Els menors d'edat necessiten l'autorització del pare/mare/tutor legal (apartat següent).</p>
+                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. Samarretes addicionals opcionals a 25€ cadascuna. El pagament s'ha de realitzar per transferència bancària a <strong className="text-white/70">{IBAN}</strong> amb concepte <strong className="text-white/70">3X3+NOM_EQUIP</strong>; cal adjuntar el justificant (JPG/PNG/PDF) dins el formulari per validar la inscripció.</p>
+                    <p>3. Premis en metàl·lic: <strong className="text-white/70">1.000€ Sèniors Masculí</strong> i <strong className="text-white/70">1.000€ Sèniors Femení</strong>. La resta de categories (Veterans M/F i formatives) reben trofeus i medalles. Sèniors atorga punts FIBA 3×3 oficials.</p>
+                    <p>4. Les regles aplicades seran les oficials FIBA 3×3. Format: fase de grups + fase eliminatòria directa.</p>
+                    <p className="text-orange-300/80">5. <strong>Cancel·lació i devolucions:</strong> una vegada confirmada la inscripció <strong>no és cancel·lable</strong> i no es retornarà cap import. Si un jugador es lesiona o no pot venir, l'equip continua jugant amb la resta i el jugador afectat conserva la samarreta com a única compensació; <strong>no es retorna ni es prorrateja l'import</strong>.</p>
+                    <p>6. Els organitzadors (Timechamber S.L. i C.B. Grup Barna) no es responsabilitzen de lesions produïdes durant el torneig.</p>
+                    <p>7. La participació implica l'acceptació de les decisions dels àrbitres com a inapel·lables.</p>
+                    <p>8. Els organitzadors es reserven el dret d'admissió i podran descalificar equips per comportament incorrecte.</p>
+                    <p>9. Els menors d'edat necessiten l'autorització del pare/mare/tutor legal (apartat següent).</p>
                   </div>
 
                   {/* Apartat legal · Pares/Tutors (heretat del JotForm Campus Time Chamber) */}
@@ -1612,6 +1619,17 @@ export default function Inscripcion() {
                         </Label>
                       </div>
                       {errors.acceptaImatge && <p className="text-red-400 text-xs ml-7 mt-1">{(errors.acceptaImatge as any).message}</p>}
+                    </div>
+                    <div>
+                      <div className="flex items-start gap-3">
+                        <Checkbox id="cancel" checked={!!watch("acceptaCancellacio")}
+                          onCheckedChange={v => setValue("acceptaCancellacio", v === true as any)}
+                          className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
+                        <Label htmlFor="cancel" className="text-sm leading-relaxed cursor-pointer text-white/70">
+                          Entenc que la inscripció <strong className="text-white">no és cancel·lable</strong> un cop confirmada i que en cas de lesió o baixa d'un jugador <strong className="text-white">no es retorna ni es prorrateja cap import</strong>; el jugador conserva la samarreta com a única compensació. *
+                        </Label>
+                      </div>
+                      {errors.acceptaCancellacio && <p className="text-red-400 text-xs ml-7 mt-1">{(errors.acceptaCancellacio as any).message}</p>}
                     </div>
                   </div>
                 </motion.div>
