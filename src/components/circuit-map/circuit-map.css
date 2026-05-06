@@ -1,0 +1,86 @@
+/* CSS base de Leaflet (necessari perquè el mapa es renderitzi correctament) */
+@import "leaflet/dist/leaflet.css";
+
+/* ─── Overrides tema fosc "Dark Court · Neon Lights" ─── */
+
+.circuit-map-container .leaflet-container {
+  background: #020617; /* slate-950 */
+  font-family: "Inter", system-ui, sans-serif;
+  border-radius: 1rem;
+}
+
+/* Atribució: text discret blanc translúcid */
+.circuit-map-container .leaflet-control-attribution {
+  background: rgba(2, 6, 23, 0.7);
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin: 4px;
+  backdrop-filter: blur(4px);
+}
+.circuit-map-container .leaflet-control-attribution a {
+  color: rgba(248, 113, 113, 0.7);
+}
+
+/* Marcadors: cap fons / cap shadow per defecte (els portem dins el divIcon) */
+.circuit-map-container .leaflet-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* divIcon de venue: animacions */
+.circuit-marker {
+  cursor: pointer;
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.circuit-marker:hover {
+  transform: scale(1.08);
+  z-index: 1000 !important;
+}
+.circuit-marker:focus-visible {
+  outline: 2px solid #fb923c;
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
+/* Glow loop pel badge "2h FREE" del Westfield */
+@keyframes circuit-parking-glow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.5),
+                0 0 12px 2px rgba(249, 115, 22, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0),
+                0 0 20px 4px rgba(249, 115, 22, 0.95);
+  }
+}
+.circuit-parking-badge {
+  animation: circuit-parking-glow 2.4s ease-in-out infinite;
+}
+
+/* User marker: cercle blau amb ring pulse */
+@keyframes circuit-user-ping {
+  0%   { transform: scale(1);   opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0;   }
+}
+.circuit-user-ring {
+  animation: circuit-user-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Reduced motion: parar tots els pulse i animacions */
+@media (prefers-reduced-motion: reduce) {
+  .circuit-parking-badge,
+  .circuit-user-ring,
+  .circuit-marker {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Skeleton mentre el chunk es carrega */
+.circuit-map-skeleton {
+  background:
+    radial-gradient(ellipse at center, rgba(249, 115, 22, 0.06) 0%, transparent 60%),
+    linear-gradient(135deg, #0f172a 0%, #020617 100%);
+}
