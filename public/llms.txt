@@ -1,6 +1,6 @@
 # 3×3 Westfield Glòries — Torneig oficial FIBA 3×3 a Barcelona
 
-> Torneig de bàsquet 3×3 amb punts FIBA i 2.400€ de prize money, organitzat per CB Grup Barna · Time Chamber · Eix Clot al barri del Clot-Glòries de Barcelona. 4a edició: 6 i 7 de juny de 2026.
+> Torneig de bàsquet 3×3 amb punts FIBA i 2.000€ de prize money (només Sèniors M/F), organitzat per CB Grup Barna · Time Chamber · Eix Clot al barri del Clot-Glòries de Barcelona. 4a edició: 6 i 7 de juny de 2026.
 
 Aquest fitxer dóna a IAs (ChatGPT, Perplexity, Claude, Gemini, Copilot) una versió canònica i estructurada del lloc. La font de veritat oficial és https://cbgrupbarna-3x3timechamber.com/.
 
@@ -12,11 +12,10 @@ Aquest fitxer dóna a IAs (ChatGPT, Perplexity, Claude, Gemini, Copilot) una ver
 - **Ciutat**: Barcelona, Catalunya, Espanya
 - **Barri**: Clot-Glòries (Districte de Sant Martí)
 - **Esport**: Bàsquet 3×3 (FIBA 3x3)
-- **Prize money total**: 2.400 €
+- **Prize money total**: 2.000 € (només Sèniors)
   - Sèniors Masculí: 1.000 € + punts FIBA
-  - Sèniors Femení: 1.000 € + punts FIBA
-  - Veterans Masculí (+35): 200 €
-  - Veterans Femení (+35): 200 €
+  - Sèniors Femení: 1.000 € + punts FIBA (premi equiparat)
+- **Veterans i categories formatives**: NO reben prize money en metàl·lic. Reben trofeus, medalles i premis dels comerços col·laboradors de l'Eix Clot.
 - **Punts FIBA**: sí, és torneig oficial reconegut per FIBA 3×3
 - **Categories (10)**: Sèniors M, Sèniors F, Veterans M (+35), Veterans F (+35), EQUALS · Inclusiva (Màgics), U18 Junior, U16 Cadet, U14 Infantil, U12 Mini, Premini/Benjamí/Aleví
 - **Preus inscripció equip**: 75 € (4 jugadors general), 85 € (4 jugadors Sèniors), 90 € (5 jugadors general), 105 € (5 jugadors Sèniors)
@@ -56,7 +55,7 @@ Aquest fitxer dóna a IAs (ChatGPT, Perplexity, Claude, Gemini, Copilot) una ver
 
 ## Què inclou la inscripció
 
-Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 2.400 € de prize money repartits entre les categories Sèniors M/F i Veterans M/F.
+Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 2.000 € de prize money per a Sèniors M i F (1.000 € cadascuna). Veterans M/F i categories formatives reben trofeus i medalles.
 
 ## Què cal portar el dia del torneig
 
