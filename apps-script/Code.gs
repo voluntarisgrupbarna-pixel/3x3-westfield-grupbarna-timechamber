@@ -14,7 +14,7 @@
  * Configuració REQUERIDA: Script Properties (Project Settings → Script properties → Add):
  *   - SHEET_ID              = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
  *   - SHEET_NAME            = Inscripcions 2026
- *   - ADMIN_EMAIL           = voluntaris@grupbarna.info
+ *   - ADMIN_EMAIL           = voluntarisgrupbarna@gmail.com
  *   - FILLOUT_API_KEY       = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
  *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
  *   - DRIVE_FOLDER_NAME     = (opcional, p. ex. "3x3 Justificants 2026". Si no, "3x3 Justificants 2026")
@@ -25,6 +25,17 @@
  *  - Sheet és BACKUP automàtic (per si Fillout fallés un dia)
  *  - Els emails es continuen enviant des d'Apps Script
  *  - El comptador de la web llegeix de Fillout (no del Sheet) → ningú pot manipular el comptador
+ *
+ * CRM "Contactes_WhatsApp" (setup manual al Sheet, una sola vegada):
+ *  - Pestanya creada automàticament la primera vegada que arriba un lead.
+ *  - Diferent de "Inscripcions 2026" (allà hi ha els PAGANTS del torneig).
+ *  - Filter view "CRM Actiu": filtre per columna `Estat` ≠ "Tancat-OK" i ≠ "Tancat-NoInteressa".
+ *  - Validació de dades a la columna `Estat`: llista
+ *      Nou · Contactat · En seguiment · Tancat-OK · Tancat-NoInteressa
+ *  - Format condicional: `Nou` → vermell suau · `Tancat-OK` → verd · `Tancat-NoInteressa` → gris.
+ *  - Format de data a la columna `Següent seguiment`.
+ *  - Els headers s'afegeixen sols (migració incremental dins addWhatsAppLead_).
+ *  - Segmentació via columna `Tipus interès` (3×3 / Campus / Portes Obertes / Patrocinador / Premsa / Altre).
  */
 
 const PROPS = PropertiesService.getScriptProperties();
@@ -428,20 +439,19 @@ function addIndividualPlayer_(data) {
  * Dedupe per telèfon (normalitzat). Notifica admin del primer contacte.
  */
 /**
- * Mapeja el camp `event` a un nom de pestanya humà del Sheet.
- * "tres_x_tres" → Llista_Difusio_3x3 (la històrica, no canviem el nom)
- * "campus"      → Llista_Difusio_Campus
- * "portes_obertes" → Llista_Difusio_PortesObertes
- * Per defecte (event no enviat o "general") → Llista_Difusio_3x3 (compat)
+ * Pestanya única per a tots els leads de WhatsApp ("Contactes_WhatsApp").
+ * El camp `Tipus interès` segmenta el contacte (3×3 / Campus / Portes Obertes
+ * / Patrocinador / Premsa / Altre) sense necessitar pestanyes separades.
+ *
+ * IMPORTANT: aquesta pestanya és **diferent** de `Inscripcions 2026`
+ * (els pagants del torneig hi van per separat).
+ *
+ * Si en el futur calgués separar per esdeveniment, només cal tornar a la
+ * versió per `event` aquí — la migració incremental d'`addWhatsAppLead_`
+ * crearà la nova pestanya automàticament.
  */
-function getLeadSheetName_(event) {
-  switch (String(event || '').toLowerCase()) {
-    case 'campus':         return 'Llista_Difusio_Campus';
-    case 'portes_obertes': return 'Llista_Difusio_PortesObertes';
-    case 'tres_x_tres':    return 'Llista_Difusio_3x3';
-    case 'general':        return 'Llista_Difusio_3x3';
-    default:               return 'Llista_Difusio_3x3';
-  }
+function getLeadSheetName_(_event) {
+  return 'Contactes_WhatsApp';
 }
 
 function addWhatsAppLead_(data) {
@@ -453,6 +463,7 @@ function addWhatsAppLead_(data) {
 
   const HEADERS = [
     'Data', 'Nom', 'Telèfon', 'Email', 'Dubte / Consulta',
+    'Tipus interès',
     'Source', 'Event', 'Intent',
     'Edat', 'Nivell', 'Setmanes',  // respostes ràpides més comunes
     'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'code',
@@ -499,6 +510,7 @@ function addWhatsAppLead_(data) {
     'Telèfon':           phoneClean,
     'Email':             data.email || '',
     'Dubte / Consulta':  data.dubte || '',
+    'Tipus interès':     data.tipusInteres || '',
     'Source':            data.source || '',
     'Event':             data.event || '',
     'Intent':            data.intent || '',
@@ -520,7 +532,7 @@ function addWhatsAppLead_(data) {
   sheet.appendRow(row);
 
   // Alerta admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
   const eventLabel = ({
     'campus':         'Campus',
     'portes_obertes': 'Portes Obertes',
@@ -533,28 +545,43 @@ function addWhatsAppLead_(data) {
   const subjectIntent = intentLabel ? ' · ' + intentLabel : '';
 
   try {
+    const esc = function(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    };
     const ansRows = Object.keys(ans).map(function(k) {
-      return '<tr><td><strong>' + k + '</strong></td><td>' + ans[k] + '</td></tr>';
+      return '<tr><td><strong>' + esc(k) + '</strong></td><td>' + esc(ans[k]) + '</td></tr>';
     }).join('');
     const utmRows = ['utm_source','utm_medium','utm_campaign','utm_content','code']
       .filter(function(k) { return data[k]; })
-      .map(function(k) { return '<tr><td><strong>' + k + '</strong></td><td>' + data[k] + '</td></tr>'; })
+      .map(function(k) { return '<tr><td><strong>' + k + '</strong></td><td>' + esc(data[k]) + '</td></tr>'; })
       .join('');
+    const nomEsc   = esc(data.nom);
+    const emailEsc = esc(data.email);
+    const tipusEsc = esc(data.tipusInteres);
+    const dubteEsc = esc(data.dubte);
+    const phoneEsc = esc(phoneClean);
     sendMail_({
       to: admin,
-      subject: '💬 Nou lead WhatsApp · ' + eventLabel + subjectIntent + ' · ' + (phoneClean || 'sense tel'),
+      subject: '💬 Nou lead WhatsApp · ' + eventLabel + subjectIntent
+        + ' · ' + (nomEsc || phoneEsc || 'sense dades'),
       htmlBody: '<h3>Nou contacte per WhatsApp</h3>'
-        + '<p>Algú acaba de deixar el seu telèfon des de <strong>' + (eventLabel || 'la web') + '</strong>'
-        + (intentLabel ? ' (<strong>' + intentLabel + '</strong>)' : '') + '.</p>'
+        + '<p>Algú acaba de deixar les seves dades des de <strong>' + esc(eventLabel || 'la web') + '</strong>'
+        + (intentLabel ? ' (<strong>' + esc(intentLabel) + '</strong>)' : '') + '.</p>'
         + '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">'
-        + '<tr><td><strong>Telèfon</strong></td><td><a href="https://wa.me/' + phoneClean + '">' + phoneClean + '</a></td></tr>'
-        + '<tr><td><strong>Source (botó)</strong></td><td>' + (data.source || '—') + '</td></tr>'
-        + '<tr><td><strong>Event</strong></td><td>' + (data.event || '—') + '</td></tr>'
-        + '<tr><td><strong>Intent</strong></td><td>' + (data.intent || '—') + '</td></tr>'
+        + '<tr><td><strong>Nom</strong></td><td>' + (nomEsc || '—') + '</td></tr>'
+        + '<tr><td><strong>Telèfon</strong></td><td><a href="https://wa.me/' + phoneEsc + '">' + (phoneEsc || '—') + '</a></td></tr>'
+        + '<tr><td><strong>Email</strong></td><td>' + (emailEsc ? '<a href="mailto:' + emailEsc + '">' + emailEsc + '</a>' : '—') + '</td></tr>'
+        + '<tr><td><strong>Tipus interès</strong></td><td>' + (tipusEsc || '—') + '</td></tr>'
+        + '<tr><td><strong>Dubte / Consulta</strong></td><td>' + (dubteEsc || '—') + '</td></tr>'
+        + '<tr><td><strong>Source (botó)</strong></td><td>' + esc(data.source || '—') + '</td></tr>'
+        + '<tr><td><strong>Event</strong></td><td>' + esc(data.event || '—') + '</td></tr>'
+        + '<tr><td><strong>Intent</strong></td><td>' + esc(data.intent || '—') + '</td></tr>'
         + ansRows
         + utmRows
         + '</table>'
-        + '<p style="font-size:11px;color:#666;margin-top:14px">Pestanya <strong>' + sheetName
+        + '<p style="font-size:11px;color:#666;margin-top:14px">Pestanya <strong>' + esc(sheetName)
         + '</strong> del Sheet. Estat inicial: <strong>Nou</strong> — actualitza\'l a mesura que el contactis.</p>',
     });
   } catch (e) { Logger.log('lead admin mail err: ' + e); }
@@ -698,7 +725,7 @@ function addToWaitlist_(data) {
     } catch (e) { Logger.log('waitlist mail user err: ' + e); }
   }
   // Alerta a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
   try {
     sendMail_({
       to: admin,
@@ -857,7 +884,7 @@ function sendEmails_(data, justificantUpload) {
     }
   }
   // Email a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntaris@grupbarna.info';
+  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
   try {
     sendMail_({
       to: admin,

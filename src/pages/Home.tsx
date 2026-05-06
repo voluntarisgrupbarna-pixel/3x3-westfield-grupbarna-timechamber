@@ -5,7 +5,7 @@ import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, 
 import { Button } from "@/components/ui/button";
 import { CATEGORIES } from "@/lib/categories";
 import BlogSection from "@/components/BlogSection";
-import FloatingButtons from "@/components/FloatingButtons";
+import SEO from "@/components/SEO";
 
 /* ─── Scroll Progress Bar ─── */
 function ScrollProgressBar() {
@@ -679,11 +679,15 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+      <SEO
+        title="3×3 Westfield Glòries 2026 · Torneig FIBA Barcelona | Inscripcions Obertes"
+        description="El torneig 3×3 més potent de Barcelona. Punts FIBA, 2.400€ prize money (1.000€ per cada Sèniors M/F + 200€ Veterans M/F). 6-7 Juny 2026 al Clot-Glòries. Inscriu-te ja!"
+        path="/"
+      />
       <ScrollProgressBar />
       <AnunciBanner />
 
-      {/* ══ FAB: WhatsApp Q&A (Ana 1:1) + Share menu (TikTok/IG/X/Telegram/Copy) ══ */}
-      <FloatingButtons />
+      {/* FAB global · muntat a App.tsx perquè surti a totes les pàgines */}
 
       {lightboxIdx !== null && (
         <Lightbox images={galleryImages} index={lightboxIdx} onClose={closeLightbox} onPrev={prevImg} onNext={nextImg} />

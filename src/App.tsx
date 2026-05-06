@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
+import FloatingButtons from "@/components/FloatingButtons";
 
 /**
  * Code splitting per ruta: només Home arriba al bundle inicial.
@@ -31,6 +32,18 @@ function PageLoader() {
       <div className="w-12 h-12 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
     </div>
   );
+}
+
+/**
+ * FAB global (WhatsApp + Compartir) a totes les pàgines.
+ * Exclos a /checkin (admin), /contacte (modal s'autoobre), /equip (pàgina compartible),
+ * i /equip/:any per coherència.
+ */
+const HIDE_FAB_PATHS = ["/checkin", "/contacte", "/contacto", "/equip"];
+function GlobalFloatingButtons() {
+  const { pathname } = useLocation();
+  if (HIDE_FAB_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) return null;
+  return <FloatingButtons />;
 }
 
 export default function App() {
@@ -64,6 +77,7 @@ export default function App() {
           <Route path="/links" element={<Hub />} />
         </Routes>
       </Suspense>
+      <GlobalFloatingButtons />
       <Toaster />
     </BrowserRouter>
   );

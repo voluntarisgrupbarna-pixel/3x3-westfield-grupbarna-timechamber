@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, MessageCircle, Phone, Loader2, Check, ArrowRight } from "lucide-react";
+import { X, MessageCircle, Phone, Loader2, Check, ArrowRight, User, Mail } from "lucide-react";
 import { tracker } from "@/lib/track";
 
 const GOOGLE_WEBHOOK = (import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK as string | undefined) || "";
@@ -72,6 +72,25 @@ const ACCENT_BY_EVENT: Record<LeadEvent, { ring: string; from: string; to: strin
 };
 
 const PHONE_REGEX = /^(\+?\d{8,15})$/;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const TIPUS_OPTIONS = [
+  { id: "3x3",            label: "3×3 Westfield Glòries" },
+  { id: "campus",         label: "Campus d'Estiu" },
+  { id: "portes_obertes", label: "Portes Obertes club" },
+  { id: "patrocinador",   label: "Patrocinador / col·laboració" },
+  { id: "premsa",         label: "Premsa" },
+  { id: "altre",          label: "Altre" },
+] as const;
+type TipusId = typeof TIPUS_OPTIONS[number]["id"];
+
+function defaultTipusFor(event?: LeadEvent, source?: WhatsAppLeadSource): TipusId {
+  if (source === "premsa") return "premsa";
+  if (event === "campus") return "campus";
+  if (event === "portes_obertes") return "portes_obertes";
+  if (event === "tres_x_tres") return "3x3";
+  return "3x3";
+}
 
 function getUtms(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -113,13 +132,20 @@ export default function WhatsAppLeadForm({
   subtitle?: string;
 }) {
   const [step, setStep] = useState<1 | 2>(1);
+  const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
   const [telefon, setTelefon] = useState("");
+  const [tipusId, setTipusId] = useState<TipusId>(() => defaultTipusFor(event, source));
   const [acceptaRgpd, setAcceptaRgpd] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [dubteId, setDubteId] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const firstFieldRef = useRef<HTMLInputElement>(null);
+  const tipusLabel = useMemo(
+    () => TIPUS_OPTIONS.find(t => t.id === tipusId)?.label || "",
+    [tipusId],
+  );
 
   const accent = ACCENT_BY_EVENT[event || "general"];
   const hasQuestions = !!(questions && questions.length > 0);
@@ -128,18 +154,33 @@ export default function WhatsAppLeadForm({
   useEffect(() => {
     if (open) {
       setStep(1);
+      setTipusId(defaultTipusFor(event, source));
       setTimeout(() => firstFieldRef.current?.focus(), 150);
       const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
       document.addEventListener("keydown", onKey);
       return () => document.removeEventListener("keydown", onKey);
     }
-  }, [open, onClose]);
+  }, [open, onClose, event, source]);
 
   const submitTel = (e: React.FormEvent) => {
     e.preventDefault();
+    const nomClean = nom.trim().replace(/\s+/g, " ");
+    if (nomClean.length < 3 || nomClean.split(" ").length < 2) {
+      setError("Posa el teu nom i cognoms (mínim 2 paraules).");
+      return;
+    }
+    const emailClean = email.trim().toLowerCase();
+    if (!EMAIL_REGEX.test(emailClean)) {
+      setError("Email no vàlid. Format: nom@domini.com.");
+      return;
+    }
     const phoneClean = telefon.replace(/[\s\-().]/g, "");
     if (!PHONE_REGEX.test(phoneClean)) {
       setError("Telèfon no vàlid. Format: 600000000 o +34600000000.");
+      return;
+    }
+    if (!tipusId) {
+      setError("Tria un tipus d'interès per continuar.");
       return;
     }
     if (!acceptaRgpd) {
@@ -181,6 +222,8 @@ export default function WhatsAppLeadForm({
   const finalSubmit = async (phoneClean: string, ans: Record<string, string>) => {
     setSending(true);
     const selectedDubte = hasDubteOptions ? dubteOptions!.find(d => d.id === dubteId) : undefined;
+    const nomClean = nom.trim().replace(/\s+/g, " ");
+    const emailClean = email.trim().toLowerCase();
     try {
       if (GOOGLE_WEBHOOK) {
         const utms = getUtms();
@@ -191,8 +234,9 @@ export default function WhatsAppLeadForm({
           body: JSON.stringify({
             action: "whatsapp_lead",
             telefon: phoneClean,
-            nom: "",
-            email: "",
+            nom: nomClean,
+            email: emailClean,
+            tipusInteres: tipusLabel,
             dubte: selectedDubte?.label || "",
             acceptaRgpd: true,
             data: new Date().toLocaleString("ca-ES"),
@@ -207,16 +251,24 @@ export default function WhatsAppLeadForm({
       tracker.ctaWhatsAppHomeClick();
 
       const key = `${event || ""}:${intent || ""}`;
-      const text = selectedDubte?.waText
+      const motiu = selectedDubte?.waText
         || PRE_TEXT_BY_EVENT_INTENT[key]
         || PRE_TEXT_BY_SOURCE[source]
         || PRE_TEXT_BY_SOURCE.home_fab;
+      const text = [
+        `Hola! Sóc ${nomClean}.`,
+        motiu,
+        tipusLabel ? `(Interès: ${tipusLabel})` : "",
+      ].filter(Boolean).join(" ");
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(text)}`;
       window.open(waUrl, "_blank", "noopener,noreferrer");
 
       setTimeout(() => {
         onClose();
+        setNom("");
+        setEmail("");
         setTelefon("");
+        setTipusId(defaultTipusFor(event, source));
         setAcceptaRgpd(false);
         setAnswers({});
         setDubteId(null);
@@ -281,15 +333,58 @@ export default function WhatsAppLeadForm({
               <form onSubmit={submitTel} className="p-5 space-y-4">
                 <label className="block">
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
+                    <User className="w-3.5 h-3.5 text-[#25D366]"/>
+                    Nom i cognoms *
+                  </span>
+                  <input ref={firstFieldRef} type="text" autoComplete="name"
+                    value={nom} onChange={e => setNom(e.target.value)}
+                    placeholder="Ex: Maria García López"
+                    className="w-full bg-white/8 border border-white/15 focus:border-[#25D366] text-white placeholder:text-white/30 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
+                    <Mail className="w-3.5 h-3.5 text-[#25D366]"/>
+                    Email *
+                  </span>
+                  <input type="email" inputMode="email" autoComplete="email"
+                    value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="el-teu@email.com"
+                    className="w-full bg-white/8 border border-white/15 focus:border-[#25D366] text-white placeholder:text-white/30 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-white/60 mb-1.5">
                     <Phone className="w-3.5 h-3.5 text-[#25D366]"/>
                     El teu telèfon *
                   </span>
-                  <input ref={firstFieldRef} type="tel" inputMode="tel" autoComplete="tel"
+                  <input type="tel" inputMode="tel" autoComplete="tel"
                     value={telefon} onChange={e => setTelefon(e.target.value)}
                     placeholder="600 000 000"
                     className="w-full bg-white/8 border border-white/15 focus:border-[#25D366] text-white placeholder:text-white/30 rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors"
                   />
                 </label>
+
+                <fieldset className="space-y-1.5">
+                  <legend className="text-xs font-semibold text-white/60 mb-1.5">Tipus d'interès *</legend>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {TIPUS_OPTIONS.map(t => {
+                      const sel = tipusId === t.id;
+                      return (
+                        <button key={t.id} type="button"
+                          onClick={() => setTipusId(t.id)}
+                          className={`text-left text-xs px-3 py-2 rounded-lg border transition-colors ${sel
+                            ? "bg-[#25D366] border-[#25D366] text-white font-semibold"
+                            : "bg-white/5 border-white/15 text-white/75 hover:bg-white/10"}`}>
+                          {sel && <Check className="inline w-3 h-3 mr-1 -mt-0.5"/>}
+                          {t.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
 
                 {hasDubteOptions && (
                   <fieldset className="space-y-1.5">
