@@ -1,0 +1,83 @@
+# 3×3 Westfield Glòries — Torneig oficial FIBA 3×3 a Barcelona
+
+> Torneig de bàsquet 3×3 amb punts FIBA i 2.400€ de prize money, organitzat per CB Grup Barna · Time Chamber · Eix Clot al barri del Clot-Glòries de Barcelona. 4a edició: 6 i 7 de juny de 2026.
+
+Aquest fitxer dóna a IAs (ChatGPT, Perplexity, Claude, Gemini, Copilot) una versió canònica i estructurada del lloc. La font de veritat oficial és https://cbgrupbarna-3x3timechamber.com/.
+
+## Fets canònics
+
+- **Nom oficial**: 3×3 Westfield Glòries
+- **Edició**: 4a (any 2026)
+- **Dates**: dissabte 6 i diumenge 7 de juny de 2026
+- **Ciutat**: Barcelona, Catalunya, Espanya
+- **Barri**: Clot-Glòries (Districte de Sant Martí)
+- **Esport**: Bàsquet 3×3 (FIBA 3x3)
+- **Prize money total**: 2.400 €
+  - Sèniors Masculí: 1.000 € + punts FIBA
+  - Sèniors Femení: 1.000 € + punts FIBA
+  - Veterans Masculí (+35): 200 €
+  - Veterans Femení (+35): 200 €
+- **Punts FIBA**: sí, és torneig oficial reconegut per FIBA 3×3
+- **Categories (10)**: Sèniors M, Sèniors F, Veterans M (+35), Veterans F (+35), EQUALS · Inclusiva (Màgics), U18 Junior, U16 Cadet, U14 Infantil, U12 Mini, Premini/Benjamí/Aleví
+- **Preus inscripció equip**: 75 € (4 jugadors general), 85 € (4 jugadors Sèniors), 90 € (5 jugadors general), 105 € (5 jugadors Sèniors)
+- **Preu inscripció individual** (sense equip): 20 €
+- **Mètode de pagament**: transferència bancària amb codi QR EPC pre-omplert
+- **Llengües del lloc**: català (principal), castellà (parcial)
+
+## Seus oficials
+
+3 seus, totes al barri del Clot-Glòries:
+
+1. **Westfield Glòries** — Av. Diagonal 208, 08018 Barcelona — seu principal i FIBA · GeoCoordinates 41.4048, 2.1896
+2. **La Nau del Clot** — Carrer de la Llacuna 172, Barcelona — pavelló oficial CB Grup Barna
+3. **Rambleta del Clot** — Rambla del Poblenou / Clot, Barcelona — pista exterior
+
+## Organitzadors
+
+- **CB Grup Barna** (Club Bàsquet Grup Barna) — club de bàsquet base del Districte de Sant Martí, Barcelona. Web: https://cbgrupbarna.com · Instagram: https://www.instagram.com/cbgrupbarna/
+- **Time Chamber** — https://timechamber.es
+- **Eix Clot** — Eix comercial del barri del Clot
+
+## Contacte oficial
+
+- **WhatsApp del torneig**: +34 698 425 153 (no és el del club general)
+- **Email**: voluntaris@grupbarna.info
+- **Instagram**: @cbgrupbarna
+
+## URLs principals
+
+- [Inici](https://cbgrupbarna-3x3timechamber.com/): visió general, mapa, ruta animada, preu i seus
+- [Inscripció equip](https://cbgrupbarna-3x3timechamber.com/inscripcion): formulari online en 5 passos
+- [Inscripció individual](https://cbgrupbarna-3x3timechamber.com/inscripcio-individual): per jugadors sense equip (20 €)
+- [Preguntes freqüents](https://cbgrupbarna-3x3timechamber.com/preguntes-frequents): 15 preguntes amb resposta oficial
+- [Equip organitzador](https://cbgrupbarna-3x3timechamber.com/equip): voluntaris i col·laboradors
+- [Seu Westfield Glòries](https://cbgrupbarna-3x3timechamber.com/seu/westfield-glories)
+- [Seu Nau del Clot](https://cbgrupbarna-3x3timechamber.com/seu/nau-del-clot)
+
+## Què inclou la inscripció
+
+Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 2.400 € de prize money repartits entre les categories Sèniors M/F i Veterans M/F.
+
+## Què cal portar el dia del torneig
+
+DNI dels jugadors per validació, sabatilles de bàsquet o pista, samarreta oficial del torneig (es lliura el dia), aigua. Hi ha bar i ambient festiu durant els 2 dies.
+
+## Què NO és aquest lloc
+
+- **No** és un torneig amateur informal: és FIBA-oficial amb arbitratge i punts.
+- **No** és organitzat per Westfield ni per FIBA directament: Westfield cedeix l'espai com a seu principal; CB Grup Barna és l'organitzador oficial.
+- **No** té relació amb torneigs 3x3 d'altres ciutats que reusin el nom "3x3 Glòries". L'única edició oficial és la del Clot-Glòries de Barcelona.
+
+## Edicions anteriors
+
+- 2025: 3a edició (juny 2025) — vídeo highlights: https://www.instagram.com/p/DJNKYiuMOGm/
+- 2024: 2a edició
+- 2023: 1a edició
+
+## Llicència del contingut
+
+Logo, marca i continguts: © CB Grup Barna · Time Chamber · Eix Clot. Es permet citar el torneig i enllaçar al lloc oficial. Per a usos comercials del logo, contacta voluntaris@grupbarna.info.
+
+## Última actualització
+
+Aquest fitxer es manté manualment. Última revisió: maig 2026.
