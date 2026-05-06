@@ -41,6 +41,12 @@ const CATS = CAT_NAMES;
 function buildCheckinUrl(data: {
   teamId: string; nomEquip: string; cap: string; cat: string;
   pob: string; jug: number; mida: string; tel: string; email: string; data: string;
+  // Camps enriquits (afegits 2026-05-07) per facilitar la prep de samarretes a l'arribada.
+  // `tallesJug`: talles concatenades de tot l'equip + extres, ex: "M-L-XL-S|XL-XL".
+  tallesJug?: string;
+  extras?: number;
+  total?: number;
+  pag?: "ok" | "pendent";
 }): string {
   const SPA_BASE = (import.meta.env.VITE_SHARE_BASE as string | undefined)?.replace(/\/+$/, "")
     || "https://cbgrupbarna-3x3timechamber.com";
@@ -56,6 +62,10 @@ function buildCheckinUrl(data: {
     email: data.email,
     data: data.data,
   });
+  if (data.tallesJug) usp.set("talles", data.tallesJug);
+  if (typeof data.extras === "number") usp.set("extras", String(data.extras));
+  if (typeof data.total === "number") usp.set("total", data.total.toFixed(2));
+  if (data.pag) usp.set("pag", data.pag);
   // Si la SPA_BASE és el worker, /checkin és part del worker també (no l'implementem allà,
   // sempre redirigim a la SPA real). Construim URL cap a la SPA real.
   const spa = (import.meta.env.VITE_SHARE_BASE as string | undefined)?.includes("workers.dev")
@@ -406,13 +416,9 @@ export default function Inscripcion() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const { register, handleSubmit, trigger, setValue, watch, control, formState:{ errors } } = useForm<FD>({
+  const { register, handleSubmit, trigger, setValue, watch, control, reset, formState:{ errors } } = useForm<FD>({
     resolver: zodResolver(schema),
     defaultValues: {
-      // Strings inicialitzats explícitament a "" perquè trigger() no els reporti
-      // com a "Required" abans que l'usuari hi escrigui (els missatges de min(2)
-      // i email() del schema són en català, però el cas undefined no els hauria
-      // disparat sense el required_error que hem afegit).
       nomEquip: "",
       midaEquip: undefined,
       capNom: "", capCognom: "", capEmail: "", capTelefon: "",
@@ -420,17 +426,32 @@ export default function Inscripcion() {
       capClub: "", capPoblacio: "",
       tutorNom: "", tutorCognom: "", tutorTelefon: "",
       comentaris: "", codiDesc: "",
-      // El capità és el primer jugador → l'array `jugadors` només conté els
-      // RESTANTS. Per defecte midaEquip serà "4", així que comencem amb 3
-      // jugadors. La selecció d'equip de 5 amplia l'array al click.
       jugadors: Array.from({ length: 3 }, () => ({ nom:"", cognom:"", email:"", telefon:"", dataNaix:"", categoria:"", talla:"", club:"" })),
+      samarretesExtra: [],
       acceptaBases: false,
       acceptaLopd: false,
       acceptaImatge: false,
+      acceptaCancellacio: false,
     }
   });
 
   const { fields } = useFieldArray({ control, name:"jugadors" });
+  const { fields: extraFields, append: appendExtra, remove: removeExtra } = useFieldArray({ control, name: "samarretesExtra" });
+
+  // Restaurem el formulari des de localStorage al muntar (només una vegada).
+  useEffect(() => {
+    const saved = loadFormState();
+    if (saved?.data && typeof saved.data === "object") {
+      try { reset(saved.data, { keepDefaultValues: false }); } catch {}
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persistim el formulari en LS cada vegada que canvia.
+  useEffect(() => {
+    const sub = watch((value) => { saveFormState(value); });
+    return () => sub.unsubscribe();
+  }, [watch]);
 
   const midaEquip    = watch("midaEquip");
   const codiInput    = watch("codiDesc") || "";
@@ -438,7 +459,9 @@ export default function Inscripcion() {
   const numJugadors  = midaEquip === "5" ? 5 : 4;
   const isMinor      = capDataNaix ? (new Date().getFullYear() - new Date(capDataNaix).getFullYear() < 18) : false;
   const capCategoria = watch("capCategoria");
-  const { base, desc5, desc10, total } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions);
+  const samarretesExtra = watch("samarretesExtra") || [];
+  const numExtraShirts = samarretesExtra.length;
+  const { base, desc5, desc10, extras, total } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions, numExtraShirts);
 
   /* ─── Gate viral helpers ─── */
   // Dos camins per desbloquejar el descompte:
@@ -500,7 +523,11 @@ export default function Inscripcion() {
       ]).flat() as Parameters<typeof trigger>[0];
       ok = await trigger(jugF);
     }
-    if (step === 4) ok = true;
+    if (step === 4) {
+      // Cada samarreta extra ha de tenir talla seleccionada.
+      const extraF = extraFields.map((_, i) => `samarretesExtra.${i}.talla` as const);
+      ok = extraF.length === 0 ? true : await trigger(extraF as unknown as Parameters<typeof trigger>[0]);
+    }
     if (ok) {
       tracker.pasCompletat(step);
       setDir(1);
@@ -668,6 +695,15 @@ export default function Inscripcion() {
       // Genera identificador únic d'equip (per QR de check-in)
       const newTeamId = buildTeamId(data.nomEquip);
       const submissionDate = new Date().toLocaleString("ca-ES");
+      // Concatenem talles capità + jugadors + samarretes extra per al QR de check-in.
+      // Format: "M-L-XL-S|XL-XL" → 4 jugadors (M, L, XL, S) + 2 extres (XL, XL).
+      // L'staff a /checkin ho llegeix d'un cop d'ull per preparar les piles.
+      const tallesJugList = [
+        data.capTalla || "?",
+        ...(data.jugadors || []).slice(0, (Number(data.midaEquip) || 4) - 1).map((j: any) => j?.talla || "?"),
+      ].join("-");
+      const tallesExtraList = (data.samarretesExtra || []).map((s: any) => s?.talla || "?").join("-");
+      const tallesJug = tallesExtraList ? `${tallesJugList}|${tallesExtraList}` : tallesJugList;
       const newCheckinUrl = buildCheckinUrl({
         teamId: newTeamId,
         nomEquip: data.nomEquip,
@@ -679,6 +715,10 @@ export default function Inscripcion() {
         tel: data.capTelefon || "",
         email: data.capEmail || "",
         data: submissionDate,
+        tallesJug,
+        extras: (data.samarretesExtra || []).length,
+        total,
+        pag: "pendent",
       });
       setTeamId(newTeamId);
       setCheckinUrl(newCheckinUrl);
@@ -709,6 +749,9 @@ export default function Inscripcion() {
         throw new Error("Webhook no configurat");
       }
       setSubmitted(true);
+      // Inscripció enviada amb èxit → netegem la persistència local perquè
+      // si l'usuari obre el form de nou (un altre equip) comenci en blanc.
+      clearPersisted();
       tracker.inscripcioCompletada({
         categoria: data.capCategoria,
         total,
@@ -952,14 +995,17 @@ export default function Inscripcion() {
                   : "Quasi! Acaba un dels dos camins per desbloquejar"}
           </button>
 
-          {/* Saltar */}
+          {/* Saltar — opció clara i visible per qui no vol descompte (cap obligació de seguir/compartir) */}
           <button
             type="button"
             onClick={skipGate}
-            className="w-full text-center text-white/30 hover:text-white/60 text-xs mt-4 underline transition-colors"
+            className="w-full font-bold uppercase tracking-wider py-3.5 rounded-xl mt-4 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/15 hover:border-white/30 transition-all text-sm"
           >
-            Saltar i pagar preu complet (sense descompte)
+            No vull descompte — continuar al preu complet
           </button>
+          <p className="text-[10px] text-white/30 text-center mt-2 leading-relaxed">
+            Cap obligació de compartir ni seguir comptes. Pots inscriure't directament al preu complet.
+          </p>
         </div>
       </div>
     );
@@ -1345,8 +1391,65 @@ export default function Inscripcion() {
                     <div className="bg-red-600 rounded-2xl p-5 text-center">
                       <p className="text-white/70 text-sm mb-1">Import total a transferir</p>
                       <p className="text-4xl font-black font-mono text-white">{total.toFixed(2)}€</p>
-                      {descInvitacions && <p className="text-white/80 text-xs mt-1 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
-                      {descAplicat && <p className="text-white/60 text-xs mt-1">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
+                      <div className="mt-2 space-y-0.5 text-xs">
+                        <p className="text-white/70">Quota equip: {base.toFixed(2)}€</p>
+                        {descInvitacions && <p className="text-white/80 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
+                        {descAplicat && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
+                        {numExtraShirts > 0 && (
+                          <p className="text-white/80 font-semibold">+{extras.toFixed(2)}€ — {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Samarretes addicionals (+25€/u) */}
+                    <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-2">
+                          <ShoppingBag className="w-3.5 h-3.5"/> Samarretes addicionals
+                        </p>
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">+25€/unitat</span>
+                      </div>
+                      <p className="text-[11px] text-white/50 leading-relaxed">
+                        A part de la samarreta inclosa per jugador, pots demanar-ne d'extra (acompanyants, familiars, recanvi). Cada una a 25€ amb la talla que vulguis.
+                      </p>
+                      {extraFields.length > 0 && (
+                        <div className="space-y-2">
+                          {extraFields.map((field, idx) => (
+                            <div key={field.id} className="flex items-center gap-2 bg-white/5 rounded-lg p-2 border border-white/10">
+                              <span className="text-xs text-white/50 w-6 text-center font-mono">#{idx + 1}</span>
+                              <Controller
+                                control={control}
+                                name={`samarretesExtra.${idx}.talla` as const}
+                                render={({ field: f }) => (
+                                  <div className="flex-1">
+                                    <STallaSelect value={f.value || ""} onChange={f.onChange} />
+                                  </div>
+                                )}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeExtra(idx)}
+                                className="text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg bg-red-500/5 hover:bg-red-500/10 border border-red-500/20"
+                                aria-label={`Eliminar samarreta extra ${idx + 1}`}
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => appendExtra({ talla: "" })}
+                        className="w-full text-sm font-bold uppercase tracking-wider py-2.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 hover:text-orange-200 border border-orange-500/30 hover:border-orange-500/50 transition-all"
+                      >
+                        + Afegir samarreta (+25€)
+                      </button>
+                      {extraFields.length > 0 && (
+                        <p className="text-[10px] text-white/40 text-center">
+                          Total extres: <strong className="text-orange-300">{extras.toFixed(2)}€</strong> · Talla obligatòria per a cada una.
+                        </p>
+                      )}
                     </div>
                     {/* QR EPC per pagar amb app del banc */}
                     <div className="bg-white rounded-xl p-4 flex items-center gap-4">
