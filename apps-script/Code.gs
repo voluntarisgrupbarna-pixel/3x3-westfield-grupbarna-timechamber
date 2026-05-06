@@ -14,7 +14,8 @@
  * Configuració REQUERIDA: Script Properties (Project Settings → Script properties → Add):
  *   - SHEET_ID              = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
  *   - SHEET_NAME            = Inscripcions 2026
- *   - ADMIN_EMAIL           = voluntarisgrupbarna@gmail.com
+ *   - ADMIN_EMAILS          = voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info  (CSV; preferit)
+ *   - ADMIN_EMAIL           = (fallback single, només si ADMIN_EMAILS no està)
  *   - FILLOUT_API_KEY       = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
  *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
  *   - DRIVE_FOLDER_NAME     = (opcional, p. ex. "3x3 Justificants 2026". Si no, "3x3 Justificants 2026")
@@ -57,8 +58,9 @@ function sendMail_(opts) {
   const useResend = apiKey && from;
 
   if (!useResend) {
-    // Fallback: MailApp (comportament històric)
-    return MailApp.sendEmail(opts);
+    // Fallback: MailApp (comportament històric). MailApp.sendEmail accepta
+    // string CSV per `to/bcc/cc`, no array — convertim si cal.
+    return MailApp.sendEmail(toMailAppOpts_(opts));
   }
 
   // Build Resend payload
@@ -99,7 +101,37 @@ function sendMail_(opts) {
     Logger.log('Resend exception: ' + err + ' — fallback a MailApp');
   }
   // Si Resend falla, fallback a MailApp per no perdre l'email
-  return MailApp.sendEmail(opts);
+  return MailApp.sendEmail(toMailAppOpts_(opts));
+}
+
+/**
+ * Adapta un opts amb `to/bcc/cc` array al format string CSV que MailApp accepta.
+ */
+function toMailAppOpts_(opts) {
+  const out = Object.assign({}, opts);
+  ['to', 'bcc', 'cc'].forEach(function(k) {
+    if (Array.isArray(out[k])) out[k] = out[k].filter(Boolean).join(',');
+  });
+  return out;
+}
+
+/**
+ * Llista de destinataris admin per a totes les notificacions del backend
+ * (inscripcions, leads WhatsApp, subscripcions blog, etc.).
+ *
+ * Prioritat:
+ *   1. Script Property `ADMIN_EMAILS` (CSV) — ex: "a@x.com,b@y.com"
+ *   2. Script Property `ADMIN_EMAIL` (single string)
+ *   3. Fallback hardcoded: voluntarisgrupbarna@gmail.com + voluntaris@grupbarna.info
+ *
+ * Així Ana rep TOTS els avisos al Gmail (preferit) i a l'email del domini
+ * del club com a redundància, sense haver de configurar res.
+ */
+function getAdminEmails_() {
+  const csv = PROPS.getProperty('ADMIN_EMAILS')
+    || PROPS.getProperty('ADMIN_EMAIL')
+    || 'voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info';
+  return String(csv).split(',').map(function(s) { return s.trim(); }).filter(Boolean);
 }
 
 function getSheet_() {
@@ -367,11 +399,16 @@ function writeToSheet_(data, justificantUpload) {
       'Data', 'Team ID', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Població', 'Email', 'Telèfon',
       'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
       'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
-      'Check-in URL', 'Arribat (timestamp)'
+      'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)'
     ]);
   }
   const jugadors = formatJugadors_(d);
   const justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
+  // Samarretes addicionals (afegit 2026-05-07): array d'{ talla } a 25€/u.
+  const extraArr = Array.isArray(data && data.samarretesExtra) ? data.samarretesExtra : [];
+  const numExtras = extraArr.length;
+  const tallesExtra = extraArr.map(function (s) { return (s && s.talla) ? s.talla : '?'; }).join(', ');
+  const pagEstat = data && data.pag === 'ok' ? 'Verificat' : 'Pendent';
   sheet.appendRow([
     d.data,
     d.teamId,
@@ -390,6 +427,9 @@ function writeToSheet_(data, justificantUpload) {
     d.descInvitacions ? 'Sí' : 'No',
     justifUrl,
     d.checkinUrl,
+    numExtras,
+    tallesExtra,
+    pagEstat,
     ''   // "Arribat" buit fins que algú escanegi el QR el dia del torneig
   ]);
 }
@@ -532,7 +572,7 @@ function addWhatsAppLead_(data) {
   sheet.appendRow(row);
 
   // Alerta admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
+  const admin = getAdminEmails_();
   const eventLabel = ({
     'campus':         'Campus',
     'portes_obertes': 'Portes Obertes',
@@ -725,7 +765,7 @@ function addToWaitlist_(data) {
     } catch (e) { Logger.log('waitlist mail user err: ' + e); }
   }
   // Alerta a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
+  const admin = getAdminEmails_();
   try {
     sendMail_({
       to: admin,
@@ -824,6 +864,8 @@ function getOrCreateFolder_(name) {
  */
 function buildFilloutBody_(data, justificantUpload) {
   const jugadors = formatJugadors_(data);
+  // Samarretes addicionals (afegit 2026-05-07): array d'{ talla } a 25€/u.
+  const extraArr = Array.isArray(data && data.samarretesExtra) ? data.samarretesExtra : [];
   const detalls = {
     concepte: data.concepte || ('3X3+' + String(data.nomEquip || 'EQUIP').toUpperCase()),
     categoria: data.categoria || '',
@@ -834,6 +876,9 @@ function buildFilloutBody_(data, justificantUpload) {
     notes: data.notes || '',
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
+    samarretesExtra: extraArr,
+    numSamarretesExtra: extraArr.length,
+    pag: data.pag === 'ok' ? 'ok' : 'pendent',
     justificantDriveUrl: justificantUpload ? justificantUpload.url : '',
     data: data.data || new Date().toLocaleString('ca-ES'),
   };
@@ -884,7 +929,7 @@ function sendEmails_(data, justificantUpload) {
     }
   }
   // Email a admin
-  const admin = PROPS.getProperty('ADMIN_EMAIL') || 'voluntarisgrupbarna@gmail.com';
+  const admin = getAdminEmails_();
   try {
     sendMail_({
       to: admin,
