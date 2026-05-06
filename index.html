@@ -7,7 +7,7 @@
     <meta name="color-scheme" content="dark" />
 
     <!-- Primary SEO -->
-    <title>3×3 Westfield Glòries 2026 · Torneig FIBA Barcelona | Inscripcions Obertes</title>
+    <title>3×3 Barcelona 2026 · Torneig FIBA Westfield Glòries | Inscripcions Obertes</title>
     <meta name="description" content="El torneig 3×3 més potent de Barcelona. Punts FIBA, 2.400€ prize money (1.000€ per cada Sèniors M/F + 200€ Veterans M/F). 6-7 Juny 2026 al Clot-Glòries. Inscriu-te ja!" />
     <meta name="keywords" content="3x3 Barcelona, torneig 3x3 FIBA, Westfield Glòries, basquet 3x3, basquet de carrer Barcelona, CB Grup Barna, Time Chamber, prize money 3x3, ranking FIBA 3x3, Sant Martí, Clot, Barcelona basquet" />
     <meta name="author" content="CB Grup Barna · Time Chamber · Eix Clot" />
@@ -224,25 +224,40 @@
     }
     </script>
 
-    <!-- JSON-LD: Organization (CB Grup Barna) -->
+    <!-- JSON-LD: Organization (CB Grup Barna)
+         Logo com a ImageObject amb dimensions explicites: requisit per al Knowledge Graph de Google.
+         sameAs reforça la identitat (Instagram + WordPress + Wikidata quan existeixi). -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "SportsOrganization",
+      "@id": "https://cbgrupbarna-3x3timechamber.com/#cb-grup-barna",
       "name": "CB Grup Barna",
-      "alternateName": "Club Bàsquet Grup Barna",
+      "alternateName": ["Club Bàsquet Grup Barna", "Grup Barna"],
       "url": "https://cbgrupbarna-3x3timechamber.com/",
-      "logo": "https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-512.png",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-512.png",
+        "width": 512,
+        "height": 512,
+        "caption": "Escut oficial del CB Grup Barna"
+      },
+      "image": "https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-1024.png",
       "sport": "Basketball",
       "address": {
         "@type": "PostalAddress",
+        "streetAddress": "Carrer de la Llacuna 172",
         "addressLocality": "Barcelona",
-        "addressRegion": "Catalunya · Districte de Sant Martí",
+        "postalCode": "08018",
+        "addressRegion": "Catalunya",
         "addressCountry": "ES"
       },
+      "areaServed": { "@type": "City", "name": "Barcelona" },
+      "telephone": "+34688265230",
       "email": "voluntaris@grupbarna.info",
       "sameAs": [
-        "https://www.instagram.com/cbgrupbarna/"
+        "https://www.instagram.com/cbgrupbarna/",
+        "https://cbgrupbarna.com"
       ]
     }
     </script>
