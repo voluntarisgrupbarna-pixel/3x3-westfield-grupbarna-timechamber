@@ -59,7 +59,7 @@ export default function Hub() {
             color="from-[#25D366] to-[#128C7E]"
             icon={Trophy}
             label="Torneig 3×3 Westfield Glòries"
-            sub="6-7 juny 2026 · 100 equips · 2.400€ premis"
+            sub="6-7 juny 2026 · 100 equips · 4.400€ premis"
           />
         </div>
 

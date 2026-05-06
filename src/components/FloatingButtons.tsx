@@ -17,7 +17,7 @@ import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
  */
 
 const SHARE_URL = "https://cbgrupbarna-3x3timechamber.com/";
-const SHARE_TEXT = "🏀 3×3 Westfield Glòries 2026 · Torneig FIBA a Barcelona · 100 equips · 6-7 Juny · 2.400€ prize money. Inscriu-te ja!";
+const SHARE_TEXT = "🏀 3×3 Westfield Glòries 2026 · Torneig FIBA a Barcelona · 100 equips · 6-7 Juny · 4.400€ prize money. Inscriu-te ja!";
 
 export default function FloatingButtons() {
   const [shareOpen, setShareOpen] = useState(false);

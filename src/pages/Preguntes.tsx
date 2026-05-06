@@ -19,7 +19,7 @@ type FAQ = { q: string; a: string; tags?: string[] };
 const FAQS: FAQ[] = [
   {
     q: "Què és el 3×3 Westfield Glòries?",
-    a: "És el torneig oficial de bàsquet 3×3 amb punts FIBA del barri del Clot-Glòries de Barcelona, organitzat per CB Grup Barna · Time Chamber · Eix Clot. La 4a edició es disputa el 6 i 7 de juny de 2026 amb 2.400€ de prize money en 6 categories i jugadors de tota la península.",
+    a: "És el torneig oficial de bàsquet 3×3 amb punts FIBA del barri del Clot-Glòries de Barcelona, organitzat per CB Grup Barna · Time Chamber · Eix Clot. La 4a edició es disputa el 6 i 7 de juny de 2026 amb 4.400€ de prize money en 6 categories i jugadors de tota la península.",
     tags: ["què és", "torneig", "fiba"],
   },
   {
@@ -44,7 +44,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: "Hi ha categoria femenina?",
-    a: "Sí. Cada categoria pot tenir equips masculins, femenins i mixtos. La igualtat és un eix central de l'esdeveniment. Tenim premis equiparats a les categories femenines Sèniors i Veterans (800€ i 100€ respectivament).",
+    a: "Sí. Cada categoria pot tenir equips masculins, femenins i mixtos. La igualtat és un eix central de l'esdeveniment. Tenim premis equiparats a les categories femenines Sèniors (1.000€ a A i B) i Veterans (200€).",
     tags: ["femení", "dones", "mixtos"],
   },
   {
@@ -59,12 +59,12 @@ const FAQS: FAQ[] = [
   },
   {
     q: "Què inclou el preu d'inscripció?",
-    a: "Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 2.400€ de prize money repartits en les 6 categories Sèniors i Veterans.",
+    a: "Samarreta oficial del torneig per a cada jugador, dorsals, accés als 2 dies, premis dels comerços col·laboradors per a tots els equips, i opció a 4.400€ de prize money repartits en les 6 categories Sèniors i Veterans.",
     tags: ["preu", "samarreta", "què inclou"],
   },
   {
     q: "Quins són els premis (prize money)?",
-    a: "2.400€ totals: Sèniors A Pro Masculí 800€ · Sèniors A Pro Femení 800€ · Sèniors B Amateur Masculí 300€ · Sèniors B Amateur Femení 300€ · Veterans Masculí (+35) 100€ · Veterans Femení (+35) 100€. Només cobra el 1r classificat de cada categoria; el 2n rep copa i el 3r medalla. Totes les categories tenen premis dels comerços.",
+    a: "4.400€ totals: Sèniors A Pro Masculí 1.000€ · Sèniors A Pro Femení 1.000€ · Sèniors B Amateur Masculí 1.000€ · Sèniors B Amateur Femení 1.000€ · Veterans Masculí (+35) 200€ · Veterans Femení (+35) 200€. Només cobra el 1r classificat de cada categoria; el 2n rep copa i el 3r medalla. Totes les categories tenen premis dels comerços.",
     tags: ["premis", "prize money", "trofeus"],
   },
   {
