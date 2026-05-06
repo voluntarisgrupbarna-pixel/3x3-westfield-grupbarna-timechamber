@@ -51,6 +51,7 @@ export const tracker = {
   shareWhatsApp: (slot: number) =>
     track("viral_share_whatsapp", { slot_index: slot }),
   igFollowed: () => track("viral_ig_followed"),
+  igTimechamberFollowed: () => track("viral_ig_timechamber_followed"),
   pasCompletat: (step: number) =>
     track("inscripcio_pas_completat", { step }),
   codiDescompteAplicat: (codi: string) =>
