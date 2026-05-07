@@ -158,13 +158,77 @@ function getFilloutAuth_() {
   return { apiKey: apiKey, formId: formId };
 }
 
+/* JSON response helper (CORS-permissive per defecte amb Apps Script Web App "Anyone"). */
+function jsonOut_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/* Normalitza nom d'equip per detectar duplicats:
+   - sense accents (NFD + strip diacritics)
+   - lowercase
+   - espais col·lapsats i trim
+   El frontend (Inscripcion.logic.ts::normalizeTeamName) ha de coincidir EXACTAMENT amb aquesta funció. */
+function normalizeTeamName_(s) {
+  return String(s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/* Retorna la llista de noms d'equip ja registrats al Sheet (font ràpida i estable). */
+function getRegisteredNames_() {
+  try {
+    const sheet = getSheet_();
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonOut_({ names: [], ts: new Date().toISOString() });
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const col = headers.indexOf('Nom equip');
+    if (col < 0) return jsonOut_({ names: [], ts: new Date().toISOString() });
+    const values = sheet.getRange(2, col + 1, lastRow - 1, 1).getValues();
+    const names = values.map(function(r) { return String(r[0] || '').trim(); }).filter(Boolean);
+    return jsonOut_({ names: names, ts: new Date().toISOString() });
+  } catch (err) {
+    Logger.log('getRegisteredNames_ error: ' + err);
+    return jsonOut_({ names: [], error: String(err), ts: new Date().toISOString() });
+  }
+}
+
+/* Comprova si un nom d'equip ja existeix (case/accent-insensitive). */
+function isTeamNameTaken_(nomEquip) {
+  const target = normalizeTeamName_(nomEquip);
+  if (!target) return false;
+  try {
+    const sheet = getSheet_();
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return false;
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const col = headers.indexOf('Nom equip');
+    if (col < 0) return false;
+    const values = sheet.getRange(2, col + 1, lastRow - 1, 1).getValues();
+    for (let i = 0; i < values.length; i++) {
+      if (normalizeTeamName_(values[i][0]) === target) return true;
+    }
+    return false;
+  } catch (err) {
+    Logger.log('isTeamNameTaken_ error: ' + err);
+    return false; // si fallem la lectura, deixem passar (el frontend ja ha validat)
+  }
+}
+
 /**
- * GET — comptador d'equips inscrits per la web.
- * Llegeix el total de submissions de Fillout (font de veritat).
- * Si Fillout no està configurat o falla, fallback a comptar files del Sheet.
- * Retorna: { count: <num>, capacity: <num o null>, source: 'fillout'|'sheet'|'error', ts: <ISO> }
+ * GET — endpoints públics:
+ *  - sense ?action o ?action=count: comptador d'equips inscrits + capacitat + by category
+ *  - ?action=names: llista de noms d'equip registrats (per autocomplete + bloqueig duplicats)
+ *
+ * Retorna JSON. CORS: Apps Script Web App ("Anyone") afegeix Access-Control-Allow-Origin:* per defecte.
  */
 function doGet(e) {
+  const action = (e && e.parameter && e.parameter.action) || 'count';
+  if (action === 'names') return getRegisteredNames_();
+
   let count = 0;
   let source = 'error';
   try {
@@ -202,15 +266,13 @@ function doGet(e) {
   let byCategory = {};
   try { byCategory = getByCategoryFromSheet_(); } catch (e) { Logger.log('byCategory err: ' + e); }
 
-  return ContentService
-    .createTextOutput(JSON.stringify({
-      count: count,
-      capacity: getCapacitat_(),
-      byCategory: byCategory,
-      source: source,
-      ts: new Date().toISOString(),
-    }))
-    .setMimeType(ContentService.MimeType.JSON);
+  return jsonOut_({
+    count: count,
+    capacity: getCapacitat_(),
+    byCategory: byCategory,
+    source: source,
+    ts: new Date().toISOString(),
+  });
 }
 
 /**
@@ -297,6 +359,16 @@ function doPost(e) {
 
     const data = normalizeFormData_(raw);
 
+    // ─── Bloqueig de duplicats (només per inscripcions d'equip, no per individuals que ja s'han processat amunt).
+    // Si dos equips envien el mateix nom (race condition) un d'ells rebrà aquest error.
+    if (data.tipus === 'equip' && data.nomEquip && isTeamNameTaken_(data.nomEquip)) {
+      return jsonOut_({
+        ok: false,
+        error: 'duplicate_team_name',
+        message: "El nom d'equip '" + data.nomEquip + "' ja està registrat. Tria'n un altre.",
+      });
+    }
+
     // 1) Si arriba justificant en base64, pujar-lo a Drive primer (per tenir URL al Sheet i Fillout)
     let justificantUpload = null;
     if (raw.justificant && raw.justificant.base64) {
@@ -345,18 +417,16 @@ function doPost(e) {
     // 4) Emails (al capità + admin)
     sendEmails_(data, justificantUpload);
 
-    return ContentService
-      .createTextOutput(JSON.stringify({
-        ok: true,
-        fillout: filloutOk,
-        filloutError: filloutError,
-        driveUploaded: !!justificantUpload,
-      }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonOut_({
+      ok: true,
+      fillout: filloutOk,
+      filloutError: filloutError,
+      driveUploaded: !!justificantUpload,
+      teamId: data.teamId,
+      nomEquip: data.nomEquip,
+    });
   } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ ok: false, error: String(err) }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return jsonOut_({ ok: false, error: String(err) });
   }
 }
 

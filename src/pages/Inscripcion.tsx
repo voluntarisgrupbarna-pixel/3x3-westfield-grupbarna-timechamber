@@ -25,6 +25,8 @@ import { tracker } from "@/lib/track";
 import { CAT_NAMES } from "@/lib/categories";
 import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 import SEO from "@/components/SEO";
+import { TeamNameInput } from "@/components/TeamNameInput";
+import { invalidateTeamNamesCache, verifyTeamRegistered } from "@/lib/teamNames";
 
 /* ─── Config ─── */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
@@ -356,6 +358,7 @@ export default function Inscripcion() {
   const [teamId, setTeamId]       = useState<string>("");
   const [checkinUrl, setCheckinUrl] = useState<string>("");
   const [sending, setSending]     = useState(false);
+  const [nameAvailable, setNameAvailable] = useState(true);
   const [downloadingCard, setDownloadingCard] = useState(false);
   const qrCardRef = useRef<HTMLDivElement>(null);
   const [descAplicat, setDescAplicat] = useState(false);
@@ -512,7 +515,17 @@ export default function Inscripcion() {
 
   const goNext = async () => {
     let ok = false;
-    if (step === 1) ok = await trigger(["nomEquip","midaEquip"]);
+    if (step === 1) {
+      ok = await trigger(["nomEquip","midaEquip"]);
+      if (ok && !nameAvailable) {
+        toast({
+          title: "Nom d'equip ja registrat",
+          description: "Tria un altre nom o fes servir un dels suggeriments.",
+          variant: "destructive",
+        });
+        ok = false;
+      }
+    }
     if (step === 2) {
       const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capTalla"];
       ok = await trigger(fields2);
@@ -723,32 +736,71 @@ export default function Inscripcion() {
       setTeamId(newTeamId);
       setCheckinUrl(newCheckinUrl);
 
-      if (GOOGLE_WEBHOOK) {
-        // Codifica el fitxer com a base64 si n'hi ha
-        let justificantPayload: null | { name: string; mimeType: string; base64: string } = null;
-        if (justFile) {
-          justificantPayload = await fileToBase64Payload(justFile);
-        }
-        await fetch(GOOGLE_WEBHOOK, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...data,
-            total,
-            descAplicat,
-            descInvitacions,
-            concepte: buildConcepte(data.nomEquip),
-            teamId: newTeamId,
-            checkinUrl: newCheckinUrl,
-            justificant: justificantPayload,    // { name, mimeType, base64 } o null
-            data: submissionDate,
-          }),
-        });
-      } else {
+      if (!GOOGLE_WEBHOOK) {
         throw new Error("Webhook no configurat");
       }
+      // Codifica el fitxer com a base64 si n'hi ha
+      let justificantPayload: null | { name: string; mimeType: string; base64: string } = null;
+      if (justFile) {
+        justificantPayload = await fileToBase64Payload(justFile);
+      }
+      // Apps Script Web App ("Anyone") respon amb Access-Control-Allow-Origin: *,
+      // així que podem llegir la resposta JSON sense `mode: "no-cors"`.
+      // Si ho posàvem amb no-cors, es silenciaven errors com `duplicate_team_name`
+      // i l'usuari veia èxit amb la inscripció a NULL al backend (bug 2026-05-07).
+      const res = await fetch(GOOGLE_WEBHOOK, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita preflight CORS
+        body: JSON.stringify({
+          ...data,
+          total,
+          descAplicat,
+          descInvitacions,
+          concepte: buildConcepte(data.nomEquip),
+          teamId: newTeamId,
+          checkinUrl: newCheckinUrl,
+          justificant: justificantPayload,
+          data: submissionDate,
+        }),
+      });
+
+      let body: { ok?: boolean; error?: string; message?: string } = {};
+      try {
+        body = await res.json();
+      } catch {
+        // Si no podem parsar la resposta, considerem fallit per no donar fals èxit.
+        throw new Error("La resposta del servidor no es pot llegir");
+      }
+
+      if (!res.ok || body.ok === false) {
+        if (body.error === "duplicate_team_name") {
+          toast({
+            title: "Nom d'equip ja registrat",
+            description: body.message || "Algú s'ha avançat amb aquest nom. Torna al pas 1 i tria'n un altre.",
+            variant: "destructive",
+          });
+          invalidateTeamNamesCache();
+          setNameAvailable(false);
+          setDir(-1);
+          setStep(1);
+          throw new Error("duplicate_team_name");
+        }
+        throw new Error(body.error || body.message || `HTTP ${res.status}`);
+      }
+
+      // Verifiquem que l'equip queda registrat de veritat (evita falsos èxits).
+      // Si en 5s no apareix a la llista, mostrem un avís però continuem perquè
+      // pot ser només replicació lenta (Sheets sol trigar 1-3s, Fillout fins 4s).
+      const verified = await verifyTeamRegistered(data.nomEquip, 5000);
+      if (!verified) {
+        toast({
+          title: "Inscripció enviada",
+          description: "El backend triga una mica a confirmar. Si en 5 minuts no reps email, escriu-nos per WhatsApp.",
+        });
+      }
+
       setSubmitted(true);
+      invalidateTeamNamesCache();
       // Inscripció enviada amb èxit → netegem la persistència local perquè
       // si l'usuari obre el form de nou (un altre equip) comenci en blanc.
       clearPersisted();
@@ -759,8 +811,11 @@ export default function Inscripcion() {
         teamId: newTeamId,
       });
     } catch (err) {
-      tracker.inscripcioError(err instanceof Error ? err.message : String(err));
-      toast({ title:"Error d'enviament", description:"Torna-ho a intentar o contacta per WhatsApp.", variant:"destructive" });
+      const msg = err instanceof Error ? err.message : String(err);
+      tracker.inscripcioError(msg);
+      if (msg !== "duplicate_team_name") {
+        toast({ title:"Error d'enviament", description:"Torna-ho a intentar o contacta per WhatsApp.", variant:"destructive" });
+      }
     } finally {
       setSending(false);
     }
@@ -1221,7 +1276,21 @@ export default function Inscripcion() {
                   </h2>
                   <div className="space-y-5">
                     <FieldRow label="Nom de l'equip *" error={errors.nomEquip?.message}>
-                      <SInput {...register("nomEquip")} placeholder="Ex: Barcelona Ballers" />
+                      <Controller
+                        name="nomEquip"
+                        control={control}
+                        render={({ field }) => (
+                          <TeamNameInput
+                            name={field.name}
+                            value={field.value || ""}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            placeholder="Ex: Barcelona Ballers"
+                            className="bg-white/8 border-white/15 focus:border-red-500 text-white placeholder:text-white/30 h-10 rounded-xl"
+                            onAvailabilityChange={({ available }) => setNameAvailable(available)}
+                          />
+                        )}
+                      />
                     </FieldRow>
                     <div>
                       <Label className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3 block">Mida de l'equip *</Label>
@@ -1654,7 +1723,7 @@ export default function Inscripcion() {
                   Següent <ChevronRight className="w-4 h-4"/>
                 </Button>
               ) : (
-                <Button type="submit" disabled={sending}
+                <Button type="submit" disabled={sending || !nameAvailable}
                   className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider gap-2 hover:scale-105 transition-transform px-8 disabled:opacity-50 disabled:scale-100 rounded-xl"
                   style={{ boxShadow:"0 4px 20px rgba(220,38,38,0.35)" }}>
                   {sending ? <><Loader2 className="w-4 h-4 animate-spin"/> Enviant...</> : <><Check className="w-4 h-4"/> Enviar Inscripció</>}

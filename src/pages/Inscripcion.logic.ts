@@ -16,6 +16,43 @@ export const BENEFICIARI = "CB Grup Barna";
 export const PRECIO_CAMISETA_EXTRA = 25;
 
 /* ─── Pure helpers (no DOM, no network) ─── */
+
+/* Normalitza un nom d'equip per detectar duplicats al frontend.
+   Coincideix EXACTAMENT amb `normalizeTeamName_` a apps-script/Code.gs. */
+export function normalizeTeamName(s: string | undefined): string {
+  return String(s || "")
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/* Genera fins a 3 suggeriments de variants del nom quan ja està registrat.
+   Estratègia: <Nom> 2 (incremental fins trobar lliure) · <Nom> BCN · <Nom> 2026.
+   `taken` és un Set de noms ja normalitzats. */
+export function genNameSuggestions(base: string, taken: Set<string>): string[] {
+  const clean = (base || "").trim().replace(/\s+/g, " ");
+  if (!clean) return [];
+  const out: string[] = [];
+  // Variant 1: número incremental
+  for (let n = 2; n <= 9; n++) {
+    const v = `${clean} ${n}`;
+    if (!taken.has(normalizeTeamName(v))) { out.push(v); break; }
+  }
+  // Variant 2: sufix BCN
+  const v2 = `${clean} BCN`;
+  if (!taken.has(normalizeTeamName(v2)) && !out.includes(v2)) out.push(v2);
+  // Variant 3: any 2026
+  const v3 = `${clean} 2026`;
+  if (!taken.has(normalizeTeamName(v3)) && !out.includes(v3)) out.push(v3);
+  // Si encara en falta algun, afegim "Team <Nom>"
+  if (out.length < 3) {
+    const v4 = `Team ${clean}`;
+    if (!taken.has(normalizeTeamName(v4)) && !out.includes(v4)) out.push(v4);
+  }
+  return out.slice(0, 3);
+}
+
 export function isSeniorCat(cat: string | undefined): boolean {
   if (!cat) return false;
   return /^(Sèniors|Sèniors|Senior|Veterans)/i.test(cat);
@@ -95,7 +132,8 @@ export const jugSchema = z.object({
 
 export const schema = z.object({
   nomEquip:  reqStr("El nom de l'equip ha de tenir almenys 2 caràcters")
-                .min(2, "El nom de l'equip ha de tenir almenys 2 caràcters"),
+                .min(2, "El nom de l'equip ha de tenir almenys 2 caràcters")
+                .max(40, "El nom de l'equip ha de ser de màxim 40 caràcters"),
   midaEquip: z.enum(["4","5"], {
     required_error: "Selecciona la mida de l'equip",
     invalid_type_error: "Selecciona la mida de l'equip",
