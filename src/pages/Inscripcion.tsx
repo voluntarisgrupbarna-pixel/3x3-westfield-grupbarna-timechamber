@@ -1247,7 +1247,33 @@ export default function Inscripcion() {
         {/* Card */}
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-7 overflow-hidden shadow-2xl">
           <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleSubmit(onSubmit, (formErrors) => {
+              // Si la validació de react-hook-form falla, NO crida onSubmit i no mostra
+              // cap missatge global — els errors només surten al costat dels camps. Si el
+              // camp invàlid és en un step anterior (no visible), l'usuari clica i sembla
+              // que el botó no faci res. Avisem amb toast i naveguem al pas problemàtic.
+              const erroredFields = Object.keys(formErrors);
+              if (erroredFields.length === 0) return;
+              const fieldToStep: Record<string, number> = {
+                nomEquip: 1, midaEquip: 1,
+                capNom: 2, capCognom: 2, capEmail: 2, capTelefon: 2,
+                capDataNaix: 2, capCategoria: 2, capTalla: 2, capPoblacio: 2,
+                capClub: 2, tutorNom: 2, tutorCognom: 2, tutorTelefon: 2,
+                jugadors: 3,
+                samarretesExtra: 5,
+                acceptaBases: 5, acceptaLopd: 5, acceptaImatge: 5, acceptaCancellacio: 5,
+              };
+              const targetStep = fieldToStep[erroredFields[0]] ?? step;
+              toast({
+                title: "Falten camps per omplir",
+                description: `Revisa el pas ${targetStep}: ${erroredFields.join(", ")}`,
+                variant: "destructive",
+              });
+              if (targetStep !== step) {
+                setDir(targetStep < step ? -1 : 1);
+                setStep(targetStep);
+              }
+            })}
             onKeyDown={(e) => {
               // Bloqueja submit implícit per Enter en steps intermedis: pitjar Enter
               // dins un <input> abans de l'últim step ha d'avançar com el botó "Següent",
