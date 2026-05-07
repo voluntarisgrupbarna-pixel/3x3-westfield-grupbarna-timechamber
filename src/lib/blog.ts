@@ -7,6 +7,7 @@ import PostComPreparar from "@/blog/post-com-preparar";
 import PostDiferencies from "@/blog/post-diferencies-3x3-5x5";
 import PostHistoria from "@/blog/post-historia-3x3-barcelona";
 import PostSeusComArribar from "@/blog/post-seus-com-arribar";
+import PostPistesStreetball from "@/blog/post-pistes-streetball-barcelona";
 
 export type BlogPost = {
   slug: string;
@@ -59,6 +60,16 @@ export const POSTS: BlogPost[] = [
     tags: ["3x3", "barcelona", "clot", "glòries", "transport", "guia visitant"],
     cover: "https://cbgrupbarna-3x3timechamber.com/images/seu-westfield-glories.jpg",
     Component: PostSeusComArribar,
+  },
+  {
+    slug: "millors-pistes-streetball-barcelona",
+    title: "7 millors pistes de streetball a Barcelona: guia 2026 per a jugadors de carrer",
+    excerpt: "Coneix les millors pistes de bàsquet de carrer de Barcelona — Rambleta del Clot, Diagonal Mar, Ciutadella, Pegaso, Montjuïc i més. Info pràctica: com arribar, horaris, ambient i el codi tàcit del streetball.",
+    date: "2026-05-07",
+    readingMinutes: 9,
+    tags: ["streetball", "pistes", "barcelona", "bàsquet de carrer", "guia"],
+    cover: "https://cbgrupbarna-3x3timechamber.com/images/streetball-urba.jpg",
+    Component: PostPistesStreetball,
   },
 ];
 
