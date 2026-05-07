@@ -219,7 +219,7 @@ function _emailPostEvent_(c) {
     '<p>Acabem de tancar la 4ª edició del 3×3 Westfield Glòries. <strong>' + c.equip + '</strong> ha format part d\'una història que continua creixent any rere any.</p>',
     '<h3 style="color:#dc2626">3 coses que pots fer ara</h3>',
     '<ol>',
-    '<li><strong>📸 Comparteix-ho a Instagram</strong> · Etiqueta'a <a href="https://www.instagram.com/cbgrupbarna/">@cbgrupbarna</a> i <a href="https://www.instagram.com/timechamber_es/">@timechamber_es</a> a les fotos del teu equip. Republicarem les millors a la nostra story.</li>',
+    '<li><strong>📸 Comparteix-ho a Instagram</strong> · Etiqueta\'ns a <a href="https://www.instagram.com/cbgrupbarna/">@cbgrupbarna</a> i <a href="https://www.instagram.com/timechamber_es/">@timechamber_es</a> a les fotos del teu equip. Republicarem les millors a la nostra story.</li>',
     '<li><strong>⭐ Enquesta ràpida</strong> · 30 segons que ens ajuden a millorar l\'edició de l\'any que ve. <a href="mailto:voluntaris@grupbarna.info?subject=Feedback%203x3%202026">Envia\'ns un email</a> amb 1-3 coses que canviaries.</li>',
     '<li><strong>🗓️ Marca el calendari</strong> · La 5ª edició serà el primer cap de setmana de juny 2027. Inscripcions obertes 6 mesos abans.</li>',
     '</ol>',
