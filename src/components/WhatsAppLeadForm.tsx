@@ -11,6 +11,7 @@ export type WhatsAppLeadSource =
   | "home_fab"
   | "faq"
   | "premsa"
+  | "patrocinadors"
   | "sobre_nosaltres"
   | "inscripcio_individual"
   | "post_inscripcio"
@@ -45,6 +46,7 @@ const PRE_TEXT_BY_SOURCE: Record<WhatsAppLeadSource, string> = {
   home_fab: "Hola! Tinc un dubte sobre el 3×3 Westfield Glòries.",
   faq: "Hola! Tinc una pregunta sobre el 3×3 Westfield Glòries.",
   premsa: "Hola · sóc de premsa, sobre el 3×3 Westfield Glòries.",
+  patrocinadors: "Hola! Sóc de [empresa] i estic interessat/da a patrocinar el 3×3 Westfield Glòries 2026. Em podríeu enviar la proposta de patrocini?",
   sobre_nosaltres: "Hola! M'agradaria contactar amb el CB Grup Barna.",
   inscripcio_individual: "Hola! Tinc dubtes sobre la inscripció individual al 3×3.",
   post_inscripcio: "Hola! Acabo d'enviar la inscripció del meu equip al 3×3 Westfield Glòries. Podeu confirmar la recepció?",

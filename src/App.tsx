@@ -19,6 +19,7 @@ const Seu                 = lazy(() => import("@/pages/Seu"));
 const LlistaEspera        = lazy(() => import("@/pages/LlistaEspera"));
 const SobreNosaltres      = lazy(() => import("@/pages/SobreNosaltres"));
 const Premsa              = lazy(() => import("@/pages/Premsa"));
+const Patrocinadors       = lazy(() => import("@/pages/Patrocinadors"));
 const Blog                = lazy(() => import("@/pages/Blog"));
 const BlogPost            = lazy(() => import("@/pages/BlogPost"));
 const Contacte            = lazy(() => import("@/pages/Contacte"));
@@ -66,6 +67,9 @@ export default function App() {
           <Route path="/qui-som" element={<SobreNosaltres />} />
           <Route path="/premsa" element={<Premsa />} />
           <Route path="/press" element={<Premsa />} />
+          <Route path="/patrocinadors" element={<Patrocinadors />} />
+          <Route path="/patrocinadores" element={<Patrocinadors />} />
+          <Route path="/sponsors" element={<Patrocinadors />} />
           <Route path="/blog" element={<Blog />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/contacte" element={<Contacte />} />
