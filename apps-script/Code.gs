@@ -20,6 +20,12 @@
  *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
  *   - DRIVE_FOLDER_NAME     = (opcional, p. ex. "3x3 Justificants 2026". Si no, "3x3 Justificants 2026")
  *   - CAPACITAT_TOTAL       = (opcional, p. ex. "48". Si no, mostra només "X equips inscrits")
+ *   - CALLMEBOT_API_KEY     = (opcional) Clau de CallMeBot per rebre cada lead WhatsApp al
+ *                            mòbil del club (+34698425153). Setup: afegeix +34644909288 com
+ *                            a contacte i envia "I allow callmebot to send me messages",
+ *                            rebràs la clau. Sense aquesta clau, els avisos només arriben
+ *                            per email (Gmail).
+ *   - CALLMEBOT_PHONE       = (opcional, default +34698425153) Mòbil destinatari de l'avís.
  *
  * Per què aquesta arquitectura:
  *  - Fillout és la BASE DE DADES OFICIAL (no es pot modificar manualment, segura)
@@ -580,6 +586,42 @@ function getLeadSheetName_(_event, data) {
   return 'Contactes_WhatsApp_3x3';
 }
 
+/**
+ * Envia un missatge WhatsApp al telèfon del club via CallMeBot
+ * (servei tercer gratuït, no toca el WhatsApp Web → sense risc de ban).
+ *
+ * Setup (una sola vegada per Ana):
+ *  1. Afegeix +34 644 90 92 88 com a contacte al WhatsApp del club (+34 698 425 153).
+ *  2. Envia-li el missatge: "I allow callmebot to send me messages"
+ *  3. Reps una API key del propi bot.
+ *  4. Apps Script → Project Settings → Script properties → afegeix:
+ *      - CALLMEBOT_API_KEY  = <la-teva-key>
+ *      - CALLMEBOT_PHONE    = +34698425153  (opcional; default = aquest)
+ *
+ * Limit: ~1 missatge/min (cua interna de CallMeBot). Pels leads del 3x3
+ * sol ser de sobres. Si arriben dos leads alhora, el segon pot trigar 60s.
+ */
+function sendCallMeBot_(text) {
+  const apiKey = PROPS.getProperty('CALLMEBOT_API_KEY');
+  if (!apiKey) {
+    Logger.log('CallMeBot: skip · CALLMEBOT_API_KEY no configurat');
+    return false;
+  }
+  const phone = (PROPS.getProperty('CALLMEBOT_PHONE') || '+34698425153').replace(/[^0-9+]/g, '');
+  const url = 'https://api.callmebot.com/whatsapp.php?phone=' + encodeURIComponent(phone)
+    + '&apikey=' + encodeURIComponent(apiKey)
+    + '&text=' + encodeURIComponent(text);
+  try {
+    const resp = UrlFetchApp.fetch(url, { method: 'get', muteHttpExceptions: true });
+    const code = resp.getResponseCode();
+    if (code >= 200 && code < 300) return true;
+    Logger.log('CallMeBot ' + code + ': ' + resp.getContentText().slice(0, 200));
+  } catch (err) {
+    Logger.log('CallMeBot exception: ' + err);
+  }
+  return false;
+}
+
 function addWhatsAppLead_(data) {
   const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
   const ss = SpreadsheetApp.openById(id);
@@ -711,6 +753,24 @@ function addWhatsAppLead_(data) {
         + '</strong> del Sheet. Estat inicial: <strong>Nou</strong> — actualitza\'l a mesura que el contactis.</p>',
     });
   } catch (e) { Logger.log('lead admin mail err: ' + e); }
+
+  // ─── WhatsApp directe al WhatsApp del club via CallMeBot ───────────
+  // Així Ana rep al WhatsApp del club +34698425153 un missatge IMMEDIAT
+  // amb les dades del lead, sense haver de comprovar email ni Sheet.
+  // Pot copiar el telèfon i respondre al lead amb un click.
+  try {
+    const waMsg = [
+      '🆕 Nou lead WhatsApp · ' + (eventLabel || 'web'),
+      (intentLabel ? '· ' + intentLabel : ''),
+      '',
+      '👤 ' + (data.nom || '—'),
+      '📱 ' + (phoneClean || '—') + (phoneClean ? '  (wa.me/' + phoneClean + ')' : ''),
+      '✉️ ' + (data.email || '—'),
+      '🎯 Tipus: ' + (data.tipusInteres || '—'),
+      '💬 Dubte: ' + (data.dubte || '—'),
+    ].filter(Boolean).join('\n');
+    sendCallMeBot_(waMsg);
+  } catch (e) { Logger.log('CallMeBot lead err: ' + e); }
 }
 
 /**
