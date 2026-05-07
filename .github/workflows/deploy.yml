@@ -38,6 +38,10 @@ jobs:
             echo "VITE_JOTFORM_BASE_URL=${{ secrets.VITE_JOTFORM_BASE_URL }}"
             echo "VITE_GOOGLE_SHEET_WEBHOOK=${{ secrets.VITE_GOOGLE_SHEET_WEBHOOK }}"
             echo "VITE_SHARE_BASE=${{ secrets.VITE_SHARE_BASE }}"
+            echo "VITE_BACKUP_REPO=${{ secrets.VITE_BACKUP_REPO }}"
+            echo "VITE_BACKUP_PATH=${{ secrets.VITE_BACKUP_PATH }}"
+            echo "VITE_BACKUP_BRANCH=${{ secrets.VITE_BACKUP_BRANCH }}"
+            echo "VITE_STAFF_PASSWORD_HASH=${{ secrets.VITE_STAFF_PASSWORD_HASH }}"
           } > .env
 
       - run: npm run build

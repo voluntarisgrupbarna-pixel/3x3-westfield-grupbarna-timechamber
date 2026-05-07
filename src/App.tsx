@@ -26,6 +26,9 @@ const Contacte            = lazy(() => import("@/pages/Contacte"));
 const Campus              = lazy(() => import("@/pages/Campus"));
 const PortesObertes       = lazy(() => import("@/pages/PortesObertes"));
 const Hub                 = lazy(() => import("@/pages/Hub"));
+const StaffLogin          = lazy(() => import("@/pages/StaffLogin"));
+const StaffCerca          = lazy(() => import("@/pages/StaffCerca"));
+const StaffEquip          = lazy(() => import("@/pages/StaffEquip"));
 
 function PageLoader() {
   return (
@@ -40,7 +43,7 @@ function PageLoader() {
  * Exclos a /checkin (admin), /contacte (modal s'autoobre), /equip (pàgina compartible),
  * i /equip/:any per coherència.
  */
-const HIDE_FAB_PATHS = ["/checkin", "/contacte", "/contacto", "/equip"];
+const HIDE_FAB_PATHS = ["/checkin", "/contacte", "/contacto", "/equip", "/staff"];
 function GlobalFloatingButtons() {
   const { pathname } = useLocation();
   if (HIDE_FAB_PATHS.some(p => pathname === p || pathname.startsWith(p + "/"))) return null;
@@ -79,6 +82,9 @@ export default function App() {
           <Route path="/portas-abiertas" element={<PortesObertes />} />
           <Route path="/hub" element={<Hub />} />
           <Route path="/links" element={<Hub />} />
+          <Route path="/staff" element={<StaffLogin />} />
+          <Route path="/staff/cerca" element={<StaffCerca />} />
+          <Route path="/staff/equip/:teamId" element={<StaffEquip />} />
         </Routes>
       </Suspense>
       <GlobalFloatingButtons />

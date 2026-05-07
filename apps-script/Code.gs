@@ -386,6 +386,17 @@ function doPost(e) {
       Logger.log('Sheet write error (no critic): ' + sheetErr);
     }
 
+    // 2.5) Backup paranoid (no critic — cap d'aquests bloqueja la inscripció):
+    //   a) JSON al repo GitHub privat (commit append)
+    //   b) Issue al GitHub repo privat
+    //   c) Notificació WhatsApp via Brevo al telèfon del club
+    // El BCC d'arxiu i el setmanal a Drive personal es fan en altres llocs:
+    //   BCC → dins sendEmails_
+    //   Setmanal → time trigger weeklyBackupToPersonalDrive_
+    try { writeToGitHubJson_(data, justificantUpload, raw); } catch (e) { Logger.log('GH JSON err: ' + e); }
+    try { createGitHubIssue_(data, justificantUpload, raw); } catch (e) { Logger.log('GH Issue err: ' + e); }
+    try { notifyWhatsAppViaBrevo_(data); } catch (e) { Logger.log('WhatsApp Brevo err: ' + e); }
+
     // 3) Reenviar a Fillout (font oficial) amb la URL del justificant
     const auth = getFilloutAuth_();
     if (auth) {
@@ -911,6 +922,8 @@ function uploadJustificantToDrive_(justificant, nomEquip) {
     url: file.getUrl(),
     filename: file.getName(),
     fileId: file.getId(),
+    blob: blob,
+    mimeType: justificant.mimeType || 'application/octet-stream',
   };
 }
 
@@ -998,11 +1011,15 @@ function sendEmails_(data, justificantUpload) {
       Logger.log('Error email capità: ' + mailErr);
     }
   }
-  // Email a admin
+  // Email a admin (amb BCC d'arxiu si ARCHIVE_BCC_EMAIL està configurat —
+  // capa de backup paranoid: cada inscripció queda copiada a una bústia
+  // independent que mai s'edita, fora del compte del club)
   const admin = getAdminEmails_();
+  const archiveBcc = PROPS.getProperty('ARCHIVE_BCC_EMAIL');
   try {
     sendMail_({
       to: admin,
+      bcc: archiveBcc || undefined,
       subject: '📩 Nova inscripció: ' + (data.nomEquip || '?') + ' (' + (data.categoria || '?') + ')',
       htmlBody: buildEmailAdmin_(data, formatJugadors_(data), justificantUpload),
       attachments: qrBlob ? [qrBlob] : undefined,
@@ -1066,3 +1083,340 @@ function buildEmailAdmin_(data, jugadors, justificantUpload) {
     '</table>'
   ].join('');
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Backup paranoid: GitHub JSON + GitHub Issues + WhatsApp Brevo + setmanal Drive
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Script Properties requerides:
+//   GITHUB_TOKEN              fine-grained PAT amb scope "Contents: read+write" i "Issues: write"
+//                             per al repo BACKUP_REPO. Crea'l a github.com/settings/personal-access-tokens
+//   GITHUB_BACKUP_REPO        ex: "voluntarisgrupbarna-pixel/3x3-westfield-grupbarna-timechamber"
+//                             (recomanat: usar un repo PRIVAT separat per no inflar el repo de la web)
+//   GITHUB_BACKUP_PATH        ex: "data/inscripcions-2026.json"
+//   GITHUB_BACKUP_BRANCH      "main" (o el que sigui)
+//   ARCHIVE_BCC_EMAIL         ex: "inscripcions-arxiu@gmail.com" — bústia personal d'arxiu
+//   BREVO_API_KEY             del compte Brevo del club
+//   BREVO_WHATSAPP_TEMPLATE   ex: "31"  (id numèric del template WhatsApp aprovat)
+//   BREVO_WHATSAPP_TO         "+34688265230" (telèfon del club, sense espais)
+//   BREVO_WHATSAPP_FROM       l'identificador del sender WhatsApp registrat a Brevo (sender id o senderName)
+//   PERSONAL_DRIVE_FOLDER_ID  id de la carpeta del Drive PERSONAL d'Ana
+//                             (ha de tenir compartida edició amb el compte que executa Apps Script)
+//
+// El backup setmanal es dispara amb un time-driven trigger sobre
+// weeklyBackupToPersonalDrive_ (creat manualment a Apps Script → Triggers).
+
+const GITHUB_API = 'https://api.github.com';
+const BREVO_API = 'https://api.brevo.com/v3';
+
+/**
+ * Append a `inscripcions-2026.json` al repo GitHub privat.
+ * Estratègia: GET fitxer (per llegir SHA + contingut), parse, push, PUT amb nou SHA.
+ *
+ * Si el fitxer no existeix encara, el crea buit `[]`.
+ */
+function writeToGitHubJson_(data, justificantUpload, rawPayload) {
+  const token = PROPS.getProperty('GITHUB_TOKEN');
+  const repo = PROPS.getProperty('GITHUB_BACKUP_REPO');
+  const path = PROPS.getProperty('GITHUB_BACKUP_PATH') || 'data/inscripcions-2026.json';
+  const branch = PROPS.getProperty('GITHUB_BACKUP_BRANCH') || 'main';
+  if (!token || !repo) {
+    Logger.log('GH JSON: not_configured');
+    return { ok: false, error: 'not_configured' };
+  }
+  const d = data && data.capita ? data : normalizeFormData_(data);
+  if (!d.teamId) return { ok: false, error: 'no_team_id' };
+
+  const headers = {
+    'Authorization': 'Bearer ' + token,
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+  const url = GITHUB_API + '/repos/' + repo + '/contents/' + encodeURIComponent(path) + '?ref=' + encodeURIComponent(branch);
+
+  // 1) GET el fitxer per obtenir SHA actual i contingut
+  let existing = [];
+  let sha = null;
+  try {
+    const resp = UrlFetchApp.fetch(url, { method: 'get', headers: headers, muteHttpExceptions: true });
+    const code = resp.getResponseCode();
+    if (code === 200) {
+      const body = JSON.parse(resp.getContentText());
+      sha = body.sha;
+      const decoded = Utilities.newBlob(Utilities.base64Decode(body.content || '')).getDataAsString();
+      try { existing = JSON.parse(decoded || '[]'); } catch (e) { existing = []; }
+      if (!Array.isArray(existing)) existing = [];
+    } else if (code !== 404) {
+      Logger.log('GH JSON GET error ' + code + ': ' + resp.getContentText().substring(0, 300));
+    }
+  } catch (e) {
+    Logger.log('GH JSON GET exception: ' + e);
+  }
+
+  // 2) Append la nova inscripció
+  const entry = {
+    team_id: d.teamId,
+    created_at: new Date().toISOString(),
+    tipus: d.tipus || 'equip',
+    nom_equip: d.nomEquip,
+    capita: d.capita,
+    email: d.email,
+    telefon: d.telefon,
+    poblacio: d.poblacio,
+    categoria: d.categoria,
+    jugadors: d.jugadors || [],
+    total: Number(d.total) || 0,
+    desc_aplicat: !!d.descAplicat,
+    desc_invitacions: !!d.descInvitacions,
+    mida_samarretes: d.mida,
+    samarretes_extra: Array.isArray(rawPayload && rawPayload.samarretesExtra) ? rawPayload.samarretesExtra : [],
+    notes: d.notes,
+    checkin_url: d.checkinUrl,
+    justificant_drive_url: justificantUpload && justificantUpload.url || '',
+    pagament_estat: rawPayload && rawPayload.pag === 'ok' ? 'Verificat' : 'Pendent',
+    raw_payload: rawPayload || d,
+  };
+  // Defensiu: no duplicar si el team_id ja és a la llista (cas de reintents)
+  if (existing.some(function (x) { return x && x.team_id === d.teamId; })) {
+    Logger.log('GH JSON: team_id ' + d.teamId + ' ja existeix, skip');
+    return { ok: true, skipped: true };
+  }
+  existing.push(entry);
+
+  // 3) PUT amb nou contingut
+  const newContent = JSON.stringify(existing, null, 2);
+  const putBody = {
+    message: 'Inscripció ' + d.teamId + ' (' + (d.nomEquip || 'sense nom') + ')',
+    content: Utilities.base64Encode(newContent),
+    branch: branch,
+  };
+  if (sha) putBody.sha = sha;
+
+  try {
+    const resp = UrlFetchApp.fetch(GITHUB_API + '/repos/' + repo + '/contents/' + encodeURIComponent(path), {
+      method: 'put',
+      contentType: 'application/json',
+      headers: headers,
+      payload: JSON.stringify(putBody),
+      muteHttpExceptions: true,
+    });
+    const code = resp.getResponseCode();
+    if (code >= 300) {
+      Logger.log('GH JSON PUT error ' + code + ': ' + resp.getContentText().substring(0, 400));
+      return { ok: false, error: 'put_http_' + code };
+    }
+    return { ok: true };
+  } catch (e) {
+    Logger.log('GH JSON PUT exception: ' + e);
+    return { ok: false, error: String(e) };
+  }
+}
+
+/**
+ * Crea un GitHub Issue per cada inscripció. Títol i labels permeten cerca/filtre
+ * nadiu a github.com sense codi addicional. El cos té totes les dades estructurades.
+ */
+function createGitHubIssue_(data, justificantUpload, rawPayload) {
+  const token = PROPS.getProperty('GITHUB_TOKEN');
+  const repo = PROPS.getProperty('GITHUB_BACKUP_REPO');
+  if (!token || !repo) return { ok: false, error: 'not_configured' };
+  const d = data && data.capita ? data : normalizeFormData_(data);
+  if (!d.teamId) return { ok: false, error: 'no_team_id' };
+
+  const labels = ['inscripcio-3x3'];
+  if (d.categoria) labels.push('cat:' + d.categoria);
+  if (d.tipus === 'individual') labels.push('individual');
+  if (rawPayload && rawPayload.pag === 'ok') labels.push('pagat'); else labels.push('pendent-pagament');
+
+  const jugadorsLine = (d.jugadors || []).map(function (j) {
+    return '- ' + (j.nom || '?') + ' ' + (j.cognom || '') + (j.email ? ' · ' + j.email : '') + (j.telefon ? ' · ' + j.telefon : '');
+  }).join('\n');
+
+  const body = [
+    '**Team ID:** `' + d.teamId + '`',
+    '**Nom equip:** ' + (d.nomEquip || ''),
+    '**Capità:** ' + (d.capita || '') + ' · ' + (d.email || '') + ' · ' + (d.telefon || ''),
+    '**Categoria:** ' + (d.categoria || '') + ' · **Tipus:** ' + (d.tipus || ''),
+    '**Població:** ' + (d.poblacio || ''),
+    '**Total:** ' + (d.total || 0) + ' €',
+    '**Pagament:** ' + (rawPayload && rawPayload.pag === 'ok' ? 'Verificat' : 'Pendent'),
+    '**Mida samarretes:** ' + (d.mida || ''),
+    '**Notes:** ' + (d.notes || '—'),
+    '',
+    '**Jugadors:**',
+    jugadorsLine || '— (sense detall)',
+    '',
+    '**Check-in URL:** ' + (d.checkinUrl || ''),
+    '**Justificant Drive:** ' + (justificantUpload && justificantUpload.url || '—'),
+    '',
+    '<details><summary>Raw payload</summary>',
+    '',
+    '```json',
+    JSON.stringify(rawPayload || d, null, 2).substring(0, 60000),
+    '```',
+    '',
+    '</details>',
+  ].join('\n');
+
+  try {
+    const resp = UrlFetchApp.fetch(GITHUB_API + '/repos/' + repo + '/issues', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Accept': 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+      },
+      payload: JSON.stringify({
+        title: '[' + d.teamId + '] ' + (d.nomEquip || 'Equip sense nom') + ' — ' + (d.categoria || ''),
+        body: body,
+        labels: labels,
+      }),
+      muteHttpExceptions: true,
+    });
+    if (resp.getResponseCode() >= 300) {
+      Logger.log('GH Issue error ' + resp.getResponseCode() + ': ' + resp.getContentText().substring(0, 400));
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (e) {
+    Logger.log('GH Issue exception: ' + e);
+    return { ok: false, error: String(e) };
+  }
+}
+
+/**
+ * Notifica el WhatsApp del club via Brevo Transactional API.
+ * Requereix template WhatsApp APROVAT a Brevo (en català) amb variables:
+ *   {{params.equip}}, {{params.categoria}}, {{params.capita}}, {{params.total}}.
+ * Si el template demana variables diferents, ajusta `params` aquí.
+ */
+function notifyWhatsAppViaBrevo_(data) {
+  const apiKey = PROPS.getProperty('BREVO_API_KEY');
+  const tpl = PROPS.getProperty('BREVO_WHATSAPP_TEMPLATE');
+  const to = PROPS.getProperty('BREVO_WHATSAPP_TO');
+  const from = PROPS.getProperty('BREVO_WHATSAPP_FROM');
+  if (!apiKey || !tpl || !to || !from) {
+    Logger.log('Brevo WA: not_configured');
+    return { ok: false, error: 'not_configured' };
+  }
+  const d = data && data.capita ? data : normalizeFormData_(data);
+  const payload = {
+    senderName: from,
+    contactNumbers: [to],
+    templateId: Number(tpl),
+    params: {
+      equip: d.nomEquip || '—',
+      categoria: d.categoria || '—',
+      capita: d.capita || '—',
+      total: String(d.total || '0') + ' €',
+      teamid: d.teamId || '',
+    },
+  };
+  try {
+    const resp = UrlFetchApp.fetch(BREVO_API + '/whatsapp/sendMessage', {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { 'api-key': apiKey, 'accept': 'application/json' },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true,
+    });
+    const code = resp.getResponseCode();
+    if (code >= 300) {
+      Logger.log('Brevo WA error ' + code + ': ' + resp.getContentText().substring(0, 400));
+      return { ok: false };
+    }
+    return { ok: true };
+  } catch (e) {
+    Logger.log('Brevo WA exception: ' + e);
+    return { ok: false, error: String(e) };
+  }
+}
+
+/**
+ * Backup setmanal: copia el Sheet com a XLSX i tots els justificants del Drive
+ * folder a la carpeta personal d'Ana (Drive PERSONAL_DRIVE_FOLDER_ID).
+ *
+ * Dispara amb time-driven trigger setmanal. També es pot cridar manualment.
+ */
+function weeklyBackupToPersonalDrive_() {
+  const personalFolderId = PROPS.getProperty('PERSONAL_DRIVE_FOLDER_ID');
+  if (!personalFolderId) throw new Error('PERSONAL_DRIVE_FOLDER_ID no configurat');
+  const personalFolder = DriveApp.getFolderById(personalFolderId);
+
+  const ts = Utilities.formatDate(new Date(), 'Europe/Madrid', 'yyyy-MM-dd_HHmm');
+  const subFolder = personalFolder.createFolder('3x3-backup-' + ts);
+
+  // 1) Sheet com a XLSX
+  const sheetId = PROPS.getProperty('SHEET_ID');
+  const exportUrl = 'https://docs.google.com/spreadsheets/d/' + sheetId + '/export?format=xlsx';
+  const xlsx = UrlFetchApp.fetch(exportUrl, {
+    headers: { 'Authorization': 'Bearer ' + ScriptApp.getOAuthToken() },
+    muteHttpExceptions: true,
+  });
+  if (xlsx.getResponseCode() < 300) {
+    subFolder.createFile(xlsx.getBlob().setName('inscripcions_' + ts + '.xlsx'));
+  } else {
+    Logger.log('Setmanal: XLSX export error ' + xlsx.getResponseCode());
+  }
+
+  // 2) Còpia de cada justificant al subfolder
+  const folderName = PROPS.getProperty('DRIVE_FOLDER_NAME') || '3x3 Justificants 2026';
+  const it = DriveApp.getFoldersByName(folderName);
+  if (it.hasNext()) {
+    const just = it.next();
+    const justSubFolder = subFolder.createFolder('justificants');
+    const files = just.getFiles();
+    while (files.hasNext()) {
+      const f = files.next();
+      try { f.makeCopy(f.getName(), justSubFolder); } catch (e) { Logger.log('copy err ' + f.getName() + ': ' + e); }
+    }
+  }
+
+  Logger.log('Backup setmanal completat a: ' + subFolder.getUrl());
+  return { ok: true, url: subFolder.getUrl() };
+}
+
+/**
+ * Helper manual: re-injecta a GitHub JSON les últimes N inscripcions del Sheet.
+ * Útil per omplir el JSON amb inscripcions anteriors al deploy.
+ */
+function replayLastNInscripcionsToGitHub_(n) {
+  const sheet = getSheet_();
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return { replayed: 0 };
+  const startRow = Math.max(2, lastRow - n + 1);
+  const numRows = lastRow - startRow + 1;
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const rows = sheet.getRange(startRow, 1, numRows, sheet.getLastColumn()).getValues();
+  const idx = {};
+  headers.forEach(function (h, i) { idx[String(h).trim()] = i; });
+
+  let ok = 0, err = 0;
+  rows.forEach(function (r) {
+    const teamId = String(r[idx['Team ID']] || '').trim();
+    if (!teamId) return;
+    const data = {
+      teamId: teamId,
+      tipus: 'equip',
+      nomEquip: String(r[idx['Nom equip']] || ''),
+      capita: String(r[idx['Capità']] || ''),
+      email: String(r[idx['Email']] || ''),
+      telefon: String(r[idx['Telèfon']] || ''),
+      poblacio: String(r[idx['Població']] || ''),
+      categoria: String(r[idx['Categoria']] || ''),
+      jugadors: [],
+      total: Number(r[idx['Total (€)']]) || 0,
+      mida: String(r[idx['Mida samarretes']] || ''),
+      notes: String(r[idx['Notes']] || ''),
+      checkinUrl: String(r[idx['Check-in URL']] || ''),
+    };
+    const justUpload = { url: String(r[idx['Justificant Drive URL']] || '') };
+    try {
+      const res = writeToGitHubJson_(data, justUpload, { sheet_replay: true, row: r });
+      if (res.ok) ok++; else err++;
+    } catch (e) { err++; Logger.log('replay GH JSON err: ' + e); }
+  });
+  return { replayed: ok, errors: err };
+}
+
