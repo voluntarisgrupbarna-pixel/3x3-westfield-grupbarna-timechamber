@@ -560,25 +560,30 @@ function addIndividualPlayer_(data) {
  * Dedupe per telèfon (normalitzat). Notifica admin del primer contacte.
  */
 /**
- * Pestanya única per a tots els leads de WhatsApp ("Contactes_WhatsApp").
- * El camp `Tipus interès` segmenta el contacte (3×3 / Campus / Portes Obertes
- * / Patrocinador / Premsa / Altre) sense necessitar pestanyes separades.
+ * Pestanya destinació segons el `Tipus interès` triat al formulari.
+ *  - "Campus d'Estiu"               → Contactes_WhatsApp_Campus
+ *  - "Portes Obertes club"          → Contactes_WhatsApp_PortesObertes
+ *  - resta (3×3 / Patrocinador / Premsa / Altre / —) → Contactes_WhatsApp_3x3
  *
- * IMPORTANT: aquesta pestanya és **diferent** de `Inscripcions 2026`
- * (els pagants del torneig hi van per separat).
+ * Així Ana té els leads del Campus separats dels del 3x3 i pot fer
+ * broadcast lists, filtres i seguiment per cada esdeveniment.
  *
- * Si en el futur calgués separar per esdeveniment, només cal tornar a la
- * versió per `event` aquí — la migració incremental d'`addWhatsAppLead_`
- * crearà la nova pestanya automàticament.
+ * Separat de "Inscripcions 2026" (PAGANTS del torneig).
+ *
+ * La pestanya es crea automàticament la primera vegada (Apps Script:
+ * `if (!sheet) sheet = ss.insertSheet(...)`).
  */
-function getLeadSheetName_(_event) {
-  return 'Contactes_WhatsApp';
+function getLeadSheetName_(_event, data) {
+  const tipus = String((data && data.tipusInteres) || '').toLowerCase();
+  if (tipus.indexOf('campus') >= 0) return 'Contactes_WhatsApp_Campus';
+  if (tipus.indexOf('portes') >= 0) return 'Contactes_WhatsApp_PortesObertes';
+  return 'Contactes_WhatsApp_3x3';
 }
 
 function addWhatsAppLead_(data) {
   const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
   const ss = SpreadsheetApp.openById(id);
-  const sheetName = getLeadSheetName_(data.event);
+  const sheetName = getLeadSheetName_(data.event, data);
   let sheet = ss.getSheetByName(sheetName);
   if (!sheet) sheet = ss.insertSheet(sheetName);
 
