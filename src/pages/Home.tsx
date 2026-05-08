@@ -474,14 +474,14 @@ const stats = [
 /* Logo order: Westfield → Grup Barna → Time Chamber → Eix Clot */
 const LOGOS = [
   { name: "Westfield Glòries", img: "/images/seu-westfield-glories.jpg", url: "https://es.westfield.com/glories", invert: false },
-  { name: "CB Grup Barna", img: "/images/cb-grup-barna.jpg", url: "https://cbgrupbarna.com", invert: false },
+  { name: "CB Grup Barna", img: "/cb-grup-barna-logo-512.png", url: "https://cbgrupbarna.com", invert: false },
   { name: "Time Chamber", img: "/logos/time-chamber.webp", url: "https://timechamber.es", invert: true },
   { name: "Eix Clot", img: "/logos/eix-clot.png", url: "#", invert: false },
 ];
 
 const sponsors = [
   { name: "Westfield Glòries", img: "/images/seu-westfield-glories.jpg", url: "https://es.westfield.com/glories", role: "Seu oficial" },
-  { name: "CB Grup Barna", img: "/images/cb-grup-barna.jpg", url: "https://cbgrupbarna.com", role: "Organitzador" },
+  { name: "CB Grup Barna", img: "/cb-grup-barna-logo-512.png", url: "https://cbgrupbarna.com", role: "Organitzador" },
   { name: "Time Chamber", img: "/logos/time-chamber.webp", url: "https://timechamber.es", role: "Organitzador", invert: true },
   { name: "Eix Clot", img: "/logos/eix-clot.png", url: "#", role: "Patrocinador" },
   { name: "Ajuntament de Barcelona", img: "/images/ajuntament-barcelona.jpg", url: "https://www.barcelona.cat", role: "Institucional" },
