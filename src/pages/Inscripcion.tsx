@@ -550,16 +550,22 @@ export default function Inscripcion() {
   const goBack = () => { setDir(-1); setStep(s => s-1); };
 
   const aplicarCodi = () => {
-    const expiry = new Date("2025-06-15");
+    const expiry = new Date("2026-06-15");
     if (codiInput.toUpperCase() === COD_DESC) {
       if (new Date() <= expiry) {
         setDescAplicat(true); setCodError("");
         toast({ title:"✅ Codi aplicat", description:"5% de descompte activat!" });
       } else {
-        setCodError("El codi ha caducat (vàlid fins al 15 de juny)."); setDescAplicat(false);
+        setDescAplicat(false);
+        const msg = "El codi ha caducat (vàlid fins al 15 de juny).";
+        setCodError(msg);
+        toast({ title:"Codi caducat", description: msg, variant: "destructive" });
       }
     } else {
-      setCodError("Codi incorrecte."); setDescAplicat(false);
+      setDescAplicat(false);
+      const msg = "Codi incorrecte.";
+      setCodError(msg);
+      toast({ title: msg, description: "Comprova-ho i torna-ho a provar.", variant: "destructive" });
     }
   };
 
@@ -814,7 +820,12 @@ export default function Inscripcion() {
       const msg = err instanceof Error ? err.message : String(err);
       tracker.inscripcioError(msg);
       if (msg !== "duplicate_team_name") {
-        toast({ title:"Error d'enviament", description:"Torna-ho a intentar o contacta per WhatsApp.", variant:"destructive" });
+        toast({
+          title:"Error d'enviament",
+          description:"No hem pogut registrar la inscripció. Escriu-nos al WhatsApp del club (+34 698 425 153) i t'apuntem nosaltres mateixos.",
+          variant:"destructive",
+          duration: 12000,
+        });
       }
     } finally {
       setSending(false);
@@ -1133,6 +1144,10 @@ export default function Inscripcion() {
           {/* Dades pagament */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-5 text-left space-y-3">
             <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Dades de la transferència</p>
+            <div className="flex justify-between items-center">
+              <span className="text-white/40 text-sm">Titular</span>
+              <span className="text-sm font-semibold text-white">{BENEFICIARI}</span>
+            </div>
             <div className="flex justify-between items-center">
               <span className="text-white/40 text-sm">IBAN</span>
               <div className="flex items-center gap-2">
@@ -1563,6 +1578,12 @@ export default function Inscripcion() {
                       <p className="text-xs font-bold uppercase tracking-wider text-red-400">Instruccions de transferència</p>
                       <div className="space-y-2 text-sm">
                         <div className="flex flex-col gap-1">
+                          <span className="text-xs text-white/40 uppercase tracking-wider">Titular</span>
+                          <span className="font-semibold text-white bg-white/8 rounded-lg px-3 py-2 border border-white/10 text-sm">
+                            {BENEFICIARI}
+                          </span>
+                        </div>
+                        <div className="flex flex-col gap-1">
                           <span className="text-xs text-white/40 uppercase tracking-wider">IBAN</span>
                           <div className="flex items-center gap-2">
                             <span className="font-mono font-bold text-white text-xs bg-white/8 rounded-lg px-3 py-2 border border-white/10 flex-1">
@@ -1668,7 +1689,7 @@ export default function Inscripcion() {
                   <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-48 overflow-y-auto text-xs text-white/45 leading-relaxed space-y-2">
                     <p><strong className="text-white/70">BASES DE LA COMPETICIÓ — 3×3 WESTFIELD GLÒRIES 2026</strong></p>
                     <p>1. El torneig es celebra els dies 6 i 7 de juny de 2026 a 3 seus del barri del Clot-Glòries: Westfield Glòries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
-                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. Samarretes addicionals opcionals a 25€ cadascuna. El pagament s'ha de realitzar per transferència bancària a <strong className="text-white/70">{IBAN}</strong> amb concepte <strong className="text-white/70">3X3+NOM_EQUIP</strong>; cal adjuntar el justificant (JPG/PNG/PDF) dins el formulari per validar la inscripció.</p>
+                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. Samarretes addicionals opcionals a 25€ cadascuna. El pagament s'ha de realitzar per transferència bancària a nom de <strong className="text-white/70">{BENEFICIARI}</strong>, IBAN <strong className="text-white/70">{IBAN}</strong>, amb concepte <strong className="text-white/70">3X3+NOM_EQUIP</strong>; cal adjuntar el justificant (JPG/PNG/PDF) dins el formulari per validar la inscripció.</p>
                     <p>3. Premis en metàl·lic: <strong className="text-white/70">1.000€ Sèniors Masculí</strong> i <strong className="text-white/70">1.000€ Sèniors Femení</strong>. La resta de categories (Veterans M/F i formatives) reben trofeus i medalles. Sèniors atorga punts FIBA 3×3 oficials.</p>
                     <p>4. Les regles aplicades seran les oficials FIBA 3×3. Format: fase de grups + fase eliminatòria directa.</p>
                     <p className="text-orange-300/80">5. <strong>Cancel·lació i devolucions:</strong> una vegada confirmada la inscripció <strong>no és cancel·lable</strong> i no es retornarà cap import. Si un jugador es lesiona o no pot venir, l'equip continua jugant amb la resta i el jugador afectat conserva la samarreta com a única compensació; <strong>no es retorna ni es prorrateja l'import</strong>.</p>
