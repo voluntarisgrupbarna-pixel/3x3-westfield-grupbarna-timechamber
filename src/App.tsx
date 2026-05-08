@@ -29,6 +29,7 @@ const Hub                 = lazy(() => import("@/pages/Hub"));
 const StaffLogin          = lazy(() => import("@/pages/StaffLogin"));
 const StaffCerca          = lazy(() => import("@/pages/StaffCerca"));
 const StaffEquip          = lazy(() => import("@/pages/StaffEquip"));
+const StaffLead           = lazy(() => import("@/pages/StaffLead"));
 
 function PageLoader() {
   return (
@@ -85,6 +86,7 @@ export default function App() {
           <Route path="/staff" element={<StaffLogin />} />
           <Route path="/staff/cerca" element={<StaffCerca />} />
           <Route path="/staff/equip/:teamId" element={<StaffEquip />} />
+          <Route path="/staff/lead" element={<StaffLead />} />
         </Routes>
       </Suspense>
       <GlobalFloatingButtons />
