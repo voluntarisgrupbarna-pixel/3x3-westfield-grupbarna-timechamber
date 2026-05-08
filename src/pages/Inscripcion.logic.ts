@@ -3,6 +3,8 @@ import { z } from "zod";
 /* ─── Constants ─── */
 export const TALLAS = ["8-10","12-14","16","XS","S","M","L","XL","XXL"];
 
+export const GENERES = ["Femení","Masculí"] as const;
+
 export const PRECIO_GEN_4    = 75;   // Categories formatives · 4 jugadors
 export const PRECIO_GEN_5    = 90;   // Categories formatives · 5 jugadors
 export const PRECIO_SENIOR_4 = 85;   // Sèniors/Veterans · 4 jugadors
@@ -14,6 +16,13 @@ export const BENEFICIARI = "CB Grup Barna";
 
 /* Samarreta addicional (a part de la inclosa per jugador) */
 export const PRECIO_CAMISETA_EXTRA = 25;
+
+/* Early-bird 10% — s'aplica automàticament a tota inscripció abans d'aquesta data.
+   Exclusiu amb el gate viral i amb el codi 3X3AVIAT (max 10%). */
+export const EARLY_BIRD_END = new Date("2026-05-15T23:59:59+02:00");
+export function isEarlyBirdActive(now: Date = new Date()): boolean {
+  return now < EARLY_BIRD_END;
+}
 
 /* ─── Pure helpers (no DOM, no network) ─── */
 
@@ -96,21 +105,36 @@ export function buildEpcQr(amount: number, nomEquip: string | undefined): string
   ].join("\n");
 }
 
+export type DiscountReason = "early-bird" | "viral" | "code5" | null;
+
 export function calcTotal(
   mida: string,
   capCategoria: string | undefined,
   desc5pct: boolean,
   descInvite10pct: boolean = false,
   extraShirts: number = 0,
+  earlyBird: boolean = false,
 ) {
   const base = precioByCat(capCategoria, mida);
   // Els descomptes només s'apliquen sobre la quota base de l'equip,
   // no sobre les samarretes extra (que es facturen a 25€/u sense descompte).
-  const desc5  = desc5pct        ? Math.round(base *  5) / 100 : 0;
-  const desc10 = descInvite10pct ? Math.round(base * 10) / 100 : 0;
+  // Mútuament exclusius (max 10%): prioritat early-bird > viral > codi 5%.
+  let desc5 = 0;
+  let desc10 = 0;
+  let reason: DiscountReason = null;
+  if (earlyBird) {
+    desc10 = Math.round(base * 10) / 100;
+    reason = "early-bird";
+  } else if (descInvite10pct) {
+    desc10 = Math.round(base * 10) / 100;
+    reason = "viral";
+  } else if (desc5pct) {
+    desc5 = Math.round(base * 5) / 100;
+    reason = "code5";
+  }
   const extras = Math.max(0, Math.floor(extraShirts)) * PRECIO_CAMISETA_EXTRA;
   const total = Math.max(0, base - desc5 - desc10) + extras;
-  return { base, desc5, desc10, extras, total };
+  return { base, desc5, desc10, extras, total, reason };
 }
 
 /* ─── Zod Schema (missatges en català perquè el form ho és) ───
@@ -145,6 +169,7 @@ export const schema = z.object({
   capTelefon:   reqStr("Telèfon mínim 9 dígits").min(9, "Telèfon mínim 9 dígits"),
   capDataNaix:  reqStr("Indica la data de naixement").min(1, "Indica la data de naixement"),
   capCategoria: reqStr("Selecciona categoria").min(1, "Selecciona categoria"),
+  capGenere:    reqStr("Selecciona el gènere de l'equip").min(1, "Selecciona el gènere de l'equip"),
   capTalla:     reqStr("Selecciona talla").min(1, "Selecciona talla"),
   capClub:      reqStr("Indica el club o escriu 'Sense club'").min(2, "Indica el club o escriu 'Sense club'"),
   capPoblacio:  z.string().optional(),

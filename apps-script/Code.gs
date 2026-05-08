@@ -462,6 +462,7 @@ function normalizeFormData_(data) {
     checkinUrl: data.checkinUrl || '',
     concepte: data.concepte || '',
     categoria: data.categoria || data.capCategoria || '',
+    genere: data.genere || data.capGenere || '',
     nomEquip: data.nomEquip || (isIndividual ? fullName : ''),
     capita: data.capita || ((data.capNom || '') + ' ' + (data.capCognom || '')).trim() || fullName,
     poblacio: data.poblacio || data.capPoblacio || '',
@@ -472,6 +473,7 @@ function normalizeFormData_(data) {
     total: data.total || (isIndividual ? 20 : 0),
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
+    descEarlyBird: !!data.descEarlyBird,
     jugadors: Array.isArray(data.jugadors) ? data.jugadors : [],
     justificant: data.justificant || null,
   };
@@ -481,13 +483,26 @@ function writeToSheet_(data, justificantUpload) {
   // Defensiu: si arriba payload sense normalitzar (cas legacy), normalitzem
   const d = data && data.capita ? data : normalizeFormData_(data);
   const sheet = getSheet_();
+  const EXPECTED_HEADERS = [
+    'Data', 'Team ID', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Població', 'Email', 'Telèfon',
+    'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
+    'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
+    'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)',
+    'Gènere', 'Desc. early-bird?'
+  ];
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'Data', 'Team ID', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Població', 'Email', 'Telèfon',
-      'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
-      'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
-      'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)'
-    ]);
+    sheet.appendRow(EXPECTED_HEADERS);
+  } else {
+    // Migració automàtica de capçaleres: si el Sheet existia abans d'aquesta versió,
+    // hi ha menys columnes que les que escrivim ara. Afegim les que manquen al final
+    // perquè les inscripcions noves no perdin dades (Samarretes extra, Talles extra,
+    // Pagament estat, Gènere — afegits 2026-05-07).
+    const headerRange = sheet.getRange(1, 1, 1, Math.max(1, sheet.getLastColumn()));
+    const current = headerRange.getValues()[0].map(function (v) { return String(v || '').trim(); });
+    const missing = EXPECTED_HEADERS.filter(function (h) { return current.indexOf(h) === -1; });
+    if (missing.length) {
+      sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
+    }
   }
   const jugadors = formatJugadors_(d);
   const justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
@@ -517,7 +532,9 @@ function writeToSheet_(data, justificantUpload) {
     numExtras,
     tallesExtra,
     pagEstat,
-    ''   // "Arribat" buit fins que algú escanegi el QR el dia del torneig
+    '',  // "Arribat" buit fins que algú escanegi el QR el dia del torneig
+    d.genere,
+    d.descEarlyBird ? 'Sí' : 'No'
   ]);
 }
 
@@ -1024,6 +1041,7 @@ function buildFilloutBody_(data, justificantUpload) {
     notes: data.notes || '',
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
+    descEarlyBird: !!data.descEarlyBird,
     samarretesExtra: extraArr,
     numSamarretesExtra: extraArr.length,
     pag: data.pag === 'ok' ? 'ok' : 'pendent',
@@ -1233,6 +1251,7 @@ function writeToGitHubJson_(data, justificantUpload, rawPayload) {
     total: Number(d.total) || 0,
     desc_aplicat: !!d.descAplicat,
     desc_invitacions: !!d.descInvitacions,
+    desc_early_bird: !!d.descEarlyBird,
     mida_samarretes: d.mida,
     samarretes_extra: Array.isArray(rawPayload && rawPayload.samarretesExtra) ? rawPayload.samarretesExtra : [],
     notes: d.notes,
@@ -1292,6 +1311,7 @@ function createGitHubIssue_(data, justificantUpload, rawPayload) {
   if (d.categoria) labels.push('cat:' + d.categoria);
   if (d.tipus === 'individual') labels.push('individual');
   if (rawPayload && rawPayload.pag === 'ok') labels.push('pagat'); else labels.push('pendent-pagament');
+  if (d.descEarlyBird) labels.push('early-bird');
 
   const jugadorsLine = (d.jugadors || []).map(function (j) {
     return '- ' + (j.nom || '?') + ' ' + (j.cognom || '') + (j.email ? ' · ' + j.email : '') + (j.telefon ? ' · ' + j.telefon : '');
@@ -1303,7 +1323,7 @@ function createGitHubIssue_(data, justificantUpload, rawPayload) {
     '**Capità:** ' + (d.capita || '') + ' · ' + (d.email || '') + ' · ' + (d.telefon || ''),
     '**Categoria:** ' + (d.categoria || '') + ' · **Tipus:** ' + (d.tipus || ''),
     '**Població:** ' + (d.poblacio || ''),
-    '**Total:** ' + (d.total || 0) + ' €',
+    '**Total:** ' + (d.total || 0) + ' €' + (d.descEarlyBird ? ' (Early Bird -10%)' : ''),
     '**Pagament:** ' + (rawPayload && rawPayload.pag === 'ok' ? 'Verificat' : 'Pendent'),
     '**Mida samarretes:** ' + (d.mida || ''),
     '**Notes:** ' + (d.notes || '—'),

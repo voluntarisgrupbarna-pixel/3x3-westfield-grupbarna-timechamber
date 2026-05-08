@@ -5,9 +5,10 @@ import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
-  TALLAS, PRECIO_GEN_4, PRECIO_GEN_5, PRECIO_SENIOR_4, PRECIO_SENIOR_5,
+  TALLAS, GENERES, PRECIO_GEN_4, PRECIO_GEN_5, PRECIO_SENIOR_4, PRECIO_SENIOR_5,
   COD_DESC, IBAN, BENEFICIARI,
   precioByCat, buildConcepte, buildTeamId, buildEpcQr, calcTotal,
+  isEarlyBirdActive,
   schema, type FD,
 } from "./Inscripcion.logic";
 import {
@@ -272,6 +273,19 @@ function SCatSelect({ value, onChange }: { value:string; onChange:(v:string)=>vo
   );
 }
 
+function SGenereSelect({ value, onChange }: { value:string; onChange:(v:string)=>void }) {
+  return (
+    <Select onValueChange={onChange} value={value}>
+      <SelectTrigger className="bg-white/8 border-white/15 focus:border-red-500 text-white h-10 rounded-xl">
+        <SelectValue placeholder="Gènere" />
+      </SelectTrigger>
+      <SelectContent className="bg-slate-900 border-white/15">
+        {GENERES.map(g => <SelectItem key={g} value={g} className="text-white hover:bg-white/10 text-xs">{g}</SelectItem>)}
+      </SelectContent>
+    </Select>
+  );
+}
+
 /* ─── Submit to JotForm ─── */
 async function submitToJotForm(data: FD, descAplicat: boolean, descInvitacions: boolean, justificantNom: string) {
   const params = new URLSearchParams();
@@ -369,7 +383,12 @@ export default function Inscripcion() {
   // Camí alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
   // Lazy initializers: si tornem d'una pestanya WhatsApp/Instagram que el SO ha matat,
   // restaurem el progrés persistit en localStorage.
-  const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">(() => loadGateState()?.gateState ?? "active");
+  // Durant la finestra early-bird (fins 2026-05-15 23:59) tothom té automàticament el 10%,
+  // així que NO mostrem el gate viral: el saltem directament a "skipped".
+  const earlyBird = isEarlyBirdActive();
+  const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">(
+    () => earlyBird ? "skipped" : (loadGateState()?.gateState ?? "active")
+  );
   const [sharedSlots, setSharedSlots] = useState<boolean[]>(() => loadGateState()?.sharedSlots ?? [false, false, false, false, false]);
   const [igFollowed, setIgFollowed]   = useState(() => loadGateState()?.igFollowed ?? false);
   const [igTimechamberFollowed, setIgTimechamberFollowed] = useState(() => loadGateState()?.igTimechamberFollowed ?? false);
@@ -425,7 +444,7 @@ export default function Inscripcion() {
       nomEquip: "",
       midaEquip: undefined,
       capNom: "", capCognom: "", capEmail: "", capTelefon: "",
-      capDataNaix: "", capCategoria: "", capTalla: "",
+      capDataNaix: "", capCategoria: "", capGenere: "", capTalla: "",
       capClub: "", capPoblacio: "",
       tutorNom: "", tutorCognom: "", tutorTelefon: "",
       comentaris: "", codiDesc: "",
@@ -464,7 +483,7 @@ export default function Inscripcion() {
   const capCategoria = watch("capCategoria");
   const samarretesExtra = watch("samarretesExtra") || [];
   const numExtraShirts = samarretesExtra.length;
-  const { base, desc5, desc10, extras, total } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions, numExtraShirts);
+  const { base, desc5, desc10, extras, total, reason } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions, numExtraShirts, earlyBird);
 
   /* ─── Gate viral helpers ─── */
   // Dos camins per desbloquejar el descompte:
@@ -527,7 +546,7 @@ export default function Inscripcion() {
       }
     }
     if (step === 2) {
-      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capTalla"];
+      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla"];
       ok = await trigger(fields2);
     }
     if (step === 3) {
@@ -760,8 +779,10 @@ export default function Inscripcion() {
         body: JSON.stringify({
           ...data,
           total,
-          descAplicat,
-          descInvitacions,
+          // Mútuament exclusius: si earlyBird, els altres dos van a false al backend.
+          descAplicat: earlyBird ? false : descAplicat,
+          descInvitacions: earlyBird ? false : descInvitacions,
+          descEarlyBird: earlyBird,
           concepte: buildConcepte(data.nomEquip),
           teamId: newTeamId,
           checkinUrl: newCheckinUrl,
@@ -1303,11 +1324,11 @@ export default function Inscripcion() {
               }
             }}
           >
-            {/* mode="wait" causava que el motion.div del pas anterior es quedés estancat en
-                estat exit i el següent no es muntés mai (regressió detectada 2026-05-07).
-                Sense mode, els passos es reemplacen sincrònicament — sense animació de
-                transició completa però funcional. */}
-            <AnimatePresence custom={dir}>
+            {/* mode="popLayout" treu del flow l'element que està sortint perquè el nou
+                pugui muntar-se a la seva posició immediatament. Sense aquest mode (o amb
+                "wait"), el motion.div del pas anterior bloquejava l'aparició del següent
+                quan la transició s'interrompia. */}
+            <AnimatePresence mode="popLayout" initial={false} custom={dir}>
 
               {/* ══ PAS 1: EQUIP ══ */}
               {step === 1 && (
@@ -1411,12 +1432,17 @@ export default function Inscripcion() {
                           <SCatSelect value={field.value||""} onChange={field.onChange} />
                         )} />
                       </FieldRow>
-                      <FieldRow label="Talla samarreta *" error={errors.capTalla?.message}>
-                        <Controller control={control} name="capTalla" render={({ field }) => (
-                          <STallaSelect value={field.value||""} onChange={field.onChange} />
+                      <FieldRow label="Gènere de l'equip *" error={errors.capGenere?.message}>
+                        <Controller control={control} name="capGenere" render={({ field }) => (
+                          <SGenereSelect value={field.value||""} onChange={field.onChange} />
                         )} />
                       </FieldRow>
                     </div>
+                    <FieldRow label="Talla samarreta *" error={errors.capTalla?.message}>
+                      <Controller control={control} name="capTalla" render={({ field }) => (
+                        <STallaSelect value={field.value||""} onChange={field.onChange} />
+                      )} />
+                    </FieldRow>
                     <FieldRow label="Club actual *" error={errors.capClub?.message}>
                       <SInput {...register("capClub")} placeholder="Club on jugues (o 'Sense club')" />
                     </FieldRow>
@@ -1507,8 +1533,9 @@ export default function Inscripcion() {
                       <p className="text-4xl font-black font-mono text-white">{total.toFixed(2)}€</p>
                       <div className="mt-2 space-y-0.5 text-xs">
                         <p className="text-white/70">Quota equip: {base.toFixed(2)}€</p>
-                        {descInvitacions && <p className="text-white/80 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
-                        {descAplicat && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
+                        {reason === "early-bird" && <p className="text-white/80 font-semibold">🔥 -{desc10.toFixed(2)}€ Early Bird (10%)</p>}
+                        {reason === "viral" && <p className="text-white/80 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
+                        {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
                         {numExtraShirts > 0 && (
                           <p className="text-white/80 font-semibold">+{extras.toFixed(2)}€ — {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
                         )}
@@ -1620,7 +1647,8 @@ export default function Inscripcion() {
                         </Button>
                       </div>
                       {codError && <p className="text-red-400 text-xs mt-2">{codError}</p>}
-                      {descAplicat && <p className="text-green-400 text-xs mt-2 flex items-center gap-1"><Check className="w-3 h-3"/> 5% de descompte aplicat!</p>}
+                      {reason === "code5" && <p className="text-green-400 text-xs mt-2 flex items-center gap-1"><Check className="w-3 h-3"/> 5% de descompte aplicat!</p>}
+                      {earlyBird && <p className="text-orange-300 text-xs mt-2 flex items-center gap-1">🔥 Ja tens el 10% Early Bird aplicat — no acumulable amb cap codi.</p>}
                     </div>
                     {/* Upload justificant */}
                     <div
@@ -1678,8 +1706,9 @@ export default function Inscripcion() {
                         <strong className="text-orange-300">{numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} (+{extras.toFixed(2)}€)</strong>
                       </div>
                     )}
-                    {descInvitacions && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) 🎁</strong></div>}
-                    {descAplicat && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
+                    {reason === "early-bird" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-10% Early Bird 🔥</strong></div>}
+                    {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) 🎁</strong></div>}
+                    {reason === "code5" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
                     <div className="flex gap-2 border-t border-white/8 pt-2 mt-1">
                       <span className="text-white/30 w-20 shrink-0">TOTAL:</span>
                       <strong className="text-red-400 text-lg">{total.toFixed(2)}€</strong>

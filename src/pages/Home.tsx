@@ -325,25 +325,28 @@ function CategoryChart() {
   );
 }
 
-/* ─── Anunci banner (visible fins 2026-05-05 00:00) ─── */
-function AnunciBanner() {
-  const VISIBLE_FINS = new Date("2026-05-05T00:00:00");
-  const [visible, setVisible] = useState(() => new Date() < VISIBLE_FINS);
+/* ─── Anunci banner (early-bird -10% fins 2026-05-15 23:59) ─── */
+const ANUNCI_VISIBLE_FINS = new Date("2026-05-15T23:59:59+02:00");
 
+function useAnunciVisible() {
+  const [visible, setVisible] = useState(() => new Date() < ANUNCI_VISIBLE_FINS);
   useEffect(() => {
     if (!visible) return;
-    const ms = VISIBLE_FINS.getTime() - Date.now();
+    const ms = ANUNCI_VISIBLE_FINS.getTime() - Date.now();
     if (ms <= 0) { setVisible(false); return; }
     const t = setTimeout(() => setVisible(false), ms);
     return () => clearTimeout(t);
   }, [visible]);
+  return visible;
+}
 
+function AnunciBanner({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <div className="sticky top-0 z-50 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 text-white text-center py-2 px-4 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
+    <div className="fixed top-0 left-0 right-0 z-[55] bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 text-white text-center py-2 px-4 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
       <span className="inline-flex items-center gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-        Dilluns 4 maig · Anunci oficial: samarreta, premis i nova seu
+        🔥 Early Bird · -10% si t'inscrius abans del 15 de maig
       </span>
     </div>
   );
@@ -662,6 +665,7 @@ export default function Home() {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [heroOffset, setHeroOffset] = useState(0);
   const [activeUbic, setActiveUbic] = useState(0);
+  const anunciVisible = useAnunciVisible();
 
   useEffect(() => {
     const onScroll = () => setHeroOffset(window.scrollY * 0.25);
@@ -682,7 +686,7 @@ export default function Home() {
         path="/"
       />
       <ScrollProgressBar />
-      <AnunciBanner />
+      <AnunciBanner visible={anunciVisible} />
 
       {/* FAB global · muntat a App.tsx perquè surti a totes les pàgines */}
 
@@ -691,7 +695,7 @@ export default function Home() {
       )}
 
       {/* ══ NAV ══ */}
-      <nav className="fixed top-0.5 left-0 right-0 z-50 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl">
+      <nav className={`fixed left-0 right-0 z-50 border-b border-white/10 bg-slate-950/90 backdrop-blur-xl ${anunciVisible ? "top-[38px]" : "top-0.5"}`}>
         <div className="container mx-auto px-0 sm:px-2 flex items-center justify-between h-[60px]">
           {/* Logos: Westfield → Grup Barna → Time Chamber → Eix Clot */}
           <div className="flex items-center gap-1.5 pl-2">
