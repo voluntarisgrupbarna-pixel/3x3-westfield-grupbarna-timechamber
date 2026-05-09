@@ -488,7 +488,8 @@ function writeToSheet_(data, justificantUpload) {
     'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
     'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
     'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)',
-    'Gènere', 'Desc. early-bird?'
+    'Gènere', 'Desc. early-bird?',
+    'Estat CRM', 'Notes CRM', 'Proper seguiment'
   ];
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(EXPECTED_HEADERS);
@@ -534,7 +535,10 @@ function writeToSheet_(data, justificantUpload) {
     pagEstat,
     '',  // "Arribat" buit fins que algú escanegi el QR el dia del torneig
     d.genere,
-    d.descEarlyBird ? 'Sí' : 'No'
+    d.descEarlyBird ? 'Sí' : 'No',
+    'Nou',  // Estat CRM inicial
+    '',     // Notes CRM (Ana omple manualment)
+    '',     // Proper seguiment (data)
   ]);
 }
 
@@ -1276,8 +1280,9 @@ function writeToGitHubJson_(data, justificantUpload, rawPayload) {
   };
   if (sha) putBody.sha = sha;
 
+  const putUrl = GITHUB_API + '/repos/' + repo + '/contents/' + encodeURIComponent(path);
   try {
-    const resp = UrlFetchApp.fetch(GITHUB_API + '/repos/' + repo + '/contents/' + encodeURIComponent(path), {
+    const resp = UrlFetchApp.fetch(putUrl, {
       method: 'put',
       contentType: 'application/json',
       headers: headers,
@@ -1285,6 +1290,25 @@ function writeToGitHubJson_(data, justificantUpload, rawPayload) {
       muteHttpExceptions: true,
     });
     const code = resp.getResponseCode();
+    if (code === 409) {
+      // Conflicte de SHA (dues inscripcions simultànies). Re-llegim i reintentam.
+      Logger.log('GH JSON PUT 409 conflict, retrying for team_id: ' + d.teamId);
+      const retryGet = UrlFetchApp.fetch(url, { method: 'get', headers: headers, muteHttpExceptions: true });
+      if (retryGet.getResponseCode() === 200) {
+        const retryBody = JSON.parse(retryGet.getContentText());
+        let retryArr = [];
+        try { retryArr = JSON.parse(Utilities.newBlob(Utilities.base64Decode(retryBody.content || '')).getDataAsString()); } catch (pe) { retryArr = []; }
+        if (!Array.isArray(retryArr)) retryArr = [];
+        if (!retryArr.some(function (x) { return x && x.team_id === d.teamId; })) {
+          retryArr.push(entry);
+          const retryPut = { message: 'Inscripció ' + d.teamId + ' (retry-409)', content: Utilities.base64Encode(JSON.stringify(retryArr, null, 2)), branch: branch, sha: retryBody.sha };
+          const retryResp = UrlFetchApp.fetch(putUrl, { method: 'put', contentType: 'application/json', headers: headers, payload: JSON.stringify(retryPut), muteHttpExceptions: true });
+          if (retryResp.getResponseCode() < 300) return { ok: true, retried: true };
+          Logger.log('GH JSON PUT retry error ' + retryResp.getResponseCode());
+        }
+      }
+      return { ok: false, error: 'put_conflict_409' };
+    }
     if (code >= 300) {
       Logger.log('GH JSON PUT error ' + code + ': ' + resp.getContentText().substring(0, 400));
       return { ok: false, error: 'put_http_' + code };
@@ -1505,3 +1529,51 @@ function replayLastNInscripcionsToGitHub_(n) {
   return { replayed: ok, errors: err };
 }
 
+/**
+ * Configura el Sheet com a CRM. Executar UNA SOLA VEGADA manualment des de l'editor Apps Script:
+ *   → Editor → Selecciona la funció setupSheetAsCrm_ → Executar
+ *
+ * Aplica:
+ *   1. Freeze de la primera fila (capçaleres fixes)
+ *   2. Validació de dades (desplegable) a la columna "Estat CRM"
+ *   3. Format condicional per colors d'estat
+ */
+function setupSheetAsCrm_() {
+  const sheet = getSheet_();
+
+  // 1) Freeze capçaleres
+  sheet.setFrozenRows(1);
+
+  // 2) Trobar columna "Estat CRM"
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const estatCol = headers.indexOf('Estat CRM') + 1;
+  if (estatCol < 1) {
+    Logger.log('setupSheetAsCrm_: columna "Estat CRM" no trobada. Envia primer una inscripció de prova o afegeix la capçalera manualment.');
+    return { ok: false, error: 'col_not_found' };
+  }
+
+  const lastRow = Math.max(sheet.getLastRow(), 2);
+  const estatRange = sheet.getRange(2, estatCol, lastRow - 1, 1);
+
+  // 3) Desplegable d'estats
+  const rule = SpreadsheetApp.newDataValidation()
+    .requireValueInList(['Nou', 'Contactat', 'En seguiment', 'Pagament confirmat', 'Tancat-OK', 'Tancat-NoInteressa'], true)
+    .setAllowInvalid(false)
+    .build();
+  estatRange.setDataValidation(rule);
+
+  // 4) Format condicional (colors per estat)
+  const existingRules = sheet.getConditionalFormatRules();
+  const newRules = [
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Nou').setBackground('#fde8e8').setFontColor('#b91c1c').setRanges([estatRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Contactat').setBackground('#fef9c3').setFontColor('#854d0e').setRanges([estatRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('En seguiment').setBackground('#dbeafe').setFontColor('#1e40af').setRanges([estatRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Pagament confirmat').setBackground('#d4f4dd').setFontColor('#15803d').setRanges([estatRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Tancat-OK').setBackground('#e0e0e0').setFontColor('#6b7280').setRanges([estatRange]).build(),
+    SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Tancat-NoInteressa').setBackground('#f3f4f6').setFontColor('#9ca3af').setRanges([estatRange]).build(),
+  ];
+  sheet.setConditionalFormatRules([...existingRules, ...newRules]);
+
+  Logger.log('setupSheetAsCrm_: CRM configurat correctament. Columna Estat CRM: ' + estatCol);
+  return { ok: true, estatCol: estatCol };
+}

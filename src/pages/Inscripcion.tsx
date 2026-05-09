@@ -773,23 +773,43 @@ export default function Inscripcion() {
       // així que podem llegir la resposta JSON sense `mode: "no-cors"`.
       // Si ho posàvem amb no-cors, es silenciaven errors com `duplicate_team_name`
       // i l'usuari veia èxit amb la inscripció a NULL al backend (bug 2026-05-07).
-      const res = await fetch(GOOGLE_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita preflight CORS
-        body: JSON.stringify({
-          ...data,
-          total,
-          // Mútuament exclusius: si earlyBird, els altres dos van a false al backend.
-          descAplicat: earlyBird ? false : descAplicat,
-          descInvitacions: earlyBird ? false : descInvitacions,
-          descEarlyBird: earlyBird,
-          concepte: buildConcepte(data.nomEquip),
-          teamId: newTeamId,
-          checkinUrl: newCheckinUrl,
-          justificant: justificantPayload,
-          data: submissionDate,
-        }),
+      const abortCtrl = new AbortController();
+      const abortTimer = setTimeout(() => abortCtrl.abort(), 50_000);
+      const fetchBody = JSON.stringify({
+        ...data,
+        total,
+        // Mútuament exclusius: si earlyBird, els altres dos van a false al backend.
+        descAplicat: earlyBird ? false : descAplicat,
+        descInvitacions: earlyBird ? false : descInvitacions,
+        descEarlyBird: earlyBird,
+        concepte: buildConcepte(data.nomEquip),
+        teamId: newTeamId,
+        checkinUrl: newCheckinUrl,
+        justificant: justificantPayload,
+        data: submissionDate,
       });
+      let res: Response;
+      try {
+        res = await fetch(GOOGLE_WEBHOOK, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" }, // evita preflight CORS
+          body: fetchBody,
+          signal: abortCtrl.signal,
+        });
+      } catch (fetchErr) {
+        clearTimeout(abortTimer);
+        // Timeout o error de xarxa: l'Apps Script pot haver processat la inscripció
+        // igualment (escriu al Sheet/Fillout abans de respondre). Esperem 10s i comprovem.
+        const lateVerified = await verifyTeamRegistered(data.nomEquip, 10_000);
+        if (lateVerified) {
+          setSubmitted(true);
+          clearPersisted();
+          tracker.inscripcioCompletada({ categoria: data.capCategoria, total, jugadors: Number(data.midaEquip) || 4, teamId: newTeamId });
+          return;
+        }
+        throw fetchErr;
+      }
+      clearTimeout(abortTimer);
 
       let body: { ok?: boolean; error?: string; message?: string } = {};
       try {
@@ -843,9 +863,9 @@ export default function Inscripcion() {
       if (msg !== "duplicate_team_name") {
         toast({
           title:"Error d'enviament",
-          description:"No hem pogut registrar la inscripció. Escriu-nos al WhatsApp del club (+34 698 425 153) i t'apuntem nosaltres mateixos.",
+          description:`No hem pogut registrar la inscripció. Escriu-nos al WhatsApp (+34 698 425 153) indicant el concepte: ${buildConcepte(data.nomEquip)} i t'apuntem nosaltres.`,
           variant:"destructive",
-          duration: 12000,
+          duration: 15000,
         });
       }
     } finally {
@@ -1422,7 +1442,7 @@ export default function Inscripcion() {
                       <FieldRow label="Data de naixement *" error={errors.capDataNaix?.message}>
                         <SInput {...register("capDataNaix")} type="date" />
                       </FieldRow>
-                      <FieldRow label="Població">
+                      <FieldRow label="Població *" error={errors.capPoblacio?.message}>
                         <SInput {...register("capPoblacio")} placeholder="Sant Martí, Barcelona…" />
                       </FieldRow>
                     </div>

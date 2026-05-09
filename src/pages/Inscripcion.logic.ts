@@ -172,7 +172,7 @@ export const schema = z.object({
   capGenere:    reqStr("Selecciona el gènere de l'equip").min(1, "Selecciona el gènere de l'equip"),
   capTalla:     reqStr("Selecciona talla").min(1, "Selecciona talla"),
   capClub:      reqStr("Indica el club o escriu 'Sense club'").min(2, "Indica el club o escriu 'Sense club'"),
-  capPoblacio:  z.string().optional(),
+  capPoblacio:  reqStr("Indica la teva població o barri").min(2, "Indica la teva població o barri"),
   tutorNom:     z.string().optional(),
   tutorCognom:  z.string().optional(),
   tutorTelefon: z.string().optional(),
