@@ -392,6 +392,9 @@ function doPost(e) {
       Logger.log('Sheet write error (no critic): ' + sheetErr);
     }
 
+    // 2.1) JotForm 3x3 (font principal d'Ana — no crític, no trenca la inscripció)
+    try { submitToJotForm3x3_(data, justificantUpload); } catch (e) { Logger.log('JotForm 3x3 err: ' + e); }
+
     // 2.5) Backup paranoid (no critic — cap d'aquests bloqueja la inscripció):
     //   a) JSON al repo GitHub privat (commit append)
     //   b) Issue al GitHub repo privat
@@ -1576,4 +1579,112 @@ function setupSheetAsCrm_() {
 
   Logger.log('setupSheetAsCrm_: CRM configurat correctament. Columna Estat CRM: ' + estatCol);
   return { ok: true, estatCol: estatCol };
+}
+
+/* ─── JotForm 3x3 ─────────────────────────────────────────────────────────
+   Envia cada inscripció al formulari JotForm 261286732245055 (EU).
+   API key → Script Property  JOTFORM_3X3_API_KEY
+   QIDs (field IDs) → Script Properties JOTFORM_3X3_QID_* (veure llista sota).
+   Si alguna property no existeix, s'utilitzen els valors per defecte de l'array.
+   Executa listJotForm3x3Fields_() des de l'editor per veure els QIDs reals del form.
+*/
+function submitToJotForm3x3_(data, justificantUpload) {
+  var props = PropertiesService.getScriptProperties();
+  var apiKey = props.getProperty('JOTFORM_3X3_API_KEY') || '';
+  if (!apiKey) { Logger.log('submitToJotForm3x3_: JOTFORM_3X3_API_KEY no configurada'); return; }
+
+  var formId = props.getProperty('JOTFORM_3X3_FORM_ID') || '261286732245055';
+  var url = 'https://eu-api.jotform.com/form/' + formId + '/submissions?apiKey=' + apiKey;
+
+  // QIDs configurables via Script Properties (fallback = valors típics del builder EU).
+  // Executa listJotForm3x3Fields_() per obtenir els QIDs reals i actualitza les properties.
+  function qid(key, def) { return props.getProperty('JOTFORM_3X3_QID_' + key) || def; }
+
+  var jugadors = Array.isArray(data.jugadors) ? data.jugadors : [];
+  var jug = function(i) { return jugadors[i] || {}; };
+
+  var payload = {
+    'submission[' + qid('NOM_EQUIP',    '3') + ']':  data.nomEquip    || '',
+    'submission[' + qid('CAPITA_NOM',   '4') + ']':  (data.capNom || '') + ' ' + (data.capCognom || ''),
+    'submission[' + qid('CAPITA_EMAIL', '5') + ']':  data.capEmail    || '',
+    'submission[' + qid('CAPITA_TEL',   '6') + ']':  data.capTelefon  || '',
+    'submission[' + qid('CAPITA_NAIX',  '7') + ']':  data.capDataNaix || '',
+    'submission[' + qid('CATEGORIA',    '8') + ']':  data.capCategoria || '',
+    'submission[' + qid('GENERE',       '9') + ']':  data.capGenere   || '',
+    'submission[' + qid('TALLA_CAP',   '10') + ']':  data.capTalla    || '',
+    'submission[' + qid('CLUB_CAP',    '11') + ']':  data.capClub     || '',
+    'submission[' + qid('POBLACIO',    '12') + ']':  data.capPoblacio || '',
+    'submission[' + qid('MIDA_EQUIP',  '13') + ']':  data.midaEquip   || '',
+    'submission[' + qid('TOTAL_EUR',   '14') + ']':  String(data.total || ''),
+    'submission[' + qid('DESC_APLICAT','15') + ']':  String(data.descAplicat || ''),
+    'submission[' + qid('COMENTARIS',  '16') + ']':  data.comentaris  || '',
+    'submission[' + qid('JUSTIFICANT', '17') + ']':  justificantUpload || '',
+    'submission[' + qid('TEAM_ID',     '18') + ']':  data.teamId      || '',
+    // Tutor (menors)
+    'submission[' + qid('TUTOR_NOM',   '19') + ']':  data.tutorNom    || '',
+    'submission[' + qid('TUTOR_TEL',   '20') + ']':  data.tutorTelefon || '',
+    // Jugador 2
+    'submission[' + qid('JUG2_NOM',    '21') + ']':  (jug(0).nom || '') + ' ' + (jug(0).cognom || ''),
+    'submission[' + qid('JUG2_EMAIL',  '22') + ']':  jug(0).email     || '',
+    'submission[' + qid('JUG2_TEL',    '23') + ']':  jug(0).telefon   || '',
+    'submission[' + qid('JUG2_NAIX',   '24') + ']':  jug(0).dataNaix  || '',
+    'submission[' + qid('JUG2_TALLA',  '25') + ']':  jug(0).talla     || '',
+    'submission[' + qid('JUG2_CLUB',   '26') + ']':  jug(0).club      || '',
+    // Jugador 3
+    'submission[' + qid('JUG3_NOM',    '27') + ']':  (jug(1).nom || '') + ' ' + (jug(1).cognom || ''),
+    'submission[' + qid('JUG3_EMAIL',  '28') + ']':  jug(1).email     || '',
+    'submission[' + qid('JUG3_TEL',    '29') + ']':  jug(1).telefon   || '',
+    'submission[' + qid('JUG3_NAIX',   '30') + ']':  jug(1).dataNaix  || '',
+    'submission[' + qid('JUG3_TALLA',  '31') + ']':  jug(1).talla     || '',
+    'submission[' + qid('JUG3_CLUB',   '32') + ']':  jug(1).club      || '',
+    // Jugador 4
+    'submission[' + qid('JUG4_NOM',    '33') + ']':  (jug(2).nom || '') + ' ' + (jug(2).cognom || ''),
+    'submission[' + qid('JUG4_EMAIL',  '34') + ']':  jug(2).email     || '',
+    'submission[' + qid('JUG4_TEL',    '35') + ']':  jug(2).telefon   || '',
+    'submission[' + qid('JUG4_NAIX',   '36') + ']':  jug(2).dataNaix  || '',
+    'submission[' + qid('JUG4_TALLA',  '37') + ']':  jug(2).talla     || '',
+    'submission[' + qid('JUG4_CLUB',   '38') + ']':  jug(2).club      || '',
+    // Jugador 5 (equip de 5)
+    'submission[' + qid('JUG5_NOM',    '39') + ']':  (jug(3).nom || '') + ' ' + (jug(3).cognom || ''),
+    'submission[' + qid('JUG5_EMAIL',  '40') + ']':  jug(3).email     || '',
+    'submission[' + qid('JUG5_TEL',    '41') + ']':  jug(3).telefon   || '',
+    'submission[' + qid('JUG5_NAIX',   '42') + ']':  jug(3).dataNaix  || '',
+    'submission[' + qid('JUG5_TALLA',  '43') + ']':  jug(3).talla     || '',
+    'submission[' + qid('JUG5_CLUB',   '44') + ']':  jug(3).club      || '',
+  };
+
+  // Elimina camps buits per no enviar strings 'undefined' ni espais en blanc
+  var form = Object.keys(payload).filter(function(k) {
+    return payload[k] && payload[k].toString().trim() !== '';
+  }).map(function(k) {
+    return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
+  }).join('&');
+
+  var resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/x-www-form-urlencoded',
+    payload: form,
+    muteHttpExceptions: true,
+  });
+
+  var code = resp.getResponseCode();
+  Logger.log('JotForm 3x3 submission → HTTP ' + code + ' : ' + resp.getContentText().slice(0, 200));
+  if (code !== 200) throw new Error('JotForm HTTP ' + code);
+}
+
+/* Executa manualment des de l'editor per veure tots els QIDs del form JotForm.
+   Copia els IDs del Logger i configura les Script Properties JOTFORM_3X3_QID_*.
+   Exemple: JOTFORM_3X3_QID_NOM_EQUIP = "3" */
+function listJotForm3x3Fields_() {
+  var props = PropertiesService.getScriptProperties();
+  var apiKey = props.getProperty('JOTFORM_3X3_API_KEY') || '';
+  if (!apiKey) { Logger.log('Configura JOTFORM_3X3_API_KEY a Script Properties primer'); return; }
+  var formId = props.getProperty('JOTFORM_3X3_FORM_ID') || '261286732245055';
+  var resp = UrlFetchApp.fetch('https://eu-api.jotform.com/form/' + formId + '/questions?apiKey=' + apiKey, { muteHttpExceptions: true });
+  var parsed = JSON.parse(resp.getContentText());
+  var qs = parsed.content || {};
+  Object.keys(qs).sort(function(a,b){ return parseInt(a)-parseInt(b); }).forEach(function(id) {
+    var q = qs[id];
+    Logger.log('QID ' + id + ' | type: ' + q.type + ' | name: ' + (q.name||'') + ' | text: ' + (q.text||''));
+  });
 }

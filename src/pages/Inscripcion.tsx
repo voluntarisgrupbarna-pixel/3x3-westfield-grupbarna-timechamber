@@ -546,12 +546,13 @@ export default function Inscripcion() {
       }
     }
     if (step === 2) {
-      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla"];
+      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla","capClub","capPoblacio"];
       ok = await trigger(fields2);
     }
     if (step === 3) {
       const jugF = Array.from({ length: numJugadors - 1 }, (_, i) => [
-        `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.talla`
+        `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.talla`,
+        `jugadors.${i}.dataNaix`, `jugadors.${i}.telefon`, `jugadors.${i}.club`,
       ]).flat() as Parameters<typeof trigger>[0];
       ok = await trigger(jugF);
     }
@@ -1512,10 +1513,10 @@ export default function Inscripcion() {
                           <FieldRow label="Cognom *" error={(errors.jugadors?.[idx] as any)?.cognom?.message}>
                             <SInput {...register(`jugadors.${idx}.cognom`)} placeholder="Cognom" />
                           </FieldRow>
-                          <FieldRow label="Data naix.">
+                          <FieldRow label="Data naix. *" error={(errors.jugadors?.[idx] as any)?.dataNaix?.message}>
                             <SInput {...register(`jugadors.${idx}.dataNaix`)} type="date" />
                           </FieldRow>
-                          <FieldRow label="Telèfon">
+                          <FieldRow label="Telèfon *" error={(errors.jugadors?.[idx] as any)?.telefon?.message}>
                             <SInput {...register(`jugadors.${idx}.telefon`)} type="tel" placeholder="600 000 000" />
                           </FieldRow>
                           <FieldRow label="Categoria">
