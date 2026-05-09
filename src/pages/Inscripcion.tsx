@@ -1472,14 +1472,14 @@ export default function Inscripcion() {
                       <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-xl p-4 space-y-3">
                         <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">👤 Jugador/a menor d'edat — cal tutor</p>
                         <div className="grid grid-cols-2 gap-3">
-                          <FieldRow label="Nom tutor *">
+                          <FieldRow label="Nom tutor *" error={errors.tutorNom?.message}>
                             <SInput {...register("tutorNom")} placeholder="Nom" />
                           </FieldRow>
-                          <FieldRow label="Cognom tutor *">
+                          <FieldRow label="Cognom tutor *" error={errors.tutorCognom?.message}>
                             <SInput {...register("tutorCognom")} placeholder="Cognom" />
                           </FieldRow>
                         </div>
-                        <FieldRow label="Telèfon tutor *">
+                        <FieldRow label="Telèfon tutor *" error={errors.tutorTelefon?.message}>
                           <SInput {...register("tutorTelefon")} type="tel" placeholder="+34 600 000 000" />
                         </FieldRow>
                       </div>
