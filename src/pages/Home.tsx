@@ -340,13 +340,43 @@ function useAnunciVisible() {
   return visible;
 }
 
+/* Countdown compacte per al banner — tick cada segon.
+   Dues versions: mobile (curta, sense segons) i desktop (completa). */
+function BannerCountdown({ target }: { target: Date }) {
+  const [diff, setDiff] = useState(() => target.getTime() - Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setDiff(target.getTime() - Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [target]);
+  if (diff <= 0) return null;
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    <>
+      {/* Mòbil: compacte, sense segons */}
+      <span className="sm:hidden font-mono tabular-nums bg-black/25 px-1.5 py-0.5 rounded">
+        {d}d {pad(h)}h {pad(m)}m
+      </span>
+      {/* Desktop: complet amb segons */}
+      <span className="hidden sm:inline font-mono tabular-nums bg-black/25 px-2 py-0.5 rounded">
+        {d}d {pad(h)}h {pad(m)}m {pad(s)}s
+      </span>
+    </>
+  );
+}
+
 function AnunciBanner({ visible }: { visible: boolean }) {
   if (!visible) return null;
   return (
-    <div className="fixed top-0 left-0 right-0 z-[55] bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 text-white text-center py-2 px-4 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-lg">
-      <span className="inline-flex items-center gap-2">
-        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-        🔥 Early Bird · -10% si t'inscrius abans del 15 de maig
+    <div className="fixed top-0 left-0 right-0 z-[55] bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 text-white text-center py-2 px-4 text-[11px] sm:text-sm font-bold uppercase tracking-wider shadow-lg whitespace-nowrap overflow-hidden">
+      <span className="inline-flex items-center gap-1.5 sm:gap-2">
+        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0" />
+        <span className="sm:hidden">🔥 -10% · Acaba en</span>
+        <span className="hidden sm:inline">🔥 Early Bird · -10% · Acaba en</span>
+        <BannerCountdown target={ANUNCI_VISIBLE_FINS} />
       </span>
     </div>
   );
