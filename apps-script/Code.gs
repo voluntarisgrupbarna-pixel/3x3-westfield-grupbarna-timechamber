@@ -225,6 +225,100 @@ function isTeamNameTaken_(nomEquip) {
 }
 
 /**
+ * Dashboard agregat — retorna totes les mètriques clau del club en un sol JSON.
+ * Usat pel fitxer local dashboard-cbgb.html
+ */
+function getDashboardData_() {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var ss;
+  try { ss = SpreadsheetApp.openById(id); } catch(err) {
+    return jsonOut_({ error: 'Cannot open sheet: ' + err, ts: new Date().toISOString() });
+  }
+
+  // ── Inscripcions 3x3 ──────────────────────────────────────
+  var inscSheet = ss.getSheetByName('Inscripcions 2026');
+  var inscTotal = 0, inscByCategory = {}, inscIngressos = 0;
+  if (inscSheet && inscSheet.getLastRow() > 1) {
+    var inscRows = inscSheet.getLastRow() - 1;
+    inscTotal = inscRows;
+    var inscHeaders = inscSheet.getRange(1, 1, 1, inscSheet.getLastColumn()).getValues()[0];
+    var catCol = inscHeaders.indexOf('Categoria');
+    var totalCol = inscHeaders.indexOf('Total €');
+    if (catCol >= 0) {
+      var cats = inscSheet.getRange(2, catCol + 1, inscRows, 1).getValues();
+      cats.forEach(function(r) {
+        var c = String(r[0] || '').trim();
+        if (c) inscByCategory[c] = (inscByCategory[c] || 0) + 1;
+      });
+    }
+    if (totalCol >= 0) {
+      var totals = inscSheet.getRange(2, totalCol + 1, inscRows, 1).getValues();
+      inscIngressos = totals.reduce(function(acc, r) { return acc + (parseFloat(r[0]) || 0); }, 0);
+    }
+  }
+
+  // ── WhatsApp contacts ─────────────────────────────────────
+  function sheetCount_(name) {
+    var s = ss.getSheetByName(name);
+    return s ? Math.max(0, s.getLastRow() - 1) : 0;
+  }
+  var wa3x3 = sheetCount_('Contactes_WhatsApp_3x3');
+  var waCampus = sheetCount_('Contactes_WhatsApp_Campus');
+
+  // CRM WhatsApp general (té columna Estat)
+  var waSheet = ss.getSheetByName('Contactes_WhatsApp');
+  var waCrmTotal = 0, waCrmByEstat = {};
+  if (waSheet && waSheet.getLastRow() > 1) {
+    waCrmTotal = waSheet.getLastRow() - 1;
+    var waHeaders = waSheet.getRange(1, 1, 1, waSheet.getLastColumn()).getValues()[0];
+    var estatCol = waHeaders.indexOf('Estat');
+    if (estatCol >= 0) {
+      var estats = waSheet.getRange(2, estatCol + 1, waCrmTotal, 1).getValues();
+      estats.forEach(function(r) {
+        var e = String(r[0] || '').trim() || 'Nou';
+        waCrmByEstat[e] = (waCrmByEstat[e] || 0) + 1;
+      });
+    }
+  }
+
+  // ── Subscriptors blog ─────────────────────────────────────
+  var blogSheet = ss.getSheetByName('Subscriptors_Blog');
+  var blogTotal = 0, blogActius = 0;
+  if (blogSheet && blogSheet.getLastRow() > 1) {
+    blogTotal = blogSheet.getLastRow() - 1;
+    var blogHeaders = blogSheet.getRange(1, 1, 1, blogSheet.getLastColumn()).getValues()[0];
+    var activCol = blogHeaders.indexOf('Actiu');
+    if (activCol >= 0) {
+      var actius = blogSheet.getRange(2, activCol + 1, blogTotal, 1).getValues();
+      blogActius = actius.filter(function(r) {
+        var v = r[0];
+        return v === true || v === 1 || String(v).toLowerCase() === 'true';
+      }).length;
+    }
+  }
+
+  return jsonOut_({
+    inscripcions3x3: {
+      total: inscTotal,
+      capacity: getCapacitat_(),
+      byCategory: inscByCategory,
+      ingressos: inscIngressos,
+    },
+    whatsapp: {
+      total3x3: wa3x3,
+      totalCampus: waCampus,
+      crmTotal: waCrmTotal,
+      crmByEstat: waCrmByEstat,
+    },
+    blog: {
+      total: blogTotal,
+      actius: blogActius,
+    },
+    ts: new Date().toISOString(),
+  });
+}
+
+/**
  * GET — endpoints públics:
  *  - sense ?action o ?action=count: comptador d'equips inscrits + capacitat + by category
  *  - ?action=names: llista de noms d'equip registrats (per autocomplete + bloqueig duplicats)
@@ -234,6 +328,7 @@ function isTeamNameTaken_(nomEquip) {
 function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'count';
   if (action === 'names') return getRegisteredNames_();
+  if (action === 'dashboard') return getDashboardData_();
 
   let count = 0;
   let source = 'error';
@@ -1582,14 +1677,30 @@ function setupSheetAsCrm_() {
 }
 
 /* ─── JotForm 3x3 ─────────────────────────────────────────────────────────
-   Envia cada inscripció al formulari JotForm 261286732245055 (EU).
-   Form QIDs (verificats 2026-05-10):
-     QID 2 → Nombre del equipo
-     QID 3 → Nombre completo del capitán (fullname: [first]/[last])
-     QID 4 → Correo electrónico del capitán
-     QID 5 → Teléfono del capitán
-     QID 6 → Jugadores (ConfigurableList widget, JSON array [{Nombre completo: "..."}])
-   API key → Script Property  JOTFORM_3X3_API_KEY
+   QIDs verificats i creats 2026-05-10:
+     2  Nombre del equipo
+     3  Nombre completo capitán (first/last)
+     4  Email capitán
+     5  Telèfon capitán
+     6  Jugadores ConfigurableList [{Nombre completo}]
+     8  Categoria
+     9  Genere equip
+    10  Mida equip
+    11  Data naix capita
+    12  Talla capita
+    13  Club capita
+    14  Poblacio capita
+    15  Tutor nom
+    16  Tutor telefon
+    17  Total EUR
+    18  Descompte aplicat
+    19  Concepte transferencia
+    20  Team ID
+    21  Check-in URL QR
+    22  Justificant Drive URL
+    23  Data inscripcio
+    24  Jugadors detall JSON (tots els jugadors complets)
+   API key: Script Property JOTFORM_3X3_API_KEY
 */
 function submitToJotForm3x3_(data, justificantUpload) {
   var props = PropertiesService.getScriptProperties();
@@ -1601,23 +1712,49 @@ function submitToJotForm3x3_(data, justificantUpload) {
 
   var jugadors = Array.isArray(data.jugadors) ? data.jugadors : [];
 
-  // Construïm l'array de jugadors addicionals (a part del capità) per al widget ConfigurableList
+  // Jugadors per al ConfigurableList (noms visibles al form)
   var jugadorsRows = jugadors.map(function(j) {
     return { 'Nombre completo': ((j.nom || '') + ' ' + (j.cognom || '')).trim() };
   }).filter(function(r) { return r['Nombre completo']; });
 
+  // Jugadors complets per al camp JSON (preserva totes les dades)
+  var jugadorsJSON = JSON.stringify(jugadors.map(function(j) {
+    return { nom: (j.nom||''), cognom: (j.cognom||''), email: (j.email||''), telefon: (j.telefon||''), dataNaix: (j.dataNaix||''), talla: (j.talla||''), club: (j.club||'') };
+  }));
+
+  var justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
+  var checkinUrl = data.checkinUrl || '';
+  var dataInscr = data.data || new Date().toLocaleString('ca-ES');
+
   var payload = {
-    'submission[2]':          data.nomEquip || '',
-    'submission[3][first]':   data.capNom   || '',
-    'submission[3][last]':    data.capCognom || '',
-    'submission[4]':          data.capEmail  || '',
-    'submission[5]':          data.capTelefon || '',
+    'submission[2]':          data.nomEquip     || '',
+    'submission[3][first]':   data.capNom        || '',
+    'submission[3][last]':    data.capCognom     || '',
+    'submission[4]':          data.capEmail      || '',
+    'submission[5]':          data.capTelefon    || '',
     'submission[6]':          JSON.stringify(jugadorsRows),
+    'submission[8]':          data.capCategoria  || '',
+    'submission[9]':          data.capGenere     || '',
+    'submission[10]':         String(data.midaEquip || ''),
+    'submission[11]':         data.capDataNaix   || '',
+    'submission[12]':         data.capTalla      || '',
+    'submission[13]':         data.capClub       || '',
+    'submission[14]':         data.capPoblacio   || '',
+    'submission[15]':         data.tutorNom      || '',
+    'submission[16]':         data.tutorTelefon  || '',
+    'submission[17]':         String(data.total  || ''),
+    'submission[18]':         data.descAplicat   ? String(data.descAplicat) : '',
+    'submission[19]':         data.concepte      || data.teamId ? ('3X3+' + (data.nomEquip || '').toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'')) : '',
+    'submission[20]':         data.teamId        || '',
+    'submission[21]':         checkinUrl,
+    'submission[22]':         justifUrl,
+    'submission[23]':         dataInscr,
+    'submission[24]':         jugadorsJSON,
   };
 
   var form = Object.keys(payload).filter(function(k) {
     var v = payload[k];
-    return v && v.toString().trim() !== '' && v !== '[]';
+    return v && v.toString().trim() !== '' && v !== '[]' && v !== 'null';
   }).map(function(k) {
     return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
   }).join('&');
