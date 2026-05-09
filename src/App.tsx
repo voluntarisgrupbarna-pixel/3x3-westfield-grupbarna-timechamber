@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import Home from "@/pages/Home";
 import FloatingButtons from "@/components/FloatingButtons";
@@ -30,6 +30,7 @@ const StaffLogin          = lazy(() => import("@/pages/StaffLogin"));
 const StaffCerca          = lazy(() => import("@/pages/StaffCerca"));
 const StaffEquip          = lazy(() => import("@/pages/StaffEquip"));
 const StaffLead           = lazy(() => import("@/pages/StaffLead"));
+const StaffDashboard      = lazy(() => import("@/pages/StaffDashboard"));
 
 function PageLoader() {
   return (
@@ -44,6 +45,14 @@ function PageLoader() {
  * Exclos a /checkin (admin), /contacte (modal s'autoobre), /equip (pàgina compartible),
  * i /equip/:any per coherència.
  */
+function RouteTracker() {
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    window.gtag?.("config", "G-R6XYR7G1WF", { page_path: pathname + search });
+  }, [pathname, search]);
+  return null;
+}
+
 const HIDE_FAB_PATHS = ["/checkin", "/contacte", "/contacto", "/equip", "/staff"];
 function GlobalFloatingButtons() {
   const { pathname } = useLocation();
@@ -54,6 +63,7 @@ function GlobalFloatingButtons() {
 export default function App() {
   return (
     <BrowserRouter basename={import.meta.env.PROD ? import.meta.env.BASE_URL : '/'}>
+      <RouteTracker />
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -87,6 +97,7 @@ export default function App() {
           <Route path="/staff/cerca" element={<StaffCerca />} />
           <Route path="/staff/equip/:teamId" element={<StaffEquip />} />
           <Route path="/staff/lead" element={<StaffLead />} />
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
         </Routes>
       </Suspense>
       <GlobalFloatingButtons />
