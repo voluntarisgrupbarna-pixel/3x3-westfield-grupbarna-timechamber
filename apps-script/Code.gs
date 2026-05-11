@@ -329,6 +329,7 @@ function doGet(e) {
   const action = (e && e.parameter && e.parameter.action) || 'count';
   if (action === 'names') return getRegisteredNames_();
   if (action === 'dashboard') return getDashboardData_();
+  if (action === 'ga4') return getGa4Data_(e);
 
   let count = 0;
   let source = 'error';
@@ -1785,5 +1786,119 @@ function listJotForm3x3Fields_() {
   Object.keys(qs).sort(function(a,b){ return parseInt(a)-parseInt(b); }).forEach(function(id) {
     var q = qs[id];
     Logger.log('QID ' + id + ' | type: ' + q.type + ' | name: ' + (q.name||'') + ' | text: ' + (q.text||''));
+  });
+}
+
+// ─── GA4 Data API proxy ───────────────────────────────────────────────────────
+/**
+ * GET ?action=ga4&token=SECRET
+ * Retorna mètriques GA4 dels darrers 30 dies.
+ * Requereix Script Properties:
+ *   GA4_PROPERTY_ID  → ID numèric de la propietat GA4 (Administrador → Propietat → número)
+ *   METRICS_TOKEN    → token secret per protegir l'endpoint (ex: "barna3x32026")
+ */
+function getGa4Data_(e) {
+  var token = (e && e.parameter && e.parameter.token) || '';
+  var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
+  if (validToken && token !== validToken) {
+    return jsonOut_({ error: 'Unauthorized', ts: new Date().toISOString() });
+  }
+
+  var propertyId = PROPS.getProperty('GA4_PROPERTY_ID') || '';
+  if (!propertyId) {
+    return jsonOut_({ error: 'GA4_PROPERTY_ID no configurat a Script Properties', ts: new Date().toISOString() });
+  }
+
+  var baseUrl = 'https://analyticsdata.googleapis.com/v1beta/properties/' + propertyId + ':runReport';
+  var headers = { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() };
+  var opts = { method: 'post', contentType: 'application/json', headers: headers, muteHttpExceptions: true };
+
+  // ── Report 1: sessions + activeUsers per dia, últims 30 dies ────────────────
+  var daily = [];
+  try {
+    var body1 = {
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'yesterday' }],
+      dimensions: [{ name: 'date' }],
+      metrics: [{ name: 'sessions' }, { name: 'activeUsers' }],
+      orderBys: [{ dimension: { dimensionName: 'date' } }],
+    };
+    var r1 = UrlFetchApp.fetch(baseUrl, Object.assign({}, opts, { payload: JSON.stringify(body1) }));
+    if (r1.getResponseCode() === 200) {
+      var d1 = JSON.parse(r1.getContentText());
+      (d1.rows || []).forEach(function(row) {
+        var rawDate = row.dimensionValues[0].value; // "20260410"
+        var fmt = rawDate.slice(4, 6) + '/' + rawDate.slice(6, 8); // "04/10"
+        daily.push({
+          date: fmt,
+          sessions: parseInt(row.metricValues[0].value) || 0,
+          users: parseInt(row.metricValues[1].value) || 0,
+        });
+      });
+    }
+  } catch (err) { Logger.log('GA4 daily error: ' + err); }
+
+  // ── Report 2: sessions per canal (fonts de tràfic) ──────────────────────────
+  var sources = [];
+  try {
+    var body2 = {
+      dateRanges: [{ startDate: '30daysAgo', endDate: 'yesterday' }],
+      dimensions: [{ name: 'sessionDefaultChannelGroup' }],
+      metrics: [{ name: 'sessions' }],
+      orderBys: [{ metric: { metricName: 'sessions' }, desc: true }],
+      limit: 8,
+    };
+    var r2 = UrlFetchApp.fetch(baseUrl, Object.assign({}, opts, { payload: JSON.stringify(body2) }));
+    if (r2.getResponseCode() === 200) {
+      var d2 = JSON.parse(r2.getContentText());
+      (d2.rows || []).forEach(function(row) {
+        sources.push({
+          channel: row.dimensionValues[0].value,
+          sessions: parseInt(row.metricValues[0].value) || 0,
+        });
+      });
+    }
+  } catch (err) { Logger.log('GA4 sources error: ' + err); }
+
+  // ── Report 3: events del funnel d'inscripció ────────────────────────────────
+  var funnelEvents = [
+    'cta_inscripcio_click',
+    'inscripcio_iniciada',
+    'queue_passada',
+    'viral_gate_passat',
+    'viral_gate_skipped',
+    'inscripcio_completada',
+  ];
+  var funnel = {};
+  try {
+    var body3 = {
+      dateRanges: [{ startDate: '60daysAgo', endDate: 'yesterday' }],
+      dimensions: [{ name: 'eventName' }],
+      metrics: [{ name: 'eventCount' }],
+      dimensionFilter: {
+        filter: {
+          fieldName: 'eventName',
+          inListFilter: { values: funnelEvents },
+        },
+      },
+    };
+    var r3 = UrlFetchApp.fetch(baseUrl, Object.assign({}, opts, { payload: JSON.stringify(body3) }));
+    if (r3.getResponseCode() === 200) {
+      var d3 = JSON.parse(r3.getContentText());
+      (d3.rows || []).forEach(function(row) {
+        funnel[row.dimensionValues[0].value] = parseInt(row.metricValues[0].value) || 0;
+      });
+    }
+  } catch (err) { Logger.log('GA4 funnel error: ' + err); }
+
+  // ── Totals darrers 30 dies ───────────────────────────────────────────────────
+  var totalSessions = daily.reduce(function(a, d) { return a + d.sessions; }, 0);
+  var totalUsers = daily.reduce(function(a, d) { return a + d.users; }, 0);
+
+  return jsonOut_({
+    daily: daily,
+    sources: sources,
+    funnel: funnel,
+    totals: { sessions: totalSessions, users: totalUsers },
+    ts: new Date().toISOString(),
   });
 }
