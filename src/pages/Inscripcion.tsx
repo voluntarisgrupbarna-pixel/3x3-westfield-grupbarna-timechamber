@@ -29,18 +29,18 @@ import SEO from "@/components/SEO";
 import { TeamNameInput } from "@/components/TeamNameInput";
 import { invalidateTeamNamesCache, verifyTeamRegistered } from "@/lib/teamNames";
 
-/* ─── Config ─── */
+/* âââ Config âââ */
 const JOTFORM_API_KEY  = import.meta.env.VITE_JOTFORM_API_KEY  || "";
 const JOTFORM_FORM_ID  = import.meta.env.VITE_JOTFORM_FORM_ID  || "250453975224358";
 const JOTFORM_BASE_URL = import.meta.env.VITE_JOTFORM_BASE_URL || "https://eu-api.jotform.com";
 const GOOGLE_WEBHOOK   = import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK || "";
 
-/* Categories del torneig — font canònica a src/lib/categories.ts */
+/* Categories del torneig â font canÃ²nica a src/lib/categories.ts */
 const CATS = CAT_NAMES;
 
 /* URL del check-in que es comparteix dins el QR de l'equip.
    Quan es escaneja, obre /checkin?id=...&nom=...&cat=...&cap=...&pob=...&jug=...&tel=...&data=...
-   La pàgina de checkin permet als responsables de torneig confirmar arribada + entrega samarretes. */
+   La pÃ gina de checkin permet als responsables de torneig confirmar arribada + entrega samarretes. */
 function buildCheckinUrl(data: {
   teamId: string; nomEquip: string; cap: string; cat: string;
   pob: string; jug: number; mida: string; tel: string; email: string; data: string;
@@ -69,7 +69,7 @@ function buildCheckinUrl(data: {
   if (typeof data.extras === "number") usp.set("extras", String(data.extras));
   if (typeof data.total === "number") usp.set("total", data.total.toFixed(2));
   if (data.pag) usp.set("pag", data.pag);
-  // Si la SPA_BASE és el worker, /checkin és part del worker també (no l'implementem allà,
+  // Si la SPA_BASE Ã©s el worker, /checkin Ã©s part del worker tambÃ© (no l'implementem allÃ ,
   // sempre redirigim a la SPA real). Construim URL cap a la SPA real.
   const spa = (import.meta.env.VITE_SHARE_BASE as string | undefined)?.includes("workers.dev")
     ? "https://cbgrupbarna-3x3timechamber.com"
@@ -87,7 +87,7 @@ function buildCartellFilename(nomEquip: string | undefined, format: "story" | "s
 }
 
 /* Descarrega el cartell de l'equip com a PNG.
-   El worker retorna un SVG pure (sense imatges externes) → es renderitza al canvas
+   El worker retorna un SVG pure (sense imatges externes) â es renderitza al canvas
    i es converteix a PNG sense problemes CORS. Funciona amb qualsevol mida (story / square / landscape). */
 async function downloadCartell(opts: { nomEquip: string; categoria: string; format: "story" | "square" | "landscape" }): Promise<void> {
   const usp = new URLSearchParams({
@@ -104,7 +104,7 @@ async function downloadCartell(opts: { nomEquip: string; categoria: string; form
   };
   const { w, h } = dims[opts.format];
 
-  // Fetch SVG → blob → object URL → <img> → canvas → PNG
+  // Fetch SVG â blob â object URL â <img> â canvas â PNG
   const resp = await fetch(svgUrl);
   if (!resp.ok) throw new Error("Error generant el cartell");
   const svgText = await resp.text();
@@ -144,7 +144,7 @@ async function downloadCartell(opts: { nomEquip: string; categoria: string; form
 const MAX_JUSTIFICANT_BYTES = 8 * 1024 * 1024;
 async function fileToBase64Payload(file: File): Promise<{ name: string; mimeType: string; base64: string }> {
   if (file.size > MAX_JUSTIFICANT_BYTES) {
-    throw new Error(`Justificant massa gran (${(file.size/1024/1024).toFixed(1)} MB). Màxim 8 MB.`);
+    throw new Error(`Justificant massa gran (${(file.size/1024/1024).toFixed(1)} MB). MÃ xim 8 MB.`);
   }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -160,7 +160,7 @@ async function fileToBase64Payload(file: File): Promise<{ name: string; mimeType
 
 const STEPS = [
   { id:1, label:"Equip",    icon:<Trophy className="w-4 h-4"/> },
-  { id:2, label:"Capità",   icon:<User className="w-4 h-4"/> },
+  { id:2, label:"CapitÃ ",   icon:<User className="w-4 h-4"/> },
   { id:3, label:"Jugadors", icon:<Users className="w-4 h-4"/> },
   { id:4, label:"Pagament", icon:<CreditCard className="w-4 h-4"/> },
   { id:5, label:"Bases",    icon:<FileText className="w-4 h-4"/> },
@@ -172,7 +172,7 @@ const slide = {
   exit:    (d:number) => ({ opacity:0, x: d*-40, transition:{ duration:0.25 } }),
 };
 
-/* ─── Persistència local (gate viral + form state) ─── */
+/* âââ PersistÃ¨ncia local (gate viral + form state) âââ */
 const GATE_LS_KEY = "3x3_gate_state_v1";
 const FORM_LS_KEY = "3x3_form_v1";
 const LS_TTL_MS = 24 * 60 * 60 * 1000;
@@ -212,19 +212,19 @@ function clearPersisted(): void {
   try { localStorage.removeItem(GATE_LS_KEY); localStorage.removeItem(FORM_LS_KEY); } catch {}
 }
 
-/* ─── Textos de WhatsApp (variados para no parecer spam) ─── */
+/* âââ Textos de WhatsApp (variados para no parecer spam) âââ */
 const SHARE_TEXTS = [
-  "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 2.000€ Prize Money (Sèniors M/F) i punts FIBA. T'apuntes?",
-  "🔥 Quintet o què? 3×3 al barri del Clot els 6-7 Juny. Premis, samarretes i festa. Necessito gent!",
-  "Hey! Inscripcions obertes 3×3 Westfield Glòries 2026 · Barcelona. Em vens?",
-  "🏆 3×3 Barcelona 6-7 Juny · 1.000€ al guanyador Sèniors, FIBA points. Apunta't amb mi!",
-  "T'agrada el bàsquet de carrer? Mira el 3×3 Westfield Glòries — l'edició 2026 promet:",
+  "ð Ei! Munto equip pel 3Ã3 Westfield GlÃ²ries (6-7 Juny Â· Barcelona). 2.000â¬ Prize Money (SÃ¨niors M/F) i punts FIBA. T'apuntes?",
+  "ð¥ Quintet o quÃ¨? 3Ã3 al barri del Clot els 6-7 Juny. Premis, samarretes i festa. Necessito gent!",
+  "Hey! Inscripcions obertes 3Ã3 Westfield GlÃ²ries 2026 Â· Barcelona. Em vens?",
+  "ð 3Ã3 Barcelona 6-7 Juny Â· 1.000â¬ al guanyador SÃ¨niors, FIBA points. Apunta't amb mi!",
+  "T'agrada el bÃ squet de carrer? Mira el 3Ã3 Westfield GlÃ²ries â l'ediciÃ³ 2026 promet:",
 ];
 const SHARE_URL = "https://cbgrupbarna-3x3timechamber.com/";
 const IG_URL = "https://www.instagram.com/cbgrupbarna/";
 const IG_TIMECHAMBER_URL = "https://www.instagram.com/timechamber_es/";
 
-/* ─── Helpers UI ─── */
+/* âââ Helpers UI âââ */
 function FieldRow({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
   return (
     <div>
@@ -235,9 +235,9 @@ function FieldRow({ label, error, children }: { label: string; error?: string; c
   );
 }
 
-// forwardRef perquè react-hook-form pugui registrar el DOM input via `register(...)`.
-// Sense això la `ref` retornada per `register()` cau dins SInput i mai s'aplica
-// al <input>, fent que rhf no detecti els canvis i la validació consideri el camp buit.
+// forwardRef perquÃ¨ react-hook-form pugui registrar el DOM input via `register(...)`.
+// Sense aixÃ² la `ref` retornada per `register()` cau dins SInput i mai s'aplica
+// al <input>, fent que rhf no detecti els canvis i la validaciÃ³ consideri el camp buit.
 const SInput = forwardRef<HTMLInputElement, ComponentProps<typeof Input>>((props, ref) => (
   <Input
     ref={ref}
@@ -277,7 +277,7 @@ function SGenereSelect({ value, onChange }: { value:string; onChange:(v:string)=
   return (
     <Select onValueChange={onChange} value={value}>
       <SelectTrigger className="bg-white/8 border-white/15 focus:border-red-500 text-white h-10 rounded-xl">
-        <SelectValue placeholder="Gènere" />
+        <SelectValue placeholder="GÃ¨nere" />
       </SelectTrigger>
       <SelectContent className="bg-slate-900 border-white/15">
         {GENERES.map(g => <SelectItem key={g} value={g} className="text-white hover:bg-white/10 text-xs">{g}</SelectItem>)}
@@ -286,18 +286,18 @@ function SGenereSelect({ value, onChange }: { value:string; onChange:(v:string)=
   );
 }
 
-/* ─── Submit to JotForm ─── */
+/* âââ Submit to JotForm âââ */
 async function submitToJotForm(data: FD, descAplicat: boolean, descInvitacions: boolean, justificantNom: string) {
   const params = new URLSearchParams();
 
   // qid=38: nom equip
   params.append("submission[38]", data.nomEquip);
-  // qid=3: capità nom complet
+  // qid=3: capitÃ  nom complet
   params.append("submission[3][first]", data.capNom);
   params.append("submission[3][last]", data.capCognom);
   // qid=6: email
   params.append("submission[6]", data.capEmail);
-  // qid=36: telèfon jugador 1
+  // qid=36: telÃ¨fon jugador 1
   params.append("submission[36][full]", data.capTelefon);
   // qid=37: data naix jugador 1
   if (data.capDataNaix) {
@@ -317,7 +317,7 @@ async function submitToJotForm(data: FD, descAplicat: boolean, descInvitacions: 
     params.append("submission[34][first]", data.tutorNom);
     params.append("submission[34][last]", data.tutorCognom || "");
   }
-  // qid=35: tutor telèfon
+  // qid=35: tutor telÃ¨fon
   if (data.tutorTelefon) params.append("submission[35][full]", data.tutorTelefon);
 
   // Jugadors 2,3,4 (,5 si escau)
@@ -362,9 +362,9 @@ async function submitToJotForm(data: FD, descAplicat: boolean, descInvitacions: 
   return res;
 }
 
-/* ═══════════════════════════════════════════
+/* âââââââââââââââââââââââââââââââââââââââââââ
    COMPONENT PRINCIPAL
-═══════════════════════════════════════════ */
+âââââââââââââââââââââââââââââââââââââââââââ */
 export default function Inscripcion() {
   const [step, setStep]           = useState(1);
   const [dir, setDir]             = useState(1);
@@ -379,12 +379,12 @@ export default function Inscripcion() {
   const [codError, setCodError]   = useState("");
   const [justFile, setJustFile]   = useState<File | null>(null);
   const [copied, setCopied]       = useState(false);
-  // Gate viral: comparteix per WhatsApp + segueix @cbgrupbarna → 10% descompte.
-  // Camí alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
+  // Gate viral: comparteix per WhatsApp + segueix @cbgrupbarna â 10% descompte.
+  // CamÃ­ alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
   // Lazy initializers: si tornem d'una pestanya WhatsApp/Instagram que el SO ha matat,
-  // restaurem el progrés persistit en localStorage.
-  // Durant la finestra early-bird (fins 2026-05-15 23:59) tothom té automàticament el 10%,
-  // així que NO mostrem el gate viral: el saltem directament a "skipped".
+  // restaurem el progrÃ©s persistit en localStorage.
+  // Durant la finestra early-bird (fins 2026-05-15 23:59) tothom tÃ© automÃ ticament el 10%,
+  // aixÃ­ que NO mostrem el gate viral: el saltem directament a "skipped".
   const earlyBird = isEarlyBirdActive();
   const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">(
     () => earlyBird ? "skipped" : (loadGateState()?.gateState ?? "active")
@@ -400,13 +400,13 @@ export default function Inscripcion() {
   const [queuePos, setQueuePos]     = useState(0);
   const [queueInitial, setQueueInitial] = useState(0);
 
-  // GA4: usuari entra a la pàgina d'inscripció
+  // GA4: usuari entra a la pÃ gina d'inscripciÃ³
   useEffect(() => {
     tracker.inscripcioIniciada();
   }, []);
 
-  // Persistim el progrés del gate cada vegada que canvia (defensa belt-and-braces:
-  // els handlers ja escriuen a LS abans de window.open, però aquest effect cobreix
+  // Persistim el progrÃ©s del gate cada vegada que canvia (defensa belt-and-braces:
+  // els handlers ja escriuen a LS abans de window.open, perÃ² aquest effect cobreix
   // qualsevol setState que se'ns hagi escapat).
   useEffect(() => {
     saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions });
@@ -460,7 +460,7 @@ export default function Inscripcion() {
   const { fields } = useFieldArray({ control, name:"jugadors" });
   const { fields: extraFields, append: appendExtra, remove: removeExtra } = useFieldArray({ control, name: "samarretesExtra" });
 
-  // Restaurem el formulari des de localStorage al muntar (només una vegada).
+  // Restaurem el formulari des de localStorage al muntar (nomÃ©s una vegada).
   useEffect(() => {
     const saved = loadFormState();
     if (saved?.data && typeof saved.data === "object") {
@@ -485,20 +485,20 @@ export default function Inscripcion() {
   const numExtraShirts = samarretesExtra.length;
   const { base, desc5, desc10, extras, total, reason } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions, numExtraShirts, earlyBird);
 
-  /* ─── Gate viral helpers ─── */
+  /* âââ Gate viral helpers âââ */
   // Dos camins per desbloquejar el descompte:
-  //   A) Compartir per WhatsApp (≥1) + seguir @cbgrupbarna
+  //   A) Compartir per WhatsApp (â¥1) + seguir @cbgrupbarna
   //   B) Seguir @cbgrupbarna + seguir @timechamber_es (per qui no vol compartir)
-  // El botó de WhatsApp queda sempre visible al costat com a alternativa.
+  // El botÃ³ de WhatsApp queda sempre visible al costat com a alternativa.
   const sharesDone = sharedSlots.filter(Boolean).length;
   const pathShareDone   = sharesDone >= 1 && igFollowed;
   const pathFollowsDone = igFollowed && igTimechamberFollowed;
   const canUnlockGate = pathShareDone || pathFollowsDone;
-  // Persistim a localStorage ABANS d'obrir l'app externa: en mòbil el SO pot matar
-  // la pestanya mentre l'usuari és a WhatsApp/Instagram, i sense aquest pre-write
-  // el progrés in-memory es perdria en tornar.
+  // Persistim a localStorage ABANS d'obrir l'app externa: en mÃ²bil el SO pot matar
+  // la pestanya mentre l'usuari Ã©s a WhatsApp/Instagram, i sense aquest pre-write
+  // el progrÃ©s in-memory es perdria en tornar.
   const shareWith = (idx: number) => {
-    const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
+    const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} ð ${SHARE_URL}`;
     const nextSlots = sharedSlots.map((v, i) => i === idx ? true : v);
     saveGateState({ sharedSlots: nextSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions });
     setSharedSlots(nextSlots);
@@ -523,7 +523,7 @@ export default function Inscripcion() {
     setDescInvitacions(true);
     setGateState("unlocked");
     tracker.gateViralPassat(sharesDone);
-    toast({ title: "🎉 10% de descompte desbloquejat!", description: "Continua omplint el formulari." });
+    toast({ title: "ð 10% de descompte desbloquejat!", description: "Continua omplint el formulari." });
   };
   const skipGate = () => {
     saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState: "skipped", descInvitacions: false });
@@ -551,8 +551,9 @@ export default function Inscripcion() {
     }
     if (step === 3) {
       const jugF = Array.from({ length: numJugadors - 1 }, (_, i) => [
-        `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.talla`,
-        `jugadors.${i}.dataNaix`, `jugadors.${i}.telefon`, `jugadors.${i}.club`,
+        `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.email`,
+        `jugadors.${i}.talla`, `jugadors.${i}.dataNaix`, `jugadors.${i}.telefon`,
+        `jugadors.${i}.club`, `jugadors.${i}.categoria`,
       ]).flat() as Parameters<typeof trigger>[0];
       ok = await trigger(jugF);
     }
@@ -574,10 +575,10 @@ export default function Inscripcion() {
     if (codiInput.toUpperCase() === COD_DESC) {
       if (new Date() <= expiry) {
         setDescAplicat(true); setCodError("");
-        toast({ title:"✅ Codi aplicat", description:"5% de descompte activat!" });
+        toast({ title:"â Codi aplicat", description:"5% de descompte activat!" });
       } else {
         setDescAplicat(false);
-        const msg = "El codi ha caducat (vàlid fins al 15 de juny).";
+        const msg = "El codi ha caducat (vÃ lid fins al 15 de juny).";
         setCodError(msg);
         toast({ title:"Codi caducat", description: msg, variant: "destructive" });
       }
@@ -596,9 +597,9 @@ export default function Inscripcion() {
     toast({ title:"IBAN copiat!" });
   };
 
-  /* Genera un PNG 1080×1350 amb la targeta d'identificació (nom equip + categoria + club + QR)
-     i el descarrega. Utilitza el patró existent d'altres descàrregues del fitxer:
-     SVG (del QR) → Blob → <img> → Canvas → toBlob → <a> click. Sense dependències noves. */
+  /* Genera un PNG 1080Ã1350 amb la targeta d'identificaciÃ³ (nom equip + categoria + club + QR)
+     i el descarrega. Utilitza el patrÃ³ existent d'altres descÃ rregues del fitxer:
+     SVG (del QR) â Blob â <img> â Canvas â toBlob â <a> click. Sense dependÃ¨ncies noves. */
   const downloadCheckinCard = async () => {
     if (downloadingCard) return;
     setDownloadingCard(true);
@@ -613,7 +614,7 @@ export default function Inscripcion() {
       // Esperar que la font Rajdhani estigui carregada (si no, fallback a sans)
       try { await (document as any).fonts?.load?.("900 96px Rajdhani"); } catch {}
 
-      // Fons gradient roig → taronja (mateix esperit que la targeta de pantalla)
+      // Fons gradient roig â taronja (mateix esperit que la targeta de pantalla)
       const grad = ctx.createLinearGradient(0, 0, W, H);
       grad.addColorStop(0, "#dc2626");
       grad.addColorStop(1, "#ea580c");
@@ -625,7 +626,7 @@ export default function Inscripcion() {
       // Etiqueta "EQUIP"
       ctx.fillStyle = "rgba(255,255,255,0.75)";
       ctx.font = "900 32px sans-serif";
-      ctx.fillText("🎟️  EQUIP  🏀", W / 2, 110);
+      ctx.fillText("ðï¸  EQUIP  ð", W / 2, 110);
 
       // Nom de l'equip (gran, Rajdhani)
       const nomEqRaw = (watch("nomEquip") || "EQUIP");
@@ -640,10 +641,10 @@ export default function Inscripcion() {
       }
       ctx.fillText(nomEq, W / 2, 230);
 
-      // Categoria · Club capità
+      // Categoria Â· Club capitÃ 
       const cat = (watch("capCategoria") || "").trim();
       const club = (watch("capClub") || "").trim();
-      const subline = [cat, club].filter(Boolean).join("  ·  ");
+      const subline = [cat, club].filter(Boolean).join("  Â·  ");
       if (subline) {
         ctx.fillStyle = "rgba(255,255,255,0.92)";
         ctx.font = "700 36px sans-serif";
@@ -669,7 +670,7 @@ export default function Inscripcion() {
       ctx.closePath();
       ctx.fill();
 
-      // QR: serialitzar el <svg> del DOM → blob → <img> → drawImage
+      // QR: serialitzar el <svg> del DOM â blob â <img> â drawImage
       const qrSvgEl = qrCardRef.current?.querySelector("svg");
       if (!qrSvgEl) throw new Error("QR no trobat al DOM");
       const svgString = new XMLSerializer().serializeToString(qrSvgEl);
@@ -697,7 +698,7 @@ export default function Inscripcion() {
       // Footer
       ctx.fillStyle = "#fff";
       ctx.font = "900 34px sans-serif";
-      ctx.fillText("3×3 WESTFIELD GLÒRIES · 6-7 JUNY 2026", W / 2, 1110);
+      ctx.fillText("3Ã3 WESTFIELD GLÃRIES Â· 6-7 JUNY 2026", W / 2, 1110);
       ctx.fillStyle = "rgba(255,255,255,0.92)";
       ctx.font = "600 28px sans-serif";
       ctx.fillText("Mostra aquest QR a l'arribada per fer", W / 2, 1170);
@@ -717,7 +718,7 @@ export default function Inscripcion() {
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(dlUrl);
-      toast({ title: "Targeta descarregada!", description: "Ja la pots guardar al mòbil i ensenyar a l'arribada." });
+      toast({ title: "Targeta descarregada!", description: "Ja la pots guardar al mÃ²bil i ensenyar a l'arribada." });
     } catch (e) {
       console.error("Error generant targeta:", e);
       toast({ title: "Error", description: "No s'ha pogut generar la targeta. Fes captura del QR.", variant: "destructive" });
@@ -731,11 +732,11 @@ export default function Inscripcion() {
     try {
       // Submit to Apps Script webhook (primary backend: Sheet + Fillout + emails)
       // Apps Script s'encarrega de pujar el justificant a Drive i passar la URL a Fillout.
-      // Genera identificador únic d'equip (per QR de check-in)
+      // Genera identificador Ãºnic d'equip (per QR de check-in)
       const newTeamId = buildTeamId(data.nomEquip);
       const submissionDate = new Date().toLocaleString("ca-ES");
-      // Concatenem talles capità + jugadors + samarretes extra per al QR de check-in.
-      // Format: "M-L-XL-S|XL-XL" → 4 jugadors (M, L, XL, S) + 2 extres (XL, XL).
+      // Concatenem talles capitÃ  + jugadors + samarretes extra per al QR de check-in.
+      // Format: "M-L-XL-S|XL-XL" â 4 jugadors (M, L, XL, S) + 2 extres (XL, XL).
       // L'staff a /checkin ho llegeix d'un cop d'ull per preparar les piles.
       const tallesJugList = [
         data.capTalla || "?",
@@ -771,15 +772,15 @@ export default function Inscripcion() {
         justificantPayload = await fileToBase64Payload(justFile);
       }
       // Apps Script Web App ("Anyone") respon amb Access-Control-Allow-Origin: *,
-      // així que podem llegir la resposta JSON sense `mode: "no-cors"`.
-      // Si ho posàvem amb no-cors, es silenciaven errors com `duplicate_team_name`
-      // i l'usuari veia èxit amb la inscripció a NULL al backend (bug 2026-05-07).
+      // aixÃ­ que podem llegir la resposta JSON sense `mode: "no-cors"`.
+      // Si ho posÃ vem amb no-cors, es silenciaven errors com `duplicate_team_name`
+      // i l'usuari veia Ã¨xit amb la inscripciÃ³ a NULL al backend (bug 2026-05-07).
       const abortCtrl = new AbortController();
       const abortTimer = setTimeout(() => abortCtrl.abort(), 50_000);
       const fetchBody = JSON.stringify({
         ...data,
         total,
-        // Mútuament exclusius: si earlyBird, els altres dos van a false al backend.
+        // MÃºtuament exclusius: si earlyBird, els altres dos van a false al backend.
         descAplicat: earlyBird ? false : descAplicat,
         descInvitacions: earlyBird ? false : descInvitacions,
         descEarlyBird: earlyBird,
@@ -799,7 +800,7 @@ export default function Inscripcion() {
         });
       } catch (fetchErr) {
         clearTimeout(abortTimer);
-        // Timeout o error de xarxa: l'Apps Script pot haver processat la inscripció
+        // Timeout o error de xarxa: l'Apps Script pot haver processat la inscripciÃ³
         // igualment (escriu al Sheet/Fillout abans de respondre). Esperem 10s i comprovem.
         const lateVerified = await verifyTeamRegistered(data.nomEquip, 10_000);
         if (lateVerified) {
@@ -816,7 +817,7 @@ export default function Inscripcion() {
       try {
         body = await res.json();
       } catch {
-        // Si no podem parsar la resposta, considerem fallit per no donar fals èxit.
+        // Si no podem parsar la resposta, considerem fallit per no donar fals Ã¨xit.
         throw new Error("La resposta del servidor no es pot llegir");
       }
 
@@ -824,7 +825,7 @@ export default function Inscripcion() {
         if (body.error === "duplicate_team_name") {
           toast({
             title: "Nom d'equip ja registrat",
-            description: body.message || "Algú s'ha avançat amb aquest nom. Torna al pas 1 i tria'n un altre.",
+            description: body.message || "AlgÃº s'ha avanÃ§at amb aquest nom. Torna al pas 1 i tria'n un altre.",
             variant: "destructive",
           });
           invalidateTeamNamesCache();
@@ -836,22 +837,30 @@ export default function Inscripcion() {
         throw new Error(body.error || body.message || `HTTP ${res.status}`);
       }
 
-      // Verifiquem que l'equip queda registrat de veritat (evita falsos èxits).
-      // Si en 5s no apareix a la llista, mostrem un avís però continuem perquè
-      // pot ser només replicació lenta (Sheets sol trigar 1-3s, Fillout fins 4s).
+      // Verifiquem que l'equip queda registrat de veritat (evita falsos Ã¨xits).
+      // Si en 5s no apareix a la llista, mostrem un avÃ­s perÃ² continuem perquÃ¨
+      // pot ser nomÃ©s replicaciÃ³ lenta (Sheets sol trigar 1-3s, Fillout fins 4s).
       const verified = await verifyTeamRegistered(data.nomEquip, 5000);
       if (!verified) {
         toast({
-          title: "Inscripció enviada",
+          title: "InscripciÃ³ enviada",
           description: "El backend triga una mica a confirmar. Si en 5 minuts no reps email, escriu-nos per WhatsApp.",
         });
       }
 
       setSubmitted(true);
       invalidateTeamNamesCache();
-      // Inscripció enviada amb èxit → netegem la persistència local perquè
+      // InscripciÃ³ enviada amb Ã¨xit â netegem la persistÃ¨ncia local perquÃ¨
       // si l'usuari obre el form de nou (un altre equip) comenci en blanc.
       clearPersisted();
+      // Enviem també a JotForm (CRM secundari) en paral·lel, sense bloquejar l'èxit.
+      // Si falla, ho registrem a la consola però no mostrem error a l'usuari
+      // perquè el Google Sheets (font de veritat) ja té les dades.
+      if (JOTFORM_API_KEY) {
+        submitToJotForm(data, descAplicat, descInvitacions, justFile?.name || "").catch(
+          (jfErr) => console.warn("[JotForm] Error enviant:", jfErr)
+        );
+      }
       tracker.inscripcioCompletada({
         categoria: data.capCategoria,
         total,
@@ -864,7 +873,7 @@ export default function Inscripcion() {
       if (msg !== "duplicate_team_name") {
         toast({
           title:"Error d'enviament",
-          description:`No hem pogut registrar la inscripció. Escriu-nos al WhatsApp (+34 698 425 153) indicant el concepte: ${buildConcepte(data.nomEquip)} i t'apuntem nosaltres.`,
+          description:`No hem pogut registrar la inscripciÃ³. Escriu-nos al WhatsApp (+34 698 425 153) indicant el concepte: ${buildConcepte(data.nomEquip)} i t'apuntem nosaltres.`,
           variant:"destructive",
           duration: 15000,
         });
@@ -874,7 +883,7 @@ export default function Inscripcion() {
     }
   };
 
-  /* ─── Queue simulator: 8-15s d'espera per percepció de demanda alta ─── */
+  /* âââ Queue simulator: 8-15s d'espera per percepciÃ³ de demanda alta âââ */
   if (queueState === "queueing") {
     const progress = queueInitial > 0 ? Math.round(((queueInitial - queuePos) / queueInitial) * 100) : 0;
     const etaSeconds = Math.max(1, Math.ceil(queuePos * 0.22));
@@ -929,7 +938,7 @@ export default function Inscripcion() {
             />
           </div>
           <p className="text-xs text-white/40 mb-7 tabular-nums">
-            {progress}% completat · temps estimat ~{etaSeconds}s
+            {progress}% completat Â· temps estimat ~{etaSeconds}s
           </p>
 
           {/* Status text */}
@@ -937,19 +946,19 @@ export default function Inscripcion() {
             Comprovant disponibilitat de places...
           </p>
           <p className="text-xs text-white/40 mb-6 leading-relaxed">
-            S'estan processant inscripcions en aquest moment. Et donarem accés en breus.
+            S'estan processant inscripcions en aquest moment. Et donarem accÃ©s en breus.
           </p>
 
           {/* Warning */}
           <div className="bg-orange-500/10 border border-orange-500/25 rounded-xl px-4 py-3 text-xs text-orange-200">
-            ⚠️ <strong>No tanquis aquesta finestra</strong> — perdries la teva posició a la cua.
+            â ï¸ <strong>No tanquis aquesta finestra</strong> â perdries la teva posiciÃ³ a la cua.
           </div>
         </motion.div>
       </div>
     );
   }
 
-  /* ─── Gate viral: 5 invitacions + IG follow → 10% off ─── */
+  /* âââ Gate viral: 5 invitacions + IG follow â 10% off âââ */
   if (gateState === "active") {
     return (
       <div className="min-h-screen bg-slate-950 text-white">
@@ -959,8 +968,8 @@ export default function Inscripcion() {
             <Link to="/" className="flex items-center gap-2 text-white/40 hover:text-white transition-colors">
               <ArrowLeft className="w-4 h-4"/><span className="text-sm font-medium">Tornar</span>
             </Link>
-            <span className="text-sm font-black font-mono text-red-500 tracking-widest">3×3 WESTFIELD GLÒRIES</span>
-            <div className="text-xs text-white/30 hidden sm:block">Pas 0 · Bonus</div>
+            <span className="text-sm font-black font-mono text-red-500 tracking-widest">3Ã3 WESTFIELD GLÃRIES</span>
+            <div className="text-xs text-white/30 hidden sm:block">Pas 0 Â· Bonus</div>
           </div>
         </div>
 
@@ -968,30 +977,30 @@ export default function Inscripcion() {
           {/* Hero */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-8">
             <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/40 mb-4">
-              <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">🎁 Bonus Inscripció</span>
+              <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">ð Bonus InscripciÃ³</span>
             </div>
             <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-              REBAIXA LA INSCRIPCIÓ <span className="text-orange-400">UN 10%</span>
+              REBAIXA LA INSCRIPCIÃ <span className="text-orange-400">UN 10%</span>
             </h1>
             <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-              Tries com desbloquejar-lo: <strong className="text-white">comparteix per WhatsApp</strong> i segueix <strong className="text-white">@cbgrupbarna</strong>, o si prefereixes no compartir, segueix també <strong className="text-white">@timechamber_es</strong>.
+              Tries com desbloquejar-lo: <strong className="text-white">comparteix per WhatsApp</strong> i segueix <strong className="text-white">@cbgrupbarna</strong>, o si prefereixes no compartir, segueix tambÃ© <strong className="text-white">@timechamber_es</strong>.
             </p>
           </motion.div>
 
           {/* Progress badges */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sharesDone >= 1 ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {sharesDone >= 1 ? "✓ Compartit" : "○ WhatsApp"}
+              {sharesDone >= 1 ? "â Compartit" : "â WhatsApp"}
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${igFollowed ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {igFollowed ? "✓" : "○"} @cbgrupbarna
+              {igFollowed ? "â" : "â"} @cbgrupbarna
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${igTimechamberFollowed ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {igTimechamberFollowed ? "✓" : "○"} @timechamber_es
+              {igTimechamberFollowed ? "â" : "â"} @timechamber_es
             </div>
           </div>
 
-          {/* WhatsApp Share — un sol botó (l'usuari tria a qui envia o si ho fa a un grup) */}
+          {/* WhatsApp Share â un sol botÃ³ (l'usuari tria a qui envia o si ho fa a un grup) */}
           <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-4">
             <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-3 flex items-center gap-2">
               <Users className="w-4 h-4 text-red-400"/> Comparteix amb amics per WhatsApp
@@ -1008,7 +1017,7 @@ export default function Inscripcion() {
               {sharesDone >= 1 ? (
                 <>
                   <Check className="w-5 h-5"/>
-                  <span>Compartit · Pots tornar a compartir si vols</span>
+                  <span>Compartit Â· Pots tornar a compartir si vols</span>
                 </>
               ) : (
                 <>
@@ -1018,13 +1027,13 @@ export default function Inscripcion() {
               )}
             </button>
             <p className="text-[10px] text-white/40 mt-3 leading-relaxed text-center">
-              S'obrirà WhatsApp amb un missatge llest. Pots <strong className="text-white/70">enviar-ho a un grup d'amics o a 5 contactes</strong>; un sol clic basta per desbloquejar el descompte.
+              S'obrirÃ  WhatsApp amb un missatge llest. Pots <strong className="text-white/70">enviar-ho a un grup d'amics o a 5 contactes</strong>; un sol clic basta per desbloquejar el descompte.
             </p>
           </div>
 
-          {/* IG Follow — @cbgrupbarna (sempre obligatori) */}
+          {/* IG Follow â @cbgrupbarna (sempre obligatori) */}
           <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-4">📲 Segueix-nos a Instagram</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-4">ð² Segueix-nos a Instagram</p>
             <button
               type="button"
               onClick={followInstagram}
@@ -1037,7 +1046,7 @@ export default function Inscripcion() {
               {igFollowed ? (
                 <>
                   <Check className="w-5 h-5"/>
-                  <span>Gràcies! Ja segueixes @cbgrupbarna</span>
+                  <span>GrÃ cies! Ja segueixes @cbgrupbarna</span>
                 </>
               ) : (
                 <>
@@ -1047,18 +1056,18 @@ export default function Inscripcion() {
               )}
             </button>
             <p className="text-[10px] text-white/30 mt-3 leading-relaxed">
-              T'arribaran totes les notificacions del 3×3: sortejos, recordatoris, fotos, classificacions...
+              T'arribaran totes les notificacions del 3Ã3: sortejos, recordatoris, fotos, classificacions...
             </p>
           </div>
 
-          {/* IG Follow — @timechamber_es (alternativa al WhatsApp share) */}
+          {/* IG Follow â @timechamber_es (alternativa al WhatsApp share) */}
           <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-6">
             <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2 flex items-center gap-2">
-              <span>📲 Alternativa sense compartir</span>
-              <span className="px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-300 text-[9px] font-bold tracking-widest">OPCIÓ B</span>
+              <span>ð² Alternativa sense compartir</span>
+              <span className="px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-300 text-[9px] font-bold tracking-widest">OPCIÃ B</span>
             </p>
             <p className="text-[11px] text-white/50 mb-3 leading-relaxed">
-              No vols compartir per WhatsApp? Cap problema — segueix també <strong className="text-white">@timechamber_es</strong> i desbloquejaràs el descompte igualment.
+              No vols compartir per WhatsApp? Cap problema â segueix tambÃ© <strong className="text-white">@timechamber_es</strong> i desbloquejarÃ s el descompte igualment.
             </p>
             <button
               type="button"
@@ -1072,7 +1081,7 @@ export default function Inscripcion() {
               {igTimechamberFollowed ? (
                 <>
                   <Check className="w-5 h-5"/>
-                  <span>Gràcies! Ja segueixes @timechamber_es</span>
+                  <span>GrÃ cies! Ja segueixes @timechamber_es</span>
                 </>
               ) : (
                 <>
@@ -1095,31 +1104,31 @@ export default function Inscripcion() {
             }`}
           >
             {canUnlockGate
-              ? "🎉 Reclamar 10% i continuar"
+              ? "ð Reclamar 10% i continuar"
               : !igFollowed
-                ? "Comença per seguir @cbgrupbarna"
+                ? "ComenÃ§a per seguir @cbgrupbarna"
                 : sharesDone === 0 && !igTimechamberFollowed
                   ? "Comparteix per WhatsApp o segueix @timechamber_es"
                   : "Quasi! Acaba un dels dos camins per desbloquejar"}
           </button>
 
-          {/* Saltar — opció clara i visible per qui no vol descompte (cap obligació de seguir/compartir) */}
+          {/* Saltar â opciÃ³ clara i visible per qui no vol descompte (cap obligaciÃ³ de seguir/compartir) */}
           <button
             type="button"
             onClick={skipGate}
             className="w-full font-bold uppercase tracking-wider py-3.5 rounded-xl mt-4 bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/15 hover:border-white/30 transition-all text-sm"
           >
-            No vull descompte — continuar al preu complet
+            No vull descompte â continuar al preu complet
           </button>
           <p className="text-[10px] text-white/30 text-center mt-2 leading-relaxed">
-            Cap obligació de compartir ni seguir comptes. Pots inscriure't directament al preu complet.
+            Cap obligaciÃ³ de compartir ni seguir comptes. Pots inscriure't directament al preu complet.
           </p>
         </div>
       </div>
     );
   }
 
-  /* ─── Pantalla d'èxit ─── */
+  /* âââ Pantalla d'Ã¨xit âââ */
   if (submitted) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center px-4 py-16">
@@ -1130,16 +1139,16 @@ export default function Inscripcion() {
             <Check className="w-12 h-12 text-green-400" />
           </div>
           <h1 className="text-4xl font-black mb-3" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-            INSCRIPCIÓ<br /><span className="text-green-400">ENVIADA!</span>
+            INSCRIPCIÃ<br /><span className="text-green-400">ENVIADA!</span>
           </h1>
           <p className="text-white/50 mb-8 leading-relaxed">
-            Hem rebut la inscripció del teu equip al <strong className="text-white">3×3 Westfield Glòries</strong>. Comprova que la transferència s'hagi realitzat correctament.
+            Hem rebut la inscripciÃ³ del teu equip al <strong className="text-white">3Ã3 Westfield GlÃ²ries</strong>. Comprova que la transferÃ¨ncia s'hagi realitzat correctament.
           </p>
-          {/* TARGETA D'IDENTIFICACIÓ (nom equip + categoria + club + QR) — LLEGIDA EL DIA DEL TORNEIG */}
+          {/* TARGETA D'IDENTIFICACIÃ (nom equip + categoria + club + QR) â LLEGIDA EL DIA DEL TORNEIG */}
           {checkinUrl && (
             <div ref={qrCardRef} className="bg-gradient-to-br from-red-600 to-orange-600 rounded-2xl p-5 mb-3 text-white shadow-2xl shadow-red-900/30">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-black uppercase tracking-[0.25em] text-white/80">🎟️ La teva targeta</span>
+                <span className="text-[11px] font-black uppercase tracking-[0.25em] text-white/80">ðï¸ La teva targeta</span>
                 <span className="text-[10px] uppercase tracking-wider font-mono bg-black/30 px-2 py-1 rounded">ID: {teamId}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black leading-tight tracking-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
@@ -1147,14 +1156,14 @@ export default function Inscripcion() {
               </h2>
               {(watch("capCategoria") || watch("capClub")) && (
                 <p className="text-sm font-bold text-white/95 mb-3">
-                  {[watch("capCategoria"), watch("capClub")].filter(Boolean).join("  ·  ")}
+                  {[watch("capCategoria"), watch("capClub")].filter(Boolean).join("  Â·  ")}
                 </p>
               )}
               <div className="bg-white rounded-xl p-4 flex flex-col items-center">
                 <QRCodeSVG value={checkinUrl} size={200} level="M" includeMargin={false} />
               </div>
               <p className="text-[11px] mt-3 leading-relaxed text-white/90">
-                <strong>Guarda aquesta targeta.</strong> Ensenya-la a l'arribada per fer <strong>check-in</strong> i recollir les <strong>samarretes</strong>. També us l'enviem per email.
+                <strong>Guarda aquesta targeta.</strong> Ensenya-la a l'arribada per fer <strong>check-in</strong> i recollir les <strong>samarretes</strong>. TambÃ© us l'enviem per email.
               </p>
               <button
                 type="button"
@@ -1163,7 +1172,7 @@ export default function Inscripcion() {
                 className="mt-3 w-full bg-white/15 hover:bg-white/25 active:bg-white/30 border border-white/30 text-white font-black uppercase tracking-wider text-xs py-3 rounded-xl transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 {downloadingCard ? (
-                  <><Loader2 className="w-4 h-4 animate-spin"/> Generant…</>
+                  <><Loader2 className="w-4 h-4 animate-spin"/> Generantâ¦</>
                 ) : (
                   <><Download className="w-4 h-4"/> Descarregar targeta (PNG)</>
                 )}
@@ -1171,21 +1180,21 @@ export default function Inscripcion() {
             </div>
           )}
 
-          {/* CARTELL DEL MEU EQUIP — descarrega PNG personalitzat per IG/TikTok story + post */}
+          {/* CARTELL DEL MEU EQUIP â descarrega PNG personalitzat per IG/TikTok story + post */}
           <CartellSection nomEquip={watch("nomEquip") || ""} categoria={watch("capCategoria") || ""} />
 
 
-          {/* QR pagament EPC — escaneig amb app del banc */}
+          {/* QR pagament EPC â escaneig amb app del banc */}
           <div className="bg-white border border-white/10 rounded-2xl p-5 mb-3 flex flex-col items-center">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">💳 Pagar amb el banc · QR</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-2">ð³ Pagar amb el banc Â· QR</p>
             <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={160} level="M" includeMargin={false} />
             <p className="text-[10px] text-slate-500 mt-2 text-center max-w-[220px]">
-              Obre l'app del banc → "Pagar amb QR" → confirma. Tot pre-omplert.
+              Obre l'app del banc â "Pagar amb QR" â confirma. Tot pre-omplert.
             </p>
           </div>
           {/* Dades pagament */}
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-5 text-left space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Dades de la transferència</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Dades de la transferÃ¨ncia</p>
             <div className="flex justify-between items-center">
               <span className="text-white/40 text-sm">Titular</span>
               <span className="text-sm font-semibold text-white">{BENEFICIARI}</span>
@@ -1205,16 +1214,16 @@ export default function Inscripcion() {
             </div>
             <div className="flex justify-between items-center border-t border-white/10 pt-3 mt-1">
               <span className="text-white/40 text-sm">Import</span>
-              <span className="text-2xl font-black text-red-400">{total.toFixed(2)}€</span>
+              <span className="text-2xl font-black text-red-400">{total.toFixed(2)}â¬</span>
             </div>
           </div>
           {justFile && (
             <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-3 mb-5 text-sm text-green-300">
-              ✅ Justificant adjuntat: <strong>{justFile.name}</strong>
+              â Justificant adjuntat: <strong>{justFile.name}</strong>
             </div>
           )}
 
-          {/* CTA: Comparteix la pàgina del teu equip (motor viral) */}
+          {/* CTA: Comparteix la pÃ gina del teu equip (motor viral) */}
           {(() => {
             const equipParams = new URLSearchParams({
               nom: watch("nomEquip") || "",
@@ -1227,9 +1236,9 @@ export default function Inscripcion() {
             return (
               <Link to={equipUrl} className="block">
                 <div className="bg-gradient-to-br from-red-600/20 to-orange-500/15 border border-red-500/40 rounded-2xl p-5 mb-5 text-left hover:scale-[1.02] active:scale-[0.99] transition-transform">
-                  <p className="text-xs font-bold uppercase tracking-wider text-orange-300 mb-1">🔥 Pàgina del teu equip</p>
-                  <p className="text-lg font-black text-white mb-1.5">{watch("nomEquip") || "El teu equip"} ja té web</p>
-                  <p className="text-xs text-white/60">Comparteix-la amb la família, amics, ex-companys… que vinguin a animar-vos!</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-orange-300 mb-1">ð¥ PÃ gina del teu equip</p>
+                  <p className="text-lg font-black text-white mb-1.5">{watch("nomEquip") || "El teu equip"} ja tÃ© web</p>
+                  <p className="text-xs text-white/60">Comparteix-la amb la famÃ­lia, amics, ex-companysâ¦ que vinguin a animar-vos!</p>
                 </div>
               </Link>
             );
@@ -1238,7 +1247,7 @@ export default function Inscripcion() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button type="button" onClick={() => setWaLeadOpen(true)}
               className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl transition-all hover:scale-105">
-              📱 WhatsApp
+              ð± WhatsApp
             </button>
             <Link to="/" className="flex-1">
               <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl hover:scale-105 transition-all h-auto">
@@ -1252,12 +1261,12 @@ export default function Inscripcion() {
     );
   }
 
-  /* ─── Render principal ─── */
+  /* âââ Render principal âââ */
   return (
     <div className="min-h-screen bg-slate-950 text-white">
       <SEO
-        title="Inscripció d'equips · 3×3 Westfield Glòries 2026"
-        description="Inscriu el teu equip al torneig 3×3 FIBA Barcelona: Premini fins a Sèniors Pro · 2.400€ prize money · 6-7 juny 2026 al Clot-Glòries. Inscripcions obertes."
+        title="InscripciÃ³ d'equips Â· 3Ã3 Westfield GlÃ²ries 2026"
+        description="Inscriu el teu equip al torneig 3Ã3 FIBA Barcelona: Premini fins a SÃ¨niors Pro Â· 2.400â¬ prize money Â· 6-7 juny 2026 al Clot-GlÃ²ries. Inscripcions obertes."
         path="/inscripcion"
       />
       {/* Header */}
@@ -1266,19 +1275,19 @@ export default function Inscripcion() {
           <Link to="/" className="flex items-center gap-2 text-white/40 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4"/><span className="text-sm font-medium">Tornar</span>
           </Link>
-          <span className="text-sm font-black font-mono text-red-500 tracking-widest">3×3 WESTFIELD GLÒRIES</span>
+          <span className="text-sm font-black font-mono text-red-500 tracking-widest">3Ã3 WESTFIELD GLÃRIES</span>
           <div className="text-xs text-white/30 hidden sm:block">Pas {step} de 5</div>
         </div>
       </div>
 
       <div className="container mx-auto px-4 py-8 max-w-xl">
-        {/* Títol */}
+        {/* TÃ­tol */}
         <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-6">
           <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-2 block">Formulari Oficial</span>
           <h1 className="text-2xl md:text-3xl font-black" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-            INSCRIPCIÓ D'EQUIP
+            INSCRIPCIÃ D'EQUIP
           </h1>
-          <p className="text-white/30 mt-1 text-sm">6 i 7 de Juny · Westfield Glòries</p>
+          <p className="text-white/30 mt-1 text-sm">6 i 7 de Juny Â· Westfield GlÃ²ries</p>
         </motion.div>
 
         {/* Steps */}
@@ -1305,10 +1314,10 @@ export default function Inscripcion() {
         <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-7 overflow-hidden shadow-2xl">
           <form
             onSubmit={handleSubmit(onSubmit, (formErrors) => {
-              // Si la validació de react-hook-form falla, NO crida onSubmit i no mostra
-              // cap missatge global — els errors només surten al costat dels camps. Si el
-              // camp invàlid és en un step anterior (no visible), l'usuari clica i sembla
-              // que el botó no faci res. Avisem amb toast i naveguem al pas problemàtic.
+              // Si la validaciÃ³ de react-hook-form falla, NO crida onSubmit i no mostra
+              // cap missatge global â els errors nomÃ©s surten al costat dels camps. Si el
+              // camp invÃ lid Ã©s en un step anterior (no visible), l'usuari clica i sembla
+              // que el botÃ³ no faci res. Avisem amb toast i naveguem al pas problemÃ tic.
               const erroredFields = Object.keys(formErrors);
               if (erroredFields.length === 0) return;
               const fieldToStep: Record<string, number> = {
@@ -1332,8 +1341,8 @@ export default function Inscripcion() {
               }
             })}
             onKeyDown={(e) => {
-              // Bloqueja submit implícit per Enter en steps intermedis: pitjar Enter
-              // dins un <input> abans de l'últim step ha d'avançar com el botó "Següent",
+              // Bloqueja submit implÃ­cit per Enter en steps intermedis: pitjar Enter
+              // dins un <input> abans de l'Ãºltim step ha d'avanÃ§ar com el botÃ³ "SegÃ¼ent",
               // no executar handleSubmit (que validaria steps buides i no faria res).
               if (
                 e.key === "Enter" &&
@@ -1345,13 +1354,13 @@ export default function Inscripcion() {
               }
             }}
           >
-            {/* mode="popLayout" treu del flow l'element que està sortint perquè el nou
-                pugui muntar-se a la seva posició immediatament. Sense aquest mode (o amb
-                "wait"), el motion.div del pas anterior bloquejava l'aparició del següent
-                quan la transició s'interrompia. */}
+            {/* mode="popLayout" treu del flow l'element que estÃ  sortint perquÃ¨ el nou
+                pugui muntar-se a la seva posiciÃ³ immediatament. Sense aquest mode (o amb
+                "wait"), el motion.div del pas anterior bloquejava l'apariciÃ³ del segÃ¼ent
+                quan la transiciÃ³ s'interrompia. */}
             <AnimatePresence mode="popLayout" initial={false} custom={dir}>
 
-              {/* ══ PAS 1: EQUIP ══ */}
+              {/* ââ PAS 1: EQUIP ââ */}
               {step === 1 && (
                 <motion.div key="s1" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
@@ -1382,9 +1391,9 @@ export default function Inscripcion() {
                           <button key={n} type="button"
                             onClick={() => {
                               setValue("midaEquip", n);
-                              // jugadors = N-1 entrades (el capità és el jug. #1).
-                              // Abans creàvem N entrades, deixant l'última buida i fent
-                              // que la validació final del schema fallés silenciosament
+                              // jugadors = N-1 entrades (el capitÃ  Ã©s el jug. #1).
+                              // Abans creÃ vem N entrades, deixant l'Ãºltima buida i fent
+                              // que la validaciÃ³ final del schema fallÃ©s silenciosament
                               // a step 5 sense missatge visible.
                               const extras = Math.max(0, Number(n) - 1);
                               setValue("jugadors", Array.from({ length: extras }, () => ({
@@ -1395,8 +1404,8 @@ export default function Inscripcion() {
                             <div className="text-3xl font-black font-mono text-red-400">{n}</div>
                             <div className="text-sm font-bold text-white mt-0.5">jugadors</div>
                             <div className="text-xs text-red-400 font-bold mt-1">
-                              {`${precioByCat(capCategoria, n)}€`}
-                              {!capCategoria && <span className="text-white/40 font-normal"> · {n==="4" ? `${PRECIO_GEN_4}-${PRECIO_SENIOR_4}` : `${PRECIO_GEN_5}-${PRECIO_SENIOR_5}`}€</span>}
+                              {`${precioByCat(capCategoria, n)}â¬`}
+                              {!capCategoria && <span className="text-white/40 font-normal"> Â· {n==="4" ? `${PRECIO_GEN_4}-${PRECIO_SENIOR_4}` : `${PRECIO_GEN_5}-${PRECIO_SENIOR_5}`}â¬</span>}
                             </div>
                           </button>
                         ))}
@@ -1407,20 +1416,20 @@ export default function Inscripcion() {
                     <div className="bg-orange-500/10 border border-orange-500/25 rounded-xl p-4 flex items-center justify-between gap-3">
                       <div>
                         <p className="text-xs text-white/40 uppercase tracking-wider mb-0.5">Codi promocional</p>
-                        <p className="text-sm text-white">Usa <strong className="font-mono text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded">{COD_DESC}</strong> i obtén un <strong className="text-orange-400">5% de descompte</strong></p>
-                        <p className="text-xs text-white/30 mt-0.5">Vàlid fins al 15 de juny de 2025</p>
+                        <p className="text-sm text-white">Usa <strong className="font-mono text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded">{COD_DESC}</strong> i obtÃ©n un <strong className="text-orange-400">5% de descompte</strong></p>
+                        <p className="text-xs text-white/30 mt-0.5">VÃ lid fins al 15 de juny de 2025</p>
                       </div>
-                      <span className="text-2xl">🏷️</span>
+                      <span className="text-2xl">ð·ï¸</span>
                     </div>
                   </div>
                 </motion.div>
               )}
 
-              {/* ══ PAS 2: CAPITÀ ══ */}
+              {/* ââ PAS 2: CAPITÃ ââ */}
               {step === 2 && (
                 <motion.div key="s2" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
-                    <User className="w-5 h-5 text-red-500"/> Capità / Responsable
+                    <User className="w-5 h-5 text-red-500"/> CapitÃ  / Responsable
                   </h2>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -1435,7 +1444,7 @@ export default function Inscripcion() {
                       <FieldRow label="Email *" error={errors.capEmail?.message}>
                         <SInput {...register("capEmail")} type="email" placeholder="email@exemple.com" />
                       </FieldRow>
-                      <FieldRow label="Telèfon *" error={errors.capTelefon?.message}>
+                      <FieldRow label="TelÃ¨fon *" error={errors.capTelefon?.message}>
                         <SInput {...register("capTelefon")} type="tel" placeholder="+34 600 000 000" />
                       </FieldRow>
                     </div>
@@ -1443,8 +1452,8 @@ export default function Inscripcion() {
                       <FieldRow label="Data de naixement *" error={errors.capDataNaix?.message}>
                         <SInput {...register("capDataNaix")} type="date" />
                       </FieldRow>
-                      <FieldRow label="Població *" error={errors.capPoblacio?.message}>
-                        <SInput {...register("capPoblacio")} placeholder="Sant Martí, Barcelona…" />
+                      <FieldRow label="PoblaciÃ³ *" error={errors.capPoblacio?.message}>
+                        <SInput {...register("capPoblacio")} placeholder="Sant MartÃ­, Barcelonaâ¦" />
                       </FieldRow>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
@@ -1453,7 +1462,7 @@ export default function Inscripcion() {
                           <SCatSelect value={field.value||""} onChange={field.onChange} />
                         )} />
                       </FieldRow>
-                      <FieldRow label="Gènere de l'equip *" error={errors.capGenere?.message}>
+                      <FieldRow label="GÃ¨nere de l'equip *" error={errors.capGenere?.message}>
                         <Controller control={control} name="capGenere" render={({ field }) => (
                           <SGenereSelect value={field.value||""} onChange={field.onChange} />
                         )} />
@@ -1470,7 +1479,7 @@ export default function Inscripcion() {
                     {/* Tutor si menor */}
                     {isMinor && (
                       <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-xl p-4 space-y-3">
-                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">👤 Jugador/a menor d'edat — cal tutor</p>
+                        <p className="text-xs font-bold text-yellow-400 uppercase tracking-wider">ð¤ Jugador/a menor d'edat â cal tutor</p>
                         <div className="grid grid-cols-2 gap-3">
                           <FieldRow label="Nom tutor *" error={errors.tutorNom?.message}>
                             <SInput {...register("tutorNom")} placeholder="Nom" />
@@ -1479,7 +1488,7 @@ export default function Inscripcion() {
                             <SInput {...register("tutorCognom")} placeholder="Cognom" />
                           </FieldRow>
                         </div>
-                        <FieldRow label="Telèfon tutor *" error={errors.tutorTelefon?.message}>
+                        <FieldRow label="TelÃ¨fon tutor *" error={errors.tutorTelefon?.message}>
                           <SInput {...register("tutorTelefon")} type="tel" placeholder="+34 600 000 000" />
                         </FieldRow>
                       </div>
@@ -1488,7 +1497,7 @@ export default function Inscripcion() {
                 </motion.div>
               )}
 
-              {/* ══ PAS 3: JUGADORS ══ */}
+              {/* ââ PAS 3: JUGADORS ââ */}
               {step === 3 && (
                 <motion.div key="s3" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <div className="flex items-center justify-between mb-5">
@@ -1496,7 +1505,7 @@ export default function Inscripcion() {
                       <Users className="w-5 h-5 text-red-500"/> Resta de jugadors
                     </h2>
                     <span className="text-xs text-white/30 bg-white/5 border border-white/10 px-3 py-1 rounded-full">
-                      {numJugadors - 1} jugadors més
+                      {numJugadors - 1} jugadors mÃ©s
                     </span>
                   </div>
                   <div className="space-y-5">
@@ -1516,10 +1525,13 @@ export default function Inscripcion() {
                           <FieldRow label="Data naix. *" error={(errors.jugadors?.[idx] as any)?.dataNaix?.message}>
                             <SInput {...register(`jugadors.${idx}.dataNaix`)} type="date" />
                           </FieldRow>
-                          <FieldRow label="Telèfon *" error={(errors.jugadors?.[idx] as any)?.telefon?.message}>
+                          <FieldRow label="Email *" error={(errors.jugadors?.[idx] as any)?.email?.message}>
+                            <SInput {...register(`jugadors.${idx}.email`)} type="email" placeholder="email@exemple.com" />
+                          </FieldRow>
+                          <FieldRow label="TelÃ¨fon *" error={(errors.jugadors?.[idx] as any)?.telefon?.message}>
                             <SInput {...register(`jugadors.${idx}.telefon`)} type="tel" placeholder="600 000 000" />
                           </FieldRow>
-                          <FieldRow label="Categoria">
+                          <FieldRow label="Categoria *" error={(errors.jugadors?.[idx] as any)?.categoria?.message}>
                             <Controller control={control} name={`jugadors.${idx}.categoria`} render={({ field }) => (
                               <SCatSelect value={field.value||""} onChange={field.onChange} />
                             )} />
@@ -1541,7 +1553,7 @@ export default function Inscripcion() {
                 </motion.div>
               )}
 
-              {/* ══ PAS 4: PAGAMENT ══ */}
+              {/* ââ PAS 4: PAGAMENT ââ */}
               {step === 4 && (
                 <motion.div key="s4" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
@@ -1551,28 +1563,28 @@ export default function Inscripcion() {
                     {/* Total */}
                     <div className="bg-red-600 rounded-2xl p-5 text-center">
                       <p className="text-white/70 text-sm mb-1">Import total a transferir</p>
-                      <p className="text-4xl font-black font-mono text-white">{total.toFixed(2)}€</p>
+                      <p className="text-4xl font-black font-mono text-white">{total.toFixed(2)}â¬</p>
                       <div className="mt-2 space-y-0.5 text-xs">
-                        <p className="text-white/70">Quota equip: {base.toFixed(2)}€</p>
-                        {reason === "early-bird" && <p className="text-white/80 font-semibold">🔥 -{desc10.toFixed(2)}€ Early Bird (10%)</p>}
-                        {reason === "viral" && <p className="text-white/80 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
-                        {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
+                        <p className="text-white/70">Quota equip: {base.toFixed(2)}â¬</p>
+                        {reason === "early-bird" && <p className="text-white/80 font-semibold">ð¥ -{desc10.toFixed(2)}â¬ Early Bird (10%)</p>}
+                        {reason === "viral" && <p className="text-white/80 font-semibold">ð -{desc10.toFixed(2)}â¬ descompte 10% (5 amics + IG)</p>}
+                        {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}â¬ descompte {COD_DESC})</p>}
                         {numExtraShirts > 0 && (
-                          <p className="text-white/80 font-semibold">+{extras.toFixed(2)}€ — {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
+                          <p className="text-white/80 font-semibold">+{extras.toFixed(2)}â¬ â {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
                         )}
                       </div>
                     </div>
 
-                    {/* Samarretes addicionals (+25€/u) */}
+                    {/* Samarretes addicionals (+25â¬/u) */}
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-2">
                           <ShoppingBag className="w-3.5 h-3.5"/> Samarretes addicionals
                         </p>
-                        <span className="text-[10px] text-white/40 uppercase tracking-wider">+25€/unitat</span>
+                        <span className="text-[10px] text-white/40 uppercase tracking-wider">+25â¬/unitat</span>
                       </div>
                       <p className="text-[11px] text-white/50 leading-relaxed">
-                        A part de la samarreta inclosa per jugador, pots demanar-ne d'extra (acompanyants, familiars, recanvi). Cada una a 25€ amb la talla que vulguis.
+                        A part de la samarreta inclosa per jugador, pots demanar-ne d'extra (acompanyants, familiars, recanvi). Cada una a 25â¬ amb la talla que vulguis.
                       </p>
                       {extraFields.length > 0 && (
                         <div className="space-y-2">
@@ -1594,7 +1606,7 @@ export default function Inscripcion() {
                                 className="text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-2 rounded-lg bg-red-500/5 hover:bg-red-500/10 border border-red-500/20"
                                 aria-label={`Eliminar samarreta extra ${idx + 1}`}
                               >
-                                ✕
+                                â
                               </button>
                             </div>
                           ))}
@@ -1605,11 +1617,11 @@ export default function Inscripcion() {
                         onClick={() => appendExtra({ talla: "" })}
                         className="w-full text-sm font-bold uppercase tracking-wider py-2.5 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-300 hover:text-orange-200 border border-orange-500/30 hover:border-orange-500/50 transition-all"
                       >
-                        + Afegir samarreta (+25€)
+                        + Afegir samarreta (+25â¬)
                       </button>
                       {extraFields.length > 0 && (
                         <p className="text-[10px] text-white/40 text-center">
-                          Total extres: <strong className="text-orange-300">{extras.toFixed(2)}€</strong> · Talla obligatòria per a cada una.
+                          Total extres: <strong className="text-orange-300">{extras.toFixed(2)}â¬</strong> Â· Talla obligatÃ²ria per a cada una.
                         </p>
                       )}
                     </div>
@@ -1618,12 +1630,12 @@ export default function Inscripcion() {
                       <QRCodeSVG value={buildEpcQr(total, watch("nomEquip"))} size={120} level="M" includeMargin={false} />
                       <div className="flex-1">
                         <p className="text-[11px] font-bold uppercase tracking-wider text-slate-700 mb-1">Pagar amb QR</p>
-                        <p className="text-xs text-slate-600 leading-snug">Obre l'app del banc, escaneja el QR i tot quedarà pre-omplert (compte, import i concepte).</p>
+                        <p className="text-xs text-slate-600 leading-snug">Obre l'app del banc, escaneja el QR i tot quedarÃ  pre-omplert (compte, import i concepte).</p>
                       </div>
                     </div>
-                    {/* Transferència */}
+                    {/* TransferÃ¨ncia */}
                     <div className="bg-white/5 border border-white/10 rounded-xl p-4 space-y-3">
-                      <p className="text-xs font-bold uppercase tracking-wider text-red-400">Instruccions de transferència</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-red-400">Instruccions de transferÃ¨ncia</p>
                       <div className="space-y-2 text-sm">
                         <div className="flex flex-col gap-1">
                           <span className="text-xs text-white/40 uppercase tracking-wider">Titular</span>
@@ -1651,7 +1663,7 @@ export default function Inscripcion() {
                         </div>
                       </div>
                       <p className="text-xs text-white/30 border-t border-white/8 pt-3">
-                        ⚠️ Posa el concepte correctament per poder identificar el pagament.
+                        â ï¸ Posa el concepte correctament per poder identificar el pagament.
                       </p>
                     </div>
                     {/* Codi descompte */}
@@ -1669,7 +1681,7 @@ export default function Inscripcion() {
                       </div>
                       {codError && <p className="text-red-400 text-xs mt-2">{codError}</p>}
                       {reason === "code5" && <p className="text-green-400 text-xs mt-2 flex items-center gap-1"><Check className="w-3 h-3"/> 5% de descompte aplicat!</p>}
-                      {earlyBird && <p className="text-orange-300 text-xs mt-2 flex items-center gap-1">🔥 Ja tens el 10% Early Bird aplicat — no acumulable amb cap codi.</p>}
+                      {earlyBird && <p className="text-orange-300 text-xs mt-2 flex items-center gap-1">ð¥ Ja tens el 10% Early Bird aplicat â no acumulable amb cap codi.</p>}
                     </div>
                     {/* Upload justificant */}
                     <div
@@ -1701,20 +1713,20 @@ export default function Inscripcion() {
                 </motion.div>
               )}
 
-              {/* ══ PAS 5: BASES ══ */}
+              {/* ââ PAS 5: BASES ââ */}
               {step === 5 && (
                 <motion.div key="s5" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-red-500"/> Bases i Confirmació
+                    <FileText className="w-5 h-5 text-red-500"/> Bases i ConfirmaciÃ³
                   </h2>
                   {/* Resum */}
                   <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-5 space-y-2 text-sm">
-                    <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Resum de la inscripció</p>
+                    <p className="text-xs font-bold uppercase tracking-wider text-red-400 mb-3">Resum de la inscripciÃ³</p>
                     {[
-                      { l:"Equip", v: watch("nomEquip") || "—" },
-                      { l:"Capità", v: `${watch("capNom")||""} ${watch("capCognom")||""}` },
+                      { l:"Equip", v: watch("nomEquip") || "â" },
+                      { l:"CapitÃ ", v: `${watch("capNom")||""} ${watch("capCognom")||""}` },
                       { l:"Jugadors", v: `${numJugadors}` },
-                      { l:"Email", v: watch("capEmail") || "—" },
+                      { l:"Email", v: watch("capEmail") || "â" },
                     ].map(({ l, v }) => (
                       <div key={l} className="flex gap-2">
                         <span className="text-white/30 w-20 shrink-0">{l}:</span>
@@ -1724,50 +1736,50 @@ export default function Inscripcion() {
                     {numExtraShirts > 0 && (
                       <div className="flex gap-2">
                         <span className="text-white/30 w-20 shrink-0">Extres:</span>
-                        <strong className="text-orange-300">{numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} (+{extras.toFixed(2)}€)</strong>
+                        <strong className="text-orange-300">{numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} (+{extras.toFixed(2)}â¬)</strong>
                       </div>
                     )}
-                    {reason === "early-bird" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-10% Early Bird 🔥</strong></div>}
-                    {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) 🎁</strong></div>}
+                    {reason === "early-bird" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-10% Early Bird ð¥</strong></div>}
+                    {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) ð</strong></div>}
                     {reason === "code5" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
                     <div className="flex gap-2 border-t border-white/8 pt-2 mt-1">
                       <span className="text-white/30 w-20 shrink-0">TOTAL:</span>
-                      <strong className="text-red-400 text-lg">{total.toFixed(2)}€</strong>
+                      <strong className="text-red-400 text-lg">{total.toFixed(2)}â¬</strong>
                     </div>
                   </div>
                   {/* Bases del torneig */}
                   <div className="bg-white/3 border border-white/8 rounded-xl p-4 mb-5 h-48 overflow-y-auto text-xs text-white/45 leading-relaxed space-y-2">
-                    <p><strong className="text-white/70">BASES DE LA COMPETICIÓ — 3×3 WESTFIELD GLÒRIES 2026</strong></p>
-                    <p>1. El torneig es celebra els dies 6 i 7 de juny de 2026 a 3 seus del barri del Clot-Glòries: Westfield Glòries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
-                    <p>2. La inscripció té un cost de <strong className="text-red-400">75€ a 105€</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accés als 2 dies. Samarretes addicionals opcionals a 25€ cadascuna. El pagament s'ha de realitzar per transferència bancària a nom de <strong className="text-white/70">{BENEFICIARI}</strong>, IBAN <strong className="text-white/70">{IBAN}</strong>, amb concepte <strong className="text-white/70">3X3+NOM_EQUIP</strong>; cal adjuntar el justificant (JPG/PNG/PDF) dins el formulari per validar la inscripció.</p>
-                    <p>3. Premis en metàl·lic: <strong className="text-white/70">1.000€ Sèniors Masculí</strong> i <strong className="text-white/70">1.000€ Sèniors Femení</strong>. La resta de categories (Veterans M/F i formatives) reben trofeus i medalles. Sèniors atorga punts FIBA 3×3 oficials.</p>
-                    <p>4. Les regles aplicades seran les oficials FIBA 3×3. Format: fase de grups + fase eliminatòria directa.</p>
-                    <p className="text-orange-300/80">5. <strong>Cancel·lació i devolucions:</strong> una vegada confirmada la inscripció <strong>no és cancel·lable</strong> i no es retornarà cap import. Si un jugador es lesiona o no pot venir, l'equip continua jugant amb la resta i el jugador afectat conserva la samarreta com a única compensació; <strong>no es retorna ni es prorrateja l'import</strong>.</p>
-                    <p>6. Els organitzadors (Timechamber S.L. i C.B. Grup Barna) no es responsabilitzen de lesions produïdes durant el torneig.</p>
-                    <p>7. La participació implica l'acceptació de les decisions dels àrbitres com a inapel·lables.</p>
-                    <p>8. Els organitzadors es reserven el dret d'admissió i podran descalificar equips per comportament incorrecte.</p>
-                    <p>9. Els menors d'edat necessiten l'autorització del pare/mare/tutor legal (apartat següent).</p>
+                    <p><strong className="text-white/70">BASES DE LA COMPETICIÃ â 3Ã3 WESTFIELD GLÃRIES 2026</strong></p>
+                    <p>1. El torneig es celebra els dies 6 i 7 de juny de 2026 a 3 seus del barri del Clot-GlÃ²ries: Westfield GlÃ²ries, La Nau del Clot i la Rambleta del Clot (Barcelona).</p>
+                    <p>2. La inscripciÃ³ tÃ© un cost de <strong className="text-red-400">75â¬ a 105â¬</strong> per equip segons categoria i nombre de jugadors (4-5). Inclou samarreta oficial, dorsal i accÃ©s als 2 dies. Samarretes addicionals opcionals a 25â¬ cadascuna. El pagament s'ha de realitzar per transferÃ¨ncia bancÃ ria a nom de <strong className="text-white/70">{BENEFICIARI}</strong>, IBAN <strong className="text-white/70">{IBAN}</strong>, amb concepte <strong className="text-white/70">3X3+NOM_EQUIP</strong>; cal adjuntar el justificant (JPG/PNG/PDF) dins el formulari per validar la inscripciÃ³.</p>
+                    <p>3. Premis en metÃ lÂ·lic: <strong className="text-white/70">1.000â¬ SÃ¨niors MasculÃ­</strong> i <strong className="text-white/70">1.000â¬ SÃ¨niors FemenÃ­</strong>. La resta de categories (Veterans M/F i formatives) reben trofeus i medalles. SÃ¨niors atorga punts FIBA 3Ã3 oficials.</p>
+                    <p>4. Les regles aplicades seran les oficials FIBA 3Ã3. Format: fase de grups + fase eliminatÃ²ria directa.</p>
+                    <p className="text-orange-300/80">5. <strong>CancelÂ·laciÃ³ i devolucions:</strong> una vegada confirmada la inscripciÃ³ <strong>no Ã©s cancelÂ·lable</strong> i no es retornarÃ  cap import. Si un jugador es lesiona o no pot venir, l'equip continua jugant amb la resta i el jugador afectat conserva la samarreta com a Ãºnica compensaciÃ³; <strong>no es retorna ni es prorrateja l'import</strong>.</p>
+                    <p>6. Els organitzadors (Timechamber S.L. i C.B. Grup Barna) no es responsabilitzen de lesions produÃ¯des durant el torneig.</p>
+                    <p>7. La participaciÃ³ implica l'acceptaciÃ³ de les decisions dels Ã rbitres com a inapelÂ·lables.</p>
+                    <p>8. Els organitzadors es reserven el dret d'admissiÃ³ i podran descalificar equips per comportament incorrecte.</p>
+                    <p>9. Els menors d'edat necessiten l'autoritzaciÃ³ del pare/mare/tutor legal (apartat segÃ¼ent).</p>
                   </div>
 
-                  {/* Apartat legal · Pares/Tutors (heretat del JotForm Campus Time Chamber) */}
+                  {/* Apartat legal Â· Pares/Tutors (heretat del JotForm Campus Time Chamber) */}
                   <div className="bg-orange-500/5 border border-orange-500/20 rounded-xl p-4 mb-4 space-y-3">
                     <p className="text-xs font-bold uppercase tracking-wider text-orange-300 flex items-center gap-2">
-                      <span>📑</span> Apartat legal · Pares / Mares / Tutors
+                      <span>ð</span> Apartat legal Â· Pares / Mares / Tutors
                     </p>
                     <div className="text-xs text-white/65 leading-relaxed space-y-3">
                       <p>
-                        Com a tutor/a legal, consento i autoritzo la captació i publicació d'imatges meves i/o del meu fill/a o tutelat/da per part de <strong>Timechamber S.L. i C.B. Grup Barna</strong>, amb finalitats comercials, promocionals o altres, sempre respectant la dignitat i la integritat de la persona captada. Així mateix, declaro que he llegit i accepto la <strong>política de privacitat</strong>, el <strong>tractament de dades</strong>, l'<strong>autorització mèdica</strong> i la <strong>normativa interna</strong> de Timechamber Experience.
+                        Com a tutor/a legal, consento i autoritzo la captaciÃ³ i publicaciÃ³ d'imatges meves i/o del meu fill/a o tutelat/da per part de <strong>Timechamber S.L. i C.B. Grup Barna</strong>, amb finalitats comercials, promocionals o altres, sempre respectant la dignitat i la integritat de la persona captada. AixÃ­ mateix, declaro que he llegit i accepto la <strong>polÃ­tica de privacitat</strong>, el <strong>tractament de dades</strong>, l'<strong>autoritzaciÃ³ mÃ¨dica</strong> i la <strong>normativa interna</strong> de Timechamber Experience.
                       </p>
                       <p>
-                        En completar aquest formulari, declares que has llegit la <strong>informació legal de Timechamber Experience</strong> relativa a la política de privacitat, el tractament de dades, les finalitats, la base legal, la conservació de dades, les persones destinatàries, els drets, les actualitzacions, l'autorització mèdica i la normativa interna.
+                        En completar aquest formulari, declares que has llegit la <strong>informaciÃ³ legal de Timechamber Experience</strong> relativa a la polÃ­tica de privacitat, el tractament de dades, les finalitats, la base legal, la conservaciÃ³ de dades, les persones destinatÃ ries, els drets, les actualitzacions, l'autoritzaciÃ³ mÃ¨dica i la normativa interna.
                       </p>
                     </div>
                   </div>
 
                   <div className="space-y-3.5">
                     {[
-                      { id:"bases", name:"acceptaBases" as keyof FD, label:"He llegit i accepto les bases de la competició i el reglament del 3×3 Westfield Glòries 2026. *", err: errors.acceptaBases },
-                      { id:"lopd",  name:"acceptaLopd"  as keyof FD, label:"Com a pare, mare o tutor/a legal, declaro que he llegit i accepto l'apartat legal de Timechamber Experience (privacitat, tractament de dades, autorització mèdica, normativa interna i drets d'imatge). *", err: errors.acceptaLopd },
+                      { id:"bases", name:"acceptaBases" as keyof FD, label:"He llegit i accepto les bases de la competiciÃ³ i el reglament del 3Ã3 Westfield GlÃ²ries 2026. *", err: errors.acceptaBases },
+                      { id:"lopd",  name:"acceptaLopd"  as keyof FD, label:"Com a pare, mare o tutor/a legal, declaro que he llegit i accepto l'apartat legal de Timechamber Experience (privacitat, tractament de dades, autoritzaciÃ³ mÃ¨dica, normativa interna i drets d'imatge). *", err: errors.acceptaLopd },
                     ].map(({ id, name, label, err }) => (
                       <div key={id}>
                         <div className="flex items-start gap-3">
@@ -1785,7 +1797,7 @@ export default function Inscripcion() {
                           onCheckedChange={v => setValue("acceptaImatge", v === true as any)}
                           className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
                         <Label htmlFor="img" className="text-sm leading-relaxed cursor-pointer text-white/70">
-                          Autoritzo expressament la captació i publicació d'imatges meves i/o del meu fill/a per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. *
+                          Autoritzo expressament la captaciÃ³ i publicaciÃ³ d'imatges meves i/o del meu fill/a per part de Timechamber S.L. i C.B. Grup Barna a xarxes socials i mitjans del torneig. *
                         </Label>
                       </div>
                       {errors.acceptaImatge && <p className="text-red-400 text-xs ml-7 mt-1">{(errors.acceptaImatge as any).message}</p>}
@@ -1796,7 +1808,7 @@ export default function Inscripcion() {
                           onCheckedChange={v => setValue("acceptaCancellacio", v === true as any)}
                           className="mt-0.5 border-white/20 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600" />
                         <Label htmlFor="cancel" className="text-sm leading-relaxed cursor-pointer text-white/70">
-                          Entenc que la inscripció <strong className="text-white">no és cancel·lable</strong> un cop confirmada i que en cas de lesió o baixa d'un jugador <strong className="text-white">no es retorna ni es prorrateja cap import</strong>; el jugador conserva la samarreta com a única compensació. *
+                          Entenc que la inscripciÃ³ <strong className="text-white">no Ã©s cancelÂ·lable</strong> un cop confirmada i que en cas de lesiÃ³ o baixa d'un jugador <strong className="text-white">no es retorna ni es prorrateja cap import</strong>; el jugador conserva la samarreta com a Ãºnica compensaciÃ³. *
                         </Label>
                       </div>
                       {errors.acceptaCancellacio && <p className="text-red-400 text-xs ml-7 mt-1">{(errors.acceptaCancellacio as any).message}</p>}
@@ -1807,7 +1819,7 @@ export default function Inscripcion() {
 
             </AnimatePresence>
 
-            {/* Navegació */}
+            {/* NavegaciÃ³ */}
             <div className="flex items-center justify-between mt-7 pt-5 border-t border-white/8">
               <Button type="button" variant="outline" onClick={goBack} disabled={step===1}
                 className="border-white/10 text-white/30 hover:text-white disabled:opacity-20 gap-2 rounded-xl bg-transparent">
@@ -1817,22 +1829,22 @@ export default function Inscripcion() {
                 <Button type="button" onClick={goNext}
                   className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider gap-2 hover:scale-105 transition-transform px-8 rounded-xl shadow-lg"
                   style={{ boxShadow:"0 4px 20px rgba(220,38,38,0.35)" }}>
-                  Següent <ChevronRight className="w-4 h-4"/>
+                  SegÃ¼ent <ChevronRight className="w-4 h-4"/>
                 </Button>
               ) : (
                 <Button type="submit" disabled={sending || !nameAvailable}
                   className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider gap-2 hover:scale-105 transition-transform px-8 disabled:opacity-50 disabled:scale-100 rounded-xl"
                   style={{ boxShadow:"0 4px 20px rgba(220,38,38,0.35)" }}>
-                  {sending ? <><Loader2 className="w-4 h-4 animate-spin"/> Enviant...</> : <><Check className="w-4 h-4"/> Enviar Inscripció</>}
+                  {sending ? <><Loader2 className="w-4 h-4 animate-spin"/> Enviant...</> : <><Check className="w-4 h-4"/> Enviar InscripciÃ³</>}
                 </Button>
               )}
             </div>
           </form>
 
-          {/* Ajuda directa per WhatsApp — visible a tots els steps del formulari.
+          {/* Ajuda directa per WhatsApp â visible a tots els steps del formulari.
               Obre wa.me amb missatge pre-omplert; no interromp el flux amb modals. */}
           <a
-            href={`https://wa.me/34698425153?text=${encodeURIComponent(`Hola! Tinc dubtes sobre la inscripció al 3×3 Westfield Glòries (Pas ${step} de 5).`)}`}
+            href={`https://wa.me/34698425153?text=${encodeURIComponent(`Hola! Tinc dubtes sobre la inscripciÃ³ al 3Ã3 Westfield GlÃ²ries (Pas ${step} de 5).`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-5 flex items-center justify-center gap-2.5 w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/40 hover:border-[#25D366]/70 text-[#25D366] font-semibold rounded-xl py-3 px-4 text-sm transition-colors"
@@ -1845,14 +1857,14 @@ export default function Inscripcion() {
         </div>
 
         <div className="text-center mt-6 text-xs text-white/20">
-          Dubtes? <a href="mailto:voluntaris@grupbarna.info" className="text-red-400 hover:underline">voluntaris@grupbarna.info</a> · <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">@cbgrupbarna</a>
+          Dubtes? <a href="mailto:voluntaris@grupbarna.info" className="text-red-400 hover:underline">voluntaris@grupbarna.info</a> Â· <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="text-red-400 hover:underline">@cbgrupbarna</a>
         </div>
       </div>
     </div>
   );
 }
 
-/* ─── Component: secció de descàrrega del cartell personalitzat (UGC viral) ─── */
+/* âââ Component: secciÃ³ de descÃ rrega del cartell personalitzat (UGC viral) âââ */
 function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: string }) {
   const [downloading, setDownloading] = useState<null | "story" | "square" | "landscape">(null);
   const [error, setError] = useState<string>("");
@@ -1872,7 +1884,7 @@ function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: 
   return (
     <div className="bg-gradient-to-br from-orange-600/20 to-red-600/20 border border-orange-500/40 rounded-2xl p-5 mb-3">
       <div className="flex items-start gap-3 mb-3">
-        <span className="text-3xl">📲</span>
+        <span className="text-3xl">ð²</span>
         <div className="flex-1">
           <p className="text-sm font-black uppercase tracking-wider text-orange-300 mb-1">Cartell del teu equip</p>
           <p className="text-xs text-white/70 leading-relaxed">
@@ -1887,9 +1899,9 @@ function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: 
           disabled={downloading !== null}
           className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
         >
-          <div className="text-lg mb-0.5">📱</div>
+          <div className="text-lg mb-0.5">ð±</div>
           <p className="text-xs font-bold text-white">{downloading === "story" ? "Generant..." : "IG/TikTok Story"}</p>
-          <p className="text-[10px] text-white/40">1080×1920 vertical</p>
+          <p className="text-[10px] text-white/40">1080Ã1920 vertical</p>
         </button>
         <button
           type="button"
@@ -1897,9 +1909,9 @@ function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: 
           disabled={downloading !== null}
           className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
         >
-          <div className="text-lg mb-0.5">🟪</div>
+          <div className="text-lg mb-0.5">ðª</div>
           <p className="text-xs font-bold text-white">{downloading === "square" ? "Generant..." : "IG Post"}</p>
-          <p className="text-[10px] text-white/40">1080×1080 quadrat</p>
+          <p className="text-[10px] text-white/40">1080Ã1080 quadrat</p>
         </button>
         <button
           type="button"
@@ -1907,12 +1919,12 @@ function CartellSection({ nomEquip, categoria }: { nomEquip: string; categoria: 
           disabled={downloading !== null}
           className="bg-white/10 hover:bg-white/15 disabled:opacity-50 disabled:cursor-not-allowed border border-white/15 rounded-xl py-3 px-3 text-left transition-colors"
         >
-          <div className="text-lg mb-0.5">🖥️</div>
+          <div className="text-lg mb-0.5">ð¥ï¸</div>
           <p className="text-xs font-bold text-white">{downloading === "landscape" ? "Generant..." : "Twitter/X"}</p>
-          <p className="text-[10px] text-white/40">1200×675 horitzontal</p>
+          <p className="text-[10px] text-white/40">1200Ã675 horitzontal</p>
         </button>
       </div>
-      {error && <p className="text-red-400 text-xs mt-2">⚠️ {error}</p>}
+      {error && <p className="text-red-400 text-xs mt-2">â ï¸ {error}</p>}
     </div>
   );
 }
