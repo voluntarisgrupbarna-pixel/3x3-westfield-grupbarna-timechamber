@@ -48,7 +48,7 @@ function PageLoader() {
 function RouteTracker() {
   const { pathname, search } = useLocation();
   useEffect(() => {
-    window.gtag?.("config", "G-R6XYR7G1WF", { page_path: pathname + search });
+    window.gtag?.("config", "G-DJDDRR4KW0", { page_path: pathname + search });
   }, [pathname, search]);
   return null;
 }
