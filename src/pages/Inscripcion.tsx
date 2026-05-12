@@ -173,8 +173,8 @@ const slide = {
 };
 
 /* ─── Persistència local (gate viral + form state) ─── */
-const GATE_LS_KEY = "3x3_gate_state_v1";
-const FORM_LS_KEY = "3x3_form_v1";
+const GATE_LS_KEY = "3x3_gate_state_v2";
+const FORM_LS_KEY = "3x3_form_v2";
 const LS_TTL_MS = 24 * 60 * 60 * 1000;
 type PersistedGate = {
   sharedSlots: boolean[];
