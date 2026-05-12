@@ -1431,7 +1431,7 @@ export default function Inscripcion() {
                       <div>
                         <p className="text-xs text-white/40 uppercase tracking-wider mb-0.5">Codi promocional</p>
                         <p className="text-sm text-white">Usa <strong className="font-mono text-orange-400 bg-orange-500/15 px-1.5 py-0.5 rounded">{COD_DESC}</strong> i obtén un <strong className="text-orange-400">5% de descompte</strong></p>
-                        <p className="text-xs text-white/30 mt-0.5">Vàlid fins al 15 de juny de 2025</p>
+                        <p className="text-xs text-white/30 mt-0.5">Vàlid fins al 15 de juny de 2026</p>
                       </div>
                       <span className="text-2xl">🏷️</span>
                     </div>
