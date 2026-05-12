@@ -146,7 +146,6 @@ const reqStr = (msg: string) => z.string({ required_error: msg, invalid_type_err
 export const jugSchema = z.object({
      nom:      reqStr("Nom mínim 2 caràcters").min(2, "Nom mínim 2 caràcters"),
      cognom:   reqStr("Cognoms mínim 2 caràcters").min(2, "Cognoms mínim 2 caràcters"),
-     // email obligatori per a tots els jugadors
      email:    reqStr("Email no vàlid").email("Email no vàlid"),
      telefon:  reqStr("Telèfon mínim 9 dígits").min(9, "Telèfon mínim 9 dígits"),
      dataNaix: reqStr("Indica la data de naixement").min(1, "Indica la data de naixement"),
