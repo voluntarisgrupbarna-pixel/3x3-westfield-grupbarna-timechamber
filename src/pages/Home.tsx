@@ -206,7 +206,7 @@ function CategoryFillGrid() {
     <div className="bg-gradient-to-br from-slate-900/80 to-slate-950 border border-white/10 rounded-3xl p-5 sm:p-7">
       <div className="flex items-end justify-between mb-5 flex-wrap gap-2">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-400 mb-1">100 places · 1 quadrat = 1 equip</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-orange-400 mb-1">{cells.length} places · 1 quadrat = 1 equip</p>
           <h3 className="font-black text-xl sm:text-2xl text-white" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
             Mira com s'omple el torneig en directe
           </h3>
@@ -235,11 +235,12 @@ function CategoryFillGrid() {
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[10px] sm:text-xs">
         {CATEGORIES.map(cat => {
           const inscrits = Math.min(cat.quota, byCategory[cat.name] || 0);
+          const pct = Math.min(100, Math.max(cat.minDisplayPct ?? 0, Math.round((inscrits / cat.quota) * 100)));
           return (
             <div key={cat.name} className="flex items-center gap-1.5">
               <span className={`inline-block w-3 h-3 rounded-sm bg-gradient-to-br ${cat.color}`} />
               <span className="text-white/60">{cat.emoji} {cat.name}</span>
-              <span className="font-mono font-bold text-white/85">{inscrits}/{cat.quota}</span>
+              <span className="font-mono font-bold text-white/85">{pct}%</span>
             </div>
           );
         })}
@@ -251,9 +252,11 @@ function CategoryFillGrid() {
 /* ─── Gràfic detallat per categoria amb barres de progrés ─── */
 function CategoryChart() {
   const { byCategory, loaded } = useEquipsInscrits();
-  const totalQuota = CATEGORIES.reduce((s, c) => s + c.quota, 0);
-  const totalInscrits = CATEGORIES.reduce((s, c) => s + (byCategory[c.name] || 0), 0);
-  const pctGlobal = Math.min(100, Math.round((totalInscrits / totalQuota) * 100));
+  const visiblePcts = CATEGORIES.map(cat => {
+    const inscrits = byCategory[cat.name] || 0;
+    return Math.min(100, Math.max(cat.minDisplayPct ?? 0, Math.round((inscrits / cat.quota) * 100)));
+  });
+  const pctGlobal = Math.round(visiblePcts.reduce((a, b) => a + b, 0) / visiblePcts.length);
 
   return (
     <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 sm:p-7">
@@ -261,9 +264,9 @@ function CategoryChart() {
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-red-400 mb-1">Places per categoria</p>
           <h3 className="font-black text-2xl sm:text-3xl text-white" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
-            {totalInscrits} <span className="text-white/40">/ {totalQuota}</span> equips
+            {loaded ? `${pctGlobal}%` : "—"} <span className="text-white/40 text-xl sm:text-2xl font-bold">ocupat</span>
           </h3>
-          <p className="text-xs text-white/45 mt-1">{loaded ? `${pctGlobal}% del torneig ple` : "Carregant…"}</p>
+          <p className="text-xs text-white/45 mt-1">{loaded ? "Places disponibles a totes les categories" : "Carregant…"}</p>
         </div>
         <Link to="/inscripcion" className="inline-flex items-center gap-1.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-colors shadow-lg shadow-red-600/30">
           🏀 Inscriu el teu equip
@@ -273,9 +276,8 @@ function CategoryChart() {
       <div className="space-y-2">
         {CATEGORIES.map(cat => {
           const inscrits = byCategory[cat.name] || 0;
-          const pct = Math.min(100, Math.round((inscrits / cat.quota) * 100));
+          const pct = Math.min(100, Math.max(cat.minDisplayPct ?? 0, Math.round((inscrits / cat.quota) * 100)));
           const ple = inscrits >= cat.quota;
-          const lliures = Math.max(0, cat.quota - inscrits);
           return (
             <div key={cat.name} className="grid grid-cols-[80px_minmax(0,1fr)_auto] sm:grid-cols-[120px_minmax(0,1fr)_auto] items-center gap-3">
               {/* Categoria + emoji */}
@@ -296,12 +298,11 @@ function CategoryChart() {
                 />
                 <div className="absolute inset-0 flex items-center justify-between px-2 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider">
                   <span className={`${pct > 35 ? "text-white" : "text-white/55"}`}>
-                    {ple ? "PLE" : `${inscrits}/${cat.quota}`}
+                    {ple ? "PLE" : `${pct}%`}
                   </span>
-                  <span className={`${pct > 75 ? "text-white" : "text-white/40"} hidden sm:inline`}>{pct}%</span>
                 </div>
               </div>
-              {/* Lliures / waitlist link */}
+              {/* Waitlist si ple */}
               <div className="text-right min-w-[44px]">
                 {ple ? (
                   <Link to="/llista-espera" className="text-[10px] font-bold text-orange-300 hover:text-orange-200 underline">
@@ -309,7 +310,7 @@ function CategoryChart() {
                   </Link>
                 ) : (
                   <span className="text-[10px] font-mono text-white/40">
-                    {lliures} <span className="hidden sm:inline">lliure{lliures === 1 ? "" : "s"}</span>
+                    {pct}%
                   </span>
                 )}
               </div>
