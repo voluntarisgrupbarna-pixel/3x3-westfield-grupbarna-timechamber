@@ -18,8 +18,8 @@ export const BENEFICIARI = "CB Grup Barna";
 export const PRECIO_CAMISETA_EXTRA = 25;
 
 /* Early-bird 10% — s'aplica automàticament a tota inscripció abans d'aquesta data.
-Exclusiu amb el gate viral i amb el codi 3X3AVIAT (max 10%). */
-export const EARLY_BIRD_END = new Date("2026-05-15T23:59:59+02:00");
+Acumulable amb el gate viral (+5%) fins a un màxim de 15%. */
+export const EARLY_BIRD_END = new Date("2026-05-20T23:59:59+02:00");
 export function isEarlyBirdActive(now: Date = new Date()): boolean {
      return now < EARLY_BIRD_END;
 }
@@ -105,31 +105,35 @@ export function buildEpcQr(amount: number, nomEquip: string | undefined): string
           ].join("\n");
 }
 
-export type DiscountReason = "early-bird" | "viral" | "code5" | null;
+export type DiscountReason = "early-bird" | "early-bird+viral" | "viral" | "code5" | null;
 
 export function calcTotal(
      mida: string,
      capCategoria: string | undefined,
      desc5pct: boolean,
-     descInvite10pct: boolean = false,
+     descInvite5pct: boolean = false,
      extraShirts: number = 0,
      earlyBird: boolean = false,
    ) {
      const base = precioByCat(capCategoria, mida);
-     // Els descomptes només s'apliquen sobre la quota base de l'equip,
-  // no sobre les samarretes extra (que es facturen a 25€/u sense descompte).
-  // Mútuament exclusius (max 10%): prioritat early-bird > viral > codi 5%.
-  let desc5 = 0;
+     // Els descomptes s'apliquen sobre la quota base (no sobre samarretes extra).
+     // Early Bird (10%) i viral (5%) SÓN ACUMULABLES — màxim 15%.
+     // El codi 3X3AVIAT (5%) és exclusiu: només s'aplica si no hi ha EB ni viral.
+     let desc5 = 0;
      let desc10 = 0;
      let reason: DiscountReason = null;
-     if (earlyBird) {
+     if (earlyBird && descInvite5pct) {
+            desc10 = Math.round(base * 10) / 100;
+            desc5  = Math.round(base * 5)  / 100;
+            reason = "early-bird+viral";
+     } else if (earlyBird) {
             desc10 = Math.round(base * 10) / 100;
             reason = "early-bird";
-     } else if (descInvite10pct) {
-            desc10 = Math.round(base * 10) / 100;
+     } else if (descInvite5pct) {
+            desc5  = Math.round(base * 5)  / 100;
             reason = "viral";
      } else if (desc5pct) {
-            desc5 = Math.round(base * 5) / 100;
+            desc5  = Math.round(base * 5)  / 100;
             reason = "code5";
      }
      const extras = Math.max(0, Math.floor(extraShirts)) * PRECIO_CAMISETA_EXTRA;

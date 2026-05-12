@@ -487,23 +487,23 @@ export default function Inscripcion() {
   const { base, desc5, desc10, extras, total, reason } = calcTotal(midaEquip || "4", capCategoria, descAplicat, descInvitacions, numExtraShirts, earlyBird);
 
   /* ─── Gate viral helpers ─── */
-  // Dos camins per desbloquejar el descompte:
-  //   A) Compartir per WhatsApp (≥1) + seguir @cbgrupbarna
-  //   B) Seguir @cbgrupbarna + seguir @timechamber_es (per qui no vol compartir)
-  // El botó de WhatsApp queda sempre visible al costat com a alternativa.
+  // Per desbloquejar el +5% addicional cal:
+  //   - Compartir 5 vegades per WhatsApp + seguir @cbgrupbarna
   const sharesDone = sharedSlots.filter(Boolean).length;
-  const pathShareDone   = sharesDone >= 1 && igFollowed;
-  const pathFollowsDone = igFollowed && igTimechamberFollowed;
-  const canUnlockGate = pathShareDone || pathFollowsDone;
+  const pathShareDone = sharesDone >= 5 && igFollowed;
+  const canUnlockGate = pathShareDone;
   // Persistim a localStorage ABANS d'obrir l'app externa: en mòbil el SO pot matar
   // la pestanya mentre l'usuari és a WhatsApp/Instagram, i sense aquest pre-write
   // el progrés in-memory es perdria en tornar.
-  const shareWith = (idx: number) => {
-    const text = `${SHARE_TEXTS[idx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
-    const nextSlots = sharedSlots.map((v, i) => i === idx ? true : v);
+  const shareWith = (_idx?: number) => {
+    // Marca el pròxim slot lliure (fins a 5 comparticions)
+    const nextIdx = sharedSlots.findIndex(v => !v);
+    if (nextIdx === -1) return; // ja té les 5
+    const text = `${SHARE_TEXTS[nextIdx % SHARE_TEXTS.length]} 👉 ${SHARE_URL}`;
+    const nextSlots = sharedSlots.map((v, i) => i === nextIdx ? true : v);
     saveGateState({ sharedSlots: nextSlots, igFollowed, igTimechamberFollowed, gateState, descInvitacions });
     setSharedSlots(nextSlots);
-    tracker.shareWhatsApp(idx);
+    tracker.shareWhatsApp(nextIdx);
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
   };
   const followInstagram = () => {
@@ -524,7 +524,7 @@ export default function Inscripcion() {
     setDescInvitacions(true);
     setGateState("unlocked");
     tracker.gateViralPassat(sharesDone);
-    toast({ title: "🎉 10% de descompte desbloquejat!", description: "Continua omplint el formulari." });
+    toast({ title: "🎉 +5% addicional desbloquejat!", description: earlyBird ? "Tens −15% en total (10% Early Bird + 5% comparticions). Continua!" : "Tens −5% de descompte. Continua omplint el formulari." });
   };
   const skipGate = () => {
     saveGateState({ sharedSlots, igFollowed, igTimechamberFollowed, gateState: "skipped", descInvitacions: false });
@@ -781,9 +781,9 @@ export default function Inscripcion() {
       const fetchBody = JSON.stringify({
         ...data,
         total,
-        // Mútuament exclusius: si earlyBird, els altres dos van a false al backend.
-        descAplicat: earlyBird ? false : descAplicat,
-        descInvitacions: earlyBird ? false : descInvitacions,
+        // Early Bird i viral s'acumulen (màx −15%). Codi 5% s'exclou si ja hi ha EB o viral.
+        descAplicat: (earlyBird || descInvitacions) ? false : descAplicat,
+        descInvitacions,
         descEarlyBird: earlyBird,
         concepte: buildConcepte(data.nomEquip),
         teamId: newTeamId,
@@ -979,25 +979,25 @@ export default function Inscripcion() {
             {earlyBird ? (
               <>
                 <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 mb-4">
-                  <span className="text-green-300 text-xs font-bold uppercase tracking-[0.2em]">🎉 Early Bird actiu — −10% aplicat!</span>
+                  <span className="text-green-300 text-xs font-bold uppercase tracking-[0.2em]">🔥 Early Bird actiu — −10% automàtic fins el 20/05</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-                  AJUDA'NS A <span className="text-orange-400">DIFONDRE</span> EL 3×3!
+                  GUANYA UN <span className="text-orange-400">5% EXTRA</span>!
                 </h1>
                 <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-                  Ja tens el <strong className="text-green-400">−10% Early Bird</strong>. Si comparteixes i segueixes <strong className="text-white">@cbgrupbarna</strong> ens ajudes molt 🙏
+                  Ja tens el <strong className="text-green-400">−10% Early Bird</strong>. Comparteix amb <strong className="text-white">5 amics</strong> per WhatsApp i segueix <strong className="text-white">@cbgrupbarna</strong> per sumar un <strong className="text-orange-400">5% addicional</strong> → total <strong className="text-orange-400">−15%</strong>.
                 </p>
               </>
             ) : (
               <>
                 <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/40 mb-4">
-                  <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">🎁 Bonus Inscripció</span>
+                  <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">🎁 Descompte Addicional</span>
                 </div>
                 <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-                  REBAIXA LA INSCRIPCIÓ <span className="text-orange-400">UN 10%</span>
+                  DESBLOQUEJA UN <span className="text-orange-400">5% DE DESCOMPTE</span>
                 </h1>
                 <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-                  Tries com desbloquejar-lo: <strong className="text-white">comparteix per WhatsApp</strong> i segueix <strong className="text-white">@cbgrupbarna</strong>, o si prefereixes no compartir, segueix també <strong className="text-white">@timechamber_es</strong>.
+                  Comparteix amb <strong className="text-white">5 amics</strong> per WhatsApp i segueix <strong className="text-white">@cbgrupbarna</strong> per obtenir un 5% de descompte a la inscripció.
                 </p>
               </>
             )}
@@ -1005,14 +1005,11 @@ export default function Inscripcion() {
 
           {/* Progress badges */}
           <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
-            <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sharesDone >= 1 ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {sharesDone >= 1 ? "✓ Compartit" : "○ WhatsApp"}
+            <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${sharesDone >= 5 ? "bg-green-500/20 text-green-400 border border-green-500/40" : sharesDone > 0 ? "bg-orange-500/20 text-orange-400 border border-orange-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
+              {sharesDone >= 5 ? "✓ 5/5 Comparticions" : `📲 ${sharesDone}/5 Comparticions`}
             </div>
             <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${igFollowed ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
               {igFollowed ? "✓" : "○"} @cbgrupbarna
-            </div>
-            <div className={`px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${igTimechamberFollowed ? "bg-green-500/20 text-green-400 border border-green-500/40" : "bg-white/5 text-white/60 border border-white/10"}`}>
-              {igTimechamberFollowed ? "✓" : "○"} @timechamber_es
             </div>
           </div>
 
@@ -1023,33 +1020,34 @@ export default function Inscripcion() {
             </p>
             <button
               type="button"
-              onClick={() => shareWith(0)}
+              onClick={() => shareWith()}
+              disabled={sharesDone >= 5}
               className={`w-full flex items-center justify-center gap-3 px-5 py-4 rounded-xl border-2 font-bold transition-all ${
-                sharesDone >= 1
-                  ? "bg-green-500/10 border-green-500/40 text-green-300"
+                sharesDone >= 5
+                  ? "bg-green-500/10 border-green-500/40 text-green-300 cursor-default"
                   : "bg-[#25D366] border-[#25D366] text-white hover:bg-[#1da851] hover:scale-[1.02] active:scale-[0.98]"
               }`}
             >
-              {sharesDone >= 1 ? (
+              {sharesDone >= 5 ? (
                 <>
                   <Check className="w-5 h-5"/>
-                  <span>Compartit · Pots tornar a compartir si vols</span>
+                  <span>✓ 5 comparticions fetes!</span>
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.71.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                  <span>Compartir per WhatsApp</span>
+                  <span>Compartir per WhatsApp ({sharesDone}/5)</span>
                 </>
               )}
             </button>
             <p className="text-[10px] text-white/40 mt-3 leading-relaxed text-center">
-              S'obrirà WhatsApp amb un missatge llest. Pots <strong className="text-white/70">enviar-ho a un grup d'amics o a 5 contactes</strong>; un sol clic basta per desbloquejar el descompte.
+              Cada clic obre WhatsApp amb un missatge diferent. Cal fer-ho <strong className="text-white/70">5 vegades</strong> (pots enviar-ho a contactes o grups).
             </p>
           </div>
 
-          {/* IG Follow — @cbgrupbarna (sempre obligatori) */}
-          <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-4">
-            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-4">📲 Segueix-nos a Instagram</p>
+          {/* IG Follow — @cbgrupbarna */}
+          <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-4">📸 Segueix-nos a Instagram</p>
             <button
               type="button"
               onClick={followInstagram}
@@ -1076,38 +1074,6 @@ export default function Inscripcion() {
             </p>
           </div>
 
-          {/* IG Follow — @timechamber_es (alternativa al WhatsApp share) */}
-          <div className="bg-slate-900 border border-white/10 rounded-2xl p-5 md:p-6 mb-6">
-            <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2 flex items-center gap-2">
-              <span>📲 Alternativa sense compartir</span>
-              <span className="px-1.5 py-0.5 rounded bg-orange-500/15 text-orange-300 text-[9px] font-bold tracking-widest">OPCIÓ B</span>
-            </p>
-            <p className="text-[11px] text-white/50 mb-3 leading-relaxed">
-              No vols compartir per WhatsApp? Cap problema — segueix també <strong className="text-white">@timechamber_es</strong> i desbloquejaràs el descompte igualment.
-            </p>
-            <button
-              type="button"
-              onClick={followTimechamber}
-              className={`w-full flex items-center justify-center gap-3 px-5 py-3.5 rounded-xl font-bold transition-all border-2 ${
-                igTimechamberFollowed
-                  ? "bg-green-500/10 border-green-500/40 text-green-300"
-                  : "bg-gradient-to-r from-[#FF0069] via-[#D300C5] to-[#7638FA] border-transparent text-white hover:scale-[1.02] active:scale-[0.98]"
-              }`}
-            >
-              {igTimechamberFollowed ? (
-                <>
-                  <Check className="w-5 h-5"/>
-                  <span>Gràcies! Ja segueixes @timechamber_es</span>
-                </>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                  <span>Seguir @timechamber_es</span>
-                </>
-              )}
-            </button>
-          </div>
-
           {/* CTA principal */}
           <button
             type="button"
@@ -1120,12 +1086,12 @@ export default function Inscripcion() {
             }`}
           >
             {canUnlockGate
-              ? "🎉 Reclamar 10% i continuar"
-              : !igFollowed
-                ? "Comença per seguir @cbgrupbarna"
-                : sharesDone === 0 && !igTimechamberFollowed
-                  ? "Comparteix per WhatsApp o segueix @timechamber_es"
-                  : "Quasi! Acaba un dels dos camins per desbloquejar"}
+              ? earlyBird ? "🎉 Reclamar −15% i continuar" : "🎉 Reclamar −5% i continuar"
+              : !igFollowed && sharesDone < 5
+                ? `Comparteix (${sharesDone}/5) i segueix @cbgrupbarna`
+                : !igFollowed
+                  ? "Ara segueix @cbgrupbarna per desbloquejar"
+                  : `Comparteix ${5 - sharesDone} vegada${5 - sharesDone === 1 ? "" : "s"} més per WhatsApp`}
           </button>
 
           {/* Saltar — opció clara i visible per qui no vol descompte (cap obligació de seguir/compartir) */}
@@ -1305,6 +1271,38 @@ export default function Inscripcion() {
           </h1>
           <p className="text-white/30 mt-1 text-sm">6 i 7 de Juny · Westfield Glòries</p>
         </motion.div>
+
+        {/* Banner descomptes */}
+        {(earlyBird || descInvitacions) && (
+          <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} className="mb-6 rounded-2xl overflow-hidden border border-white/10">
+            {earlyBird && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20">
+                <span className="text-2xl">🔥</span>
+                <div>
+                  <p className="text-orange-300 text-xs font-black uppercase tracking-wider">Early Bird actiu — fins el 20 de maig</p>
+                  <p className="text-white font-bold text-sm">−10% aplicat automàticament</p>
+                </div>
+                <span className="ml-auto text-2xl font-black text-orange-400">−10%</span>
+              </div>
+            )}
+            {descInvitacions && (
+              <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20">
+                <span className="text-2xl">🎁</span>
+                <div>
+                  <p className="text-green-300 text-xs font-black uppercase tracking-wider">5 comparticions + @cbgrupbarna</p>
+                  <p className="text-white font-bold text-sm">+5% addicional desbloquejat</p>
+                </div>
+                <span className="ml-auto text-2xl font-black text-green-400">−5%</span>
+              </div>
+            )}
+            {earlyBird && descInvitacions && (
+              <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-t border-white/10">
+                <span className="text-white/60 text-xs font-semibold">Total descompte</span>
+                <span className="text-white font-black text-lg">−15% 🏆</span>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         {/* Steps */}
         <div className="flex items-center justify-between mb-6 px-1">
@@ -1582,8 +1580,8 @@ export default function Inscripcion() {
                       <p className="text-4xl font-black font-mono text-white">{total.toFixed(2)}€</p>
                       <div className="mt-2 space-y-0.5 text-xs">
                         <p className="text-white/70">Quota equip: {base.toFixed(2)}€</p>
-                        {reason === "early-bird" && <p className="text-white/80 font-semibold">🔥 -{desc10.toFixed(2)}€ Early Bird (10%)</p>}
-                        {reason === "viral" && <p className="text-white/80 font-semibold">🎁 -{desc10.toFixed(2)}€ descompte 10% (5 amics + IG)</p>}
+                        {(reason === "early-bird" || reason === "early-bird+viral") && <p className="text-white/80 font-semibold">🔥 -{desc10.toFixed(2)}€ Early Bird (−10%)</p>}
+                        {(reason === "viral" || reason === "early-bird+viral") && <p className="text-white/80 font-semibold">🎁 -{desc5.toFixed(2)}€ comparticions (−5%)</p>}
                         {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
                         {numExtraShirts > 0 && (
                           <p className="text-white/80 font-semibold">+{extras.toFixed(2)}€ — {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
@@ -1756,7 +1754,8 @@ export default function Inscripcion() {
                       </div>
                     )}
                     {reason === "early-bird" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-10% Early Bird 🔥</strong></div>}
-                    {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-10% (invitacions 5 amics + IG) 🎁</strong></div>}
+                    {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-5% (5 comparticions + IG) 🎁</strong></div>}
+                    {reason === "early-bird+viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-15% (Early Bird + comparticions) 🏆</strong></div>}
                     {reason === "code5" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
                     <div className="flex gap-2 border-t border-white/8 pt-2 mt-1">
                       <span className="text-white/30 w-20 shrink-0">TOTAL:</span>
