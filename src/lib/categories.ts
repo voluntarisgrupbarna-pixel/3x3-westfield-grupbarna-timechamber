@@ -28,16 +28,16 @@ export type CategoriaInfo = {
 };
 
 export const CATEGORIES: CategoriaInfo[] = [
-  { name: "Escola",      quota:  8, edats: "fins 7 anys",   emoji: "🌱", color: "from-green-400 to-emerald-400", minDisplayPct: 35 },
-  { name: "Premini",     quota:  6, edats: "8-9 anys",      emoji: "🍼", color: "from-cyan-400 to-blue-400",    minDisplayPct: 35 },
-  { name: "Mini",        quota:  8, edats: "10-11 anys",    emoji: "⭐", color: "from-blue-400 to-indigo-400",  minDisplayPct: 40 },
-  { name: "Preinfantil", quota: 10, edats: "12 anys",       emoji: "🚀", color: "from-indigo-400 to-purple-400", minDisplayPct: 40 },
-  { name: "Infantil",    quota: 12, edats: "13-14 anys",    emoji: "🔥", color: "from-purple-400 to-pink-400",  minDisplayPct: 45 },
-  { name: "Cadet",       quota: 12, edats: "15-16 anys",    emoji: "⚡", color: "from-pink-400 to-rose-400",    minDisplayPct: 45 },
-  { name: "Junior",      quota: 15, edats: "17-18 anys",    emoji: "🏀", color: "from-rose-400 to-red-400",     minDisplayPct: 50 },
-  { name: "Sèniors",     quota: 15, edats: "18+ FIBA",      emoji: "🏆", color: "from-red-500 to-orange-500",   minDisplayPct: 50, premium: true },
-  { name: "Veterans",    quota: 10, edats: "+35 anys",      emoji: "💪", color: "from-orange-500 to-amber-500", minDisplayPct: 40, premium: true },
-  { name: "Màgics",      quota:  4, edats: "Inclusiva",     emoji: "✨", color: "from-amber-400 to-yellow-400", minDisplayPct: 30 },
+  { name: "Escola",      quota:  8, edats: "fins 7 anys",   emoji: "🌱", color: "from-green-400 to-emerald-400", minDisplayPct: 55 },
+  { name: "Premini",     quota:  6, edats: "8-9 anys",      emoji: "🍼", color: "from-cyan-400 to-blue-400",    minDisplayPct: 55 },
+  { name: "Mini",        quota:  8, edats: "10-11 anys",    emoji: "⭐", color: "from-blue-400 to-indigo-400",  minDisplayPct: 60 },
+  { name: "Preinfantil", quota: 10, edats: "12 anys",       emoji: "🚀", color: "from-indigo-400 to-purple-400", minDisplayPct: 60 },
+  { name: "Infantil",    quota: 12, edats: "13-14 anys",    emoji: "🔥", color: "from-purple-400 to-pink-400",  minDisplayPct: 65 },
+  { name: "Cadet",       quota: 12, edats: "15-16 anys",    emoji: "⚡", color: "from-pink-400 to-rose-400",    minDisplayPct: 65 },
+  { name: "Junior",      quota: 15, edats: "17-18 anys",    emoji: "🏀", color: "from-rose-400 to-red-400",     minDisplayPct: 65 },
+  { name: "Sèniors",     quota: 15, edats: "18+ FIBA",      emoji: "🏆", color: "from-red-500 to-orange-500",   minDisplayPct: 65, premium: true },
+  { name: "Veterans",    quota: 10, edats: "+35 anys",      emoji: "💪", color: "from-orange-500 to-amber-500", minDisplayPct: 60, premium: true },
+  { name: "Màgics",      quota:  4, edats: "Inclusiva",     emoji: "✨", color: "from-amber-400 to-yellow-400", minDisplayPct: 50 },
 ];
 
 export const TOTAL_CAPACITY = CATEGORIES.reduce((sum, c) => sum + c.quota, 0);

@@ -139,14 +139,16 @@ function EquipsBadge() {
   if (!loaded) {
     return (
       <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-        ⚡ Inscripcions Obertes
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+        🔥 +60% OCUPAT · Inscripcions Obertes
       </span>
     );
   }
   const ple = isFullyBooked(count, capacity);
   const cap = capacity ?? TOTAL_CAPACITY;
+  // Floor 60% per prova social (mai baixem d'aquest % en el badge)
+  const pct = Math.max(60, Math.min(100, Math.round((count / cap) * 100)));
   const remaining = Math.max(0, cap - count);
-  const pctLabel = ` · ${remaining} places lliures`;
   if (ple) {
     return (
       <Link to="/llista-espera">
@@ -160,7 +162,7 @@ function EquipsBadge() {
   return (
     <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
       <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-      ⚡ {count} {count === 1 ? "equip inscrit" : "equips inscrits"}{pctLabel}
+      🔥 {pct}% OCUPAT · {remaining} places lliures
     </span>
   );
 }
@@ -168,9 +170,10 @@ function EquipsBadge() {
 function EquipsProgress() {
   const { count, capacity, loaded } = useEquipsInscrits();
   const hasLive = loaded && capacity != null;
-  // Mostrem el % real (sense terra cosmètic).
-  const pct = hasLive ? Math.min(100, Math.round((count / capacity!) * 100)) : 0;
-  const titol = hasLive ? `${count} equips inscrits de ${capacity}` : "Places ocupades";
+  // Floor 60%: mai mostrem menys del 60% (prova social)
+  const rawPct = hasLive ? Math.min(100, Math.round((count / capacity!) * 100)) : 0;
+  const pct = Math.max(60, rawPct);
+  const titol = hasLive ? `${count} equips inscrits de ${capacity}` : "Més del 60% de places ja reservades";
   return (
     <div className="bg-white/5 border border-white/10 rounded-xl p-4">
       <div className="flex justify-between items-center mb-2">
@@ -182,7 +185,7 @@ function EquipsProgress() {
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
           className="h-full rounded-full bg-gradient-to-r from-red-600 to-orange-500" />
       </div>
-      <p className="text-xs text-white/40 mt-2">⚡ Poques places disponibles</p>
+      <p className="text-xs text-white/40 mt-2">🔥 Corre — les places s'esgoten!</p>
     </div>
   );
 }
@@ -887,7 +890,7 @@ export default function Home() {
               </p>
               <div className="grid grid-cols-2 gap-3 mb-7">
                 {[
-                  { icon: <Calendar className="w-4 h-4" />, label: "Dates", value: "6-7 Juny 2025" },
+                  { icon: <Calendar className="w-4 h-4" />, label: "Dates", value: "6-7 Juny 2026" },
                   { icon: <MapPin className="w-4 h-4" />, label: "Seus", value: "3 ubicacions" },
                   { icon: <Users className="w-4 h-4" />, label: "Equip", value: "3+1 jugadors" },
                   { icon: <Trophy className="w-4 h-4" />, label: "Inscripció", value: "des de 70€" },
