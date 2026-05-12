@@ -46,6 +46,7 @@
  */
 
 const PROPS = PropertiesService.getScriptProperties();
+
 const FILLOUT_BASE = 'https://api.fillout.com/v1/api';
 const RESEND_BASE = 'https://api.resend.com/emails';
 
@@ -501,6 +502,21 @@ function doPost(e) {
       // raw porta teamId/checkinUrl ja generats al frontend
       const data = normalizeFormData_(raw);
       try { sendEmails_(data, null); } catch (e) { Logger.log('individual mail err: ' + e); }
+      // Enviar a JotForm adaptat (mateixa funció que equips, camps capXxx mapeats des de nom/cognom/...)
+      const rawForJotForm = Object.assign({}, raw, {
+        capNom:      raw.nom      || '',
+        capCognom:   raw.cognom   || '',
+        capEmail:    raw.email    || '',
+        capTelefon:  raw.telefon  || '',
+        capDataNaix: raw.dataNaix || '',
+        capTalla:    raw.talla    || '',
+        capCategoria: 'Individual (per assignar)',
+        capPoblacio:  raw.poblacio || '',
+        nomEquip:    ((raw.nom || '') + ' ' + (raw.cognom || '')).trim() + ' (Solo)',
+        midaEquip:   1,
+        jugadors:    [],
+      });
+      try { submitToJotForm3x3_(rawForJotForm, null); } catch (e) { Logger.log('JotForm individual err: ' + e); }
       return ContentService
         .createTextOutput(JSON.stringify({ ok: true, action: 'individual', teamId: raw.teamId }))
         .setMimeType(ContentService.MimeType.JSON);
@@ -726,7 +742,8 @@ function addIndividualPlayer_(data) {
     sheet.appendRow([
       'Data', 'Team ID', 'Concepte', 'Nom', 'Cognom', 'Data naixement', 'Categoria',
       'Email', 'Telèfon', 'Població', 'Talla', 'Posició preferida', 'Nivell',
-      'Observacions', 'Equip assignat', 'Pagat?', 'Arribat (timestamp)'
+      'Observacions', 'Accepta bases', 'Accepta LOPD', 'Accepta imatge',
+      'Equip assignat', 'Pagat?', 'Arribat (timestamp)'
     ]);
   }
   sheet.appendRow([
@@ -744,6 +761,9 @@ function addIndividualPlayer_(data) {
     data.posicio || '',
     data.nivell || '',
     data.observacions || '',
+    data.acceptaBases  ? 'Sí' : 'No',
+    data.acceptaLopd   ? 'Sí' : 'No',
+    data.acceptaImatge ? 'Sí' : 'No',
     '',  // Equip assignat (Ana ho omple a mà)
     'No',
     '',  // Arribat
