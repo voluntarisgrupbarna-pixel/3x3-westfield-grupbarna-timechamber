@@ -482,6 +482,13 @@ function doPost(e) {
     }
 
     // 2) Backup al Sheet (amb la URL del justificant si existeix)
+    // Generem el codi WR just abans d'escriure per tenir el número correcte.
+    try {
+      data.codiWR = generarCodiWR_(getSheet_());
+    } catch (wrErr) {
+      Logger.log('Generació WR error (no critic): ' + wrErr);
+      data.codiWR = 'WR-???';
+    }
     try {
       writeToSheet_(data, justificantUpload);
     } catch (sheetErr) {
@@ -575,7 +582,18 @@ function normalizeFormData_(data) {
     descEarlyBird: !!data.descEarlyBird,
     jugadors: Array.isArray(data.jugadors) ? data.jugadors : [],
     justificant: data.justificant || null,
+    codiWR: data.codiWR || '',
   };
+}
+
+/* Genera el proper codi de reserva WR-XXX basat en el nombre total de files del Sheet.
+   WR-001 és la primera inscripció, WR-042 la quaranta-dosena, etc.
+   Llegeix ABANS d'escriure la nova fila, de manera que lastRow ja compta les files existents. */
+function generarCodiWR_(sheet) {
+  var totalFiles = Math.max(0, sheet.getLastRow() - 1); // -1 per capçalera
+  var num = String(totalFiles + 1);
+  while (num.length < 3) num = '0' + num;
+  return 'WR-' + num;
 }
 
 function writeToSheet_(data, justificantUpload) {
@@ -588,7 +606,8 @@ function writeToSheet_(data, justificantUpload) {
     'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
     'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)',
     'Gènere', 'Desc. early-bird?',
-    'Estat CRM', 'Notes CRM', 'Proper seguiment'
+    'Estat CRM', 'Notes CRM', 'Proper seguiment',
+    'Codi WR'
   ];
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(EXPECTED_HEADERS);
@@ -638,6 +657,7 @@ function writeToSheet_(data, justificantUpload) {
     'Nou',  // Estat CRM inicial
     '',     // Notes CRM (Ana omple manualment)
     '',     // Proper seguiment (data)
+    d.codiWR || '',
   ]);
 }
 
@@ -1221,10 +1241,18 @@ function buildEmailCapita_(data) {
   const qrPngUrl = checkinUrl
     ? 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data=' + encodeURIComponent(checkinUrl)
     : '';
+  var codiWR = data.codiWR || '';
   return [
     '<h2 style="color:#dc2626">✅ Hem rebut la teva inscripció</h2>',
     '<p>Hola <strong>' + (data.capita || '') + '</strong>,</p>',
     '<p>Hem registrat l\'equip <strong>' + (data.nomEquip || '') + '</strong> a la categoria <strong>' + (data.categoria || '') + '</strong>.</p>',
+    codiWR ? (
+      '<div style="margin:20px 0;padding:16px 24px;background:#fef2f2;border:2px solid #dc2626;border-radius:12px;text-align:center">' +
+      '<p style="margin:0 0 4px;font-size:11px;color:#7f1d1d;text-transform:uppercase;letter-spacing:1px;font-weight:bold">Codi de reserva</p>' +
+      '<p style="margin:0;font-size:28px;font-weight:900;color:#dc2626;letter-spacing:3px">' + codiWR + '</p>' +
+      '<p style="margin:4px 0 0;font-size:11px;color:#7f1d1d">Guarda\'l — el necessitaràs per a qualsevol consulta i el dia del torneig</p>' +
+      '</div>'
+    ) : '',
     '<p><strong>Total a pagar:</strong> ' + (data.total || '') + ' €</p>',
     '<p>Quan rebem el justificant de transferència confirmarem la plaça per email i WhatsApp.</p>',
     qrPngUrl ? (
@@ -1751,6 +1779,7 @@ function submitToJotForm3x3_(data, justificantUpload) {
     'submission[22]':         justifUrl,
     'submission[23]':         dataInscr,
     'submission[24]':         jugadorsJSON,
+    'submission[25]':         data.codiWR || '',
   };
 
   var form = Object.keys(payload).filter(function(k) {
