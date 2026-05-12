@@ -1818,10 +1818,26 @@ function submitToJotForm3x3_(data, justificantUpload) {
     return { 'Nombre completo': ((j.nom || '') + ' ' + (j.cognom || '')).trim() };
   }).filter(function(r) { return r['Nombre completo']; });
 
-  // Jugadors complets per al camp JSON (preserva totes les dades)
-  var jugadorsJSON = JSON.stringify(jugadors.map(function(j) {
-    return { nom: (j.nom||''), cognom: (j.cognom||''), email: (j.email||''), telefon: (j.telefon||''), dataNaix: (j.dataNaix||''), talla: (j.talla||''), club: (j.club||'') };
-  }));
+  // Jugadors complets per al camp JSON (preserva totes les dades).
+  // Per a inscripcions individuals (jugadors buit): codifica els camps extra del
+  // formulari solo (posicio, nivell, observacions, acceptances) que no tenen QID propi.
+  var jugadorsJSON;
+  var isIndividualSub = !jugadors.length && (data.midaEquip == 1 || data.tipus === 'individual' || data.action === 'individual');
+  if (isIndividualSub) {
+    jugadorsJSON = JSON.stringify({
+      tipus:         'individual',
+      posicio:       data.posicio       || '',
+      nivell:        data.nivell        || '',
+      observacions:  data.observacions  || data.notes || data.comentaris || '',
+      acceptaBases:  data.acceptaBases  ? 'Sí' : 'No',
+      acceptaLopd:   data.acceptaLopd   ? 'Sí' : 'No',
+      acceptaImatge: data.acceptaImatge ? 'Sí' : 'No',
+    });
+  } else {
+    jugadorsJSON = JSON.stringify(jugadors.map(function(j) {
+      return { nom: (j.nom||''), cognom: (j.cognom||''), email: (j.email||''), telefon: (j.telefon||''), dataNaix: (j.dataNaix||''), talla: (j.talla||''), club: (j.club||'') };
+    }));
+  }
 
   var justifUrl = justificantUpload && justificantUpload.url ? justificantUpload.url : '';
   var checkinUrl = data.checkinUrl || '';
