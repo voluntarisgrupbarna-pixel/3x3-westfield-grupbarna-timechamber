@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, X, ChevronLeft, ChevronRight, Zap, Medal, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES } from "@/lib/categories";
+import { CATEGORIES, TOTAL_CAPACITY } from "@/lib/categories";
 import BlogSection from "@/components/BlogSection";
 import SEO from "@/components/SEO";
 
@@ -144,10 +144,9 @@ function EquipsBadge() {
     );
   }
   const ple = isFullyBooked(count, capacity);
-  // Mostrem el % real (sense terra cosmètic) — Ana vol veure les dades reals,
-  // tant si són baixes (ex: 23%) com si pugen.
-  const realPct = capacity ? Math.min(100, Math.round((count / capacity) * 100)) : 0;
-  const pctLabel = ` · ${realPct}%`;
+  const cap = capacity ?? TOTAL_CAPACITY;
+  const remaining = Math.max(0, cap - count);
+  const pctLabel = ` · ${remaining} places lliures`;
   if (ple) {
     return (
       <Link to="/llista-espera">
