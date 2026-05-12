@@ -1380,6 +1380,43 @@ export default function Inscripcion() {
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
                     <Trophy className="w-5 h-5 text-red-500"/> Nom i mida de l'equip
                   </h2>
+
+                  {/* ── Bloc descompte viral: sempre visible a l'Step 1 ── */}
+                  <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                    <p className="text-xs font-bold uppercase tracking-widest text-white/50">
+                      🎁 Desbloqueja un <span className="text-orange-400">−5% extra</span>
+                    </p>
+                    {descInvitacions ? (
+                      <div className="flex items-center gap-2 bg-green-500/15 border border-green-400/30 rounded-xl px-4 py-2.5">
+                        <span className="text-green-400 text-lg">✅</span>
+                        <span className="text-green-300 text-sm font-bold">−5% addicional desbloquejat!</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <button
+                          type="button"
+                          onClick={() => shareWith()}
+                          className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1da851] active:scale-95 transition-all text-white font-bold text-sm px-4 py-3 rounded-xl"
+                        >
+                          <span>📲</span>
+                          Comparteix per WhatsApp ({sharedSlots.filter(Boolean).length}/5)
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIgFollowed(true);
+                            saveGateState({ sharedSlots, igFollowed: true, igTimechamberFollowed, gateState, descInvitacions });
+                            window.open("https://www.instagram.com/cbgrupbarna/", "_blank", "noopener,noreferrer");
+                          }}
+                          className={`flex-1 flex items-center justify-center gap-2 transition-all font-bold text-sm px-4 py-3 rounded-xl border ${igFollowed ? "bg-purple-500/20 border-purple-400/40 text-purple-300" : "bg-white/8 border-white/20 text-white hover:bg-white/15 active:scale-95"}`}
+                        >
+                          <span>📸</span>
+                          {igFollowed ? "✓ Segueixes @cbgrupbarna" : "Seguir @cbgrupbarna"}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-5">
                     <FieldRow label="Nom de l'equip *" error={errors.nomEquip?.message}>
                       <Controller
