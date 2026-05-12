@@ -383,11 +383,12 @@ export default function Inscripcion() {
   // Camí alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
   // Lazy initializers: si tornem d'una pestanya WhatsApp/Instagram que el SO ha matat,
   // restaurem el progrés persistit en localStorage.
-  // Durant la finestra early-bird (fins 2026-05-15 23:59) tothom té automàticament el 10%,
-  // així que NO mostrem el gate viral: el saltem directament a "skipped".
   const earlyBird = isEarlyBirdActive();
+  // Sempre mostrem el gate viral perquè l'usuari pugui compartir i seguir @cbgrupbarna.
+  // Durant l'Early Bird el descompte del gate no s'acumula (el 10% ja s'aplica automàticament),
+  // però volem que els usuaris comparteixin i segueixin igualment.
   const [gateState, setGateState] = useState<"active" | "unlocked" | "skipped">(
-    () => earlyBird ? "skipped" : (loadGateState()?.gateState ?? "active")
+    () => loadGateState()?.gateState ?? "active"
   );
   const [sharedSlots, setSharedSlots] = useState<boolean[]>(() => loadGateState()?.sharedSlots ?? [false, false, false, false, false]);
   const [igFollowed, setIgFollowed]   = useState(() => loadGateState()?.igFollowed ?? false);
@@ -975,15 +976,31 @@ export default function Inscripcion() {
         <div className="container mx-auto px-4 py-8 max-w-2xl">
           {/* Hero */}
           <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} className="text-center mb-8">
-            <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/40 mb-4">
-              <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">🎁 Bonus Inscripció</span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-              REBAIXA LA INSCRIPCIÓ <span className="text-orange-400">UN 10%</span>
-            </h1>
-            <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
-              Tries com desbloquejar-lo: <strong className="text-white">comparteix per WhatsApp</strong> i segueix <strong className="text-white">@cbgrupbarna</strong>, o si prefereixes no compartir, segueix també <strong className="text-white">@timechamber_es</strong>.
-            </p>
+            {earlyBird ? (
+              <>
+                <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-400/40 mb-4">
+                  <span className="text-green-300 text-xs font-bold uppercase tracking-[0.2em]">🎉 Early Bird actiu — −10% aplicat!</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
+                  AJUDA'NS A <span className="text-orange-400">DIFONDRE</span> EL 3×3!
+                </h1>
+                <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
+                  Ja tens el <strong className="text-green-400">−10% Early Bird</strong>. Si comparteixes i segueixes <strong className="text-white">@cbgrupbarna</strong> ens ajudes molt 🙏
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-block px-4 py-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 border border-orange-400/40 mb-4">
+                  <span className="text-orange-300 text-xs font-bold uppercase tracking-[0.2em]">🎁 Bonus Inscripció</span>
+                </div>
+                <h1 className="text-3xl md:text-4xl font-black mb-3 leading-tight" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
+                  REBAIXA LA INSCRIPCIÓ <span className="text-orange-400">UN 10%</span>
+                </h1>
+                <p className="text-white/60 text-sm md:text-base max-w-md mx-auto">
+                  Tries com desbloquejar-lo: <strong className="text-white">comparteix per WhatsApp</strong> i segueix <strong className="text-white">@cbgrupbarna</strong>, o si prefereixes no compartir, segueix també <strong className="text-white">@timechamber_es</strong>.
+                </p>
+              </>
+            )}
           </motion.div>
 
           {/* Progress badges */}
