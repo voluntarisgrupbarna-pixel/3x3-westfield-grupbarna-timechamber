@@ -384,6 +384,87 @@ export default function StaffDashboard() {
             </div>
           </div>
         </div>
+
+        {/* ─── Llista completa d'equips ─── */}
+        <div className="bg-slate-900 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-slate-300">Tots els equips inscrits</h2>
+            <span className="text-xs text-slate-500 tabular-nums">{inscripcions.length} equips</span>
+          </div>
+          {inscripcions.length === 0 ? (
+            <div className="text-sm text-slate-500 text-center py-8 space-y-2">
+              <p>Sense dades d'inscripcions.</p>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Si acabes d'activar l'endpoint d'Apps Script, comprova que el Script Property
+                <code className="mx-1 px-1 bg-slate-800 rounded">METRICS_TOKEN</code>
+                tingui el mateix valor que <code className="px-1 bg-slate-800 rounded">VITE_STAFF_PASSWORD_HASH</code>.
+                Si el GitHub JSON és buit, executa{" "}
+                <code className="px-1 bg-slate-800 rounded">replayLastNInscripcionsToGitHub_(50)</code>{" "}
+                des de l'editor d'Apps Script.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto -mx-4 px-4">
+              <table className="w-full text-xs min-w-[600px]">
+                <thead>
+                  <tr className="border-b border-slate-800">
+                    <th className="text-left pb-2 pr-3 text-slate-400 font-medium">Equip</th>
+                    <th className="text-left pb-2 pr-3 text-slate-400 font-medium">Cat.</th>
+                    <th className="text-left pb-2 pr-3 text-slate-400 font-medium">Capità</th>
+                    <th className="text-left pb-2 pr-3 text-slate-400 font-medium hidden sm:table-cell">Email</th>
+                    <th className="text-left pb-2 pr-3 text-slate-400 font-medium hidden sm:table-cell">Telèfon</th>
+                    <th className="text-right pb-2 pr-3 text-slate-400 font-medium">€</th>
+                    <th className="text-left pb-2 text-slate-400 font-medium">Pagament</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {inscripcions.map((i, idx) => (
+                    <tr
+                      key={i.team_id || idx}
+                      className="border-b border-slate-800/50 hover:bg-slate-800/40 transition-colors"
+                    >
+                      <td className="py-2 pr-3">
+                        <div className="font-medium text-white">{i.nom_equip || "—"}</div>
+                        <div className="text-[10px] text-slate-500 font-mono">{i.team_id}</div>
+                      </td>
+                      <td className="py-2 pr-3 text-slate-300 whitespace-nowrap">{i.categoria || "—"}</td>
+                      <td className="py-2 pr-3 text-slate-300">{i.capita || "—"}</td>
+                      <td className="py-2 pr-3 text-slate-400 hidden sm:table-cell">
+                        {i.email ? (
+                          <a href={`mailto:${i.email}`} className="hover:text-white transition-colors">
+                            {i.email}
+                          </a>
+                        ) : "—"}
+                      </td>
+                      <td className="py-2 pr-3 text-slate-400 hidden sm:table-cell">
+                        {i.telefon ? (
+                          <a href={`https://wa.me/${i.telefon?.replace(/[^0-9]/g, "")}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors">
+                            {i.telefon}
+                          </a>
+                        ) : "—"}
+                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums text-slate-300">
+                        {i.total ?? 0} €
+                      </td>
+                      <td className="py-2">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                          i.pagament_estat === "pagat" || i.pagament_estat === "verificat"
+                            ? "bg-green-900/50 text-green-400"
+                            : i.pagament_estat?.includes("cancel")
+                            ? "bg-slate-800 text-slate-500"
+                            : "bg-orange-900/50 text-orange-400"
+                        }`}>
+                          {i.pagament_estat || "pendent"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
       </div>
       )}
     </div>

@@ -330,43 +330,28 @@ function doGet(e) {
   if (action === 'names') return getRegisteredNames_();
   if (action === 'dashboard') return getDashboardData_();
   if (action === 'ga4') return getGa4Data_(e);
+  if (action === 'inscripcions') return getInscripcionsForStaff_(e);
 
+  // Comptador: font primària = Sheet (sempre actualitzat per cada inscripció).
+  // Fillout s'usa com a font addicional però NO com a font de veritat per al comptador
+  // perquè pot tenir 0 si FILLOUT_API_KEY no està configurat o si alguna inscripció
+  // no va arribar a Fillout (fallada de xarxa temporal, etc.).
   let count = 0;
-  let source = 'error';
+  let source = 'sheet';
   try {
-    const auth = getFilloutAuth_();
-    if (auth) {
-      const url = FILLOUT_BASE + '/forms/' + encodeURIComponent(auth.formId) + '/submissions?limit=1';
-      const resp = UrlFetchApp.fetch(url, {
-        method: 'get',
-        headers: { 'Authorization': 'Bearer ' + auth.apiKey },
-        muteHttpExceptions: true,
-      });
-      if (resp.getResponseCode() === 200) {
-        const json = JSON.parse(resp.getContentText() || '{}');
-        // Fillout retorna { responses: [...], totalResponses: N, pageCount: ... }
-        if (typeof json.totalResponses === 'number') {
-          count = json.totalResponses;
-          source = 'fillout';
-        } else if (Array.isArray(json.responses)) {
-          count = json.responses.length;
-          source = 'fillout';
-        }
-      }
-    }
-    // Fallback al Sheet si Fillout no respon
-    if (source === 'error') {
-      const sheet = getSheet_();
-      count = Math.max(0, sheet.getLastRow() - 1);
-      source = 'sheet';
-    }
+    const sheet = getSheet_();
+    count = Math.max(0, sheet.getLastRow() - 1);
   } catch (err) {
-    Logger.log('doGet error: ' + err);
+    Logger.log('doGet Sheet count error: ' + err);
   }
 
-  // Per-categoria counts llegits del Sheet (rapid, sense gastar quota Fillout)
+  // Per-categoria counts llegits del Sheet
   let byCategory = {};
   try { byCategory = getByCategoryFromSheet_(); } catch (e) { Logger.log('byCategory err: ' + e); }
+
+  // Si byCategory suma més que Sheet count (improbable però defensiu), fem servir la suma
+  const catSum = Object.values(byCategory).reduce(function(a, b) { return a + b; }, 0);
+  if (catSum > count) count = catSum;
 
   return jsonOut_({
     count: count,
@@ -375,6 +360,68 @@ function doGet(e) {
     source: source,
     ts: new Date().toISOString(),
   });
+}
+
+/**
+ * Retorna la llista completa d'inscripcions del Sheet per al dashboard d'staff.
+ * Protegit per METRICS_TOKEN (la mateixa clau que s'usa per a GA4).
+ * Cridat amb ?action=inscripcions&token=<METRICS_TOKEN>
+ */
+function getInscripcionsForStaff_(e) {
+  var token = (e && e.parameter && e.parameter.token) || '';
+  var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
+  // Si METRICS_TOKEN no está configurat, deneguem per seguretat (dades personals).
+  if (!validToken || token !== validToken) {
+    return jsonOut_({ error: 'Unauthorized', ts: new Date().toISOString() });
+  }
+
+  try {
+    var sheet = getSheet_();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonOut_({ inscripcions: [], ts: new Date().toISOString() });
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function(h) { return String(h || '').trim(); });
+    var rows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+
+    var idx = {};
+    headers.forEach(function(h, i) { idx[h] = i; });
+
+    var inscripcions = rows.map(function(r) {
+      var jugadorsRaw = String(r[idx['Jugadors']] || '');
+      // Jugadors estan separats per " · " en el Sheet
+      var jugadors = jugadorsRaw ? jugadorsRaw.split(' · ').map(function(n) { return { nom: n.trim() }; }) : [];
+      return {
+        team_id:            String(r[idx['Team ID']] || ''),
+        created_at:         String(r[idx['Data']] || ''),
+        tipus:              'equip',
+        nom_equip:          String(r[idx['Nom equip']] || ''),
+        capita:             String(r[idx['Capità']] || ''),
+        email:              String(r[idx['Email']] || ''),
+        telefon:            String(r[idx['Telèfon']] || ''),
+        poblacio:           String(r[idx['Població']] || ''),
+        categoria:          String(r[idx['Categoria']] || ''),
+        genere:             String(r[idx['Gènere']] || ''),
+        jugadors:           jugadors,
+        total:              Number(r[idx['Total (€)']] || r[idx['Total €']] || 0),
+        desc_aplicat:       String(r[idx['Desc. aplicat?']] || '') === 'Sí',
+        desc_invitacions:   String(r[idx['Desc. invitacions?']] || '') === 'Sí',
+        desc_early_bird:    String(r[idx['Desc. early-bird?']] || '') === 'Sí',
+        mida_samarretes:    String(r[idx['Mida samarretes']] || ''),
+        samarretes_extra:   Number(r[idx['Samarretes extra']] || 0),
+        notes:              String(r[idx['Notes']] || ''),
+        checkin_url:        String(r[idx['Check-in URL']] || ''),
+        justificant_drive_url: String(r[idx['Justificant Drive URL']] || ''),
+        pagament_estat:     String(r[idx['Pagament estat']] || 'Pendent').toLowerCase(),
+        codi_wr:            String(r[idx['Codi WR']] || ''),
+      };
+    }).filter(function(i) { return i.team_id || i.nom_equip; });
+
+    return jsonOut_({ inscripcions: inscripcions, ts: new Date().toISOString() });
+  } catch (err) {
+    Logger.log('getInscripcionsForStaff_ error: ' + err);
+    return jsonOut_({ error: String(err), ts: new Date().toISOString() });
+  }
 }
 
 /**
@@ -496,7 +543,12 @@ function doPost(e) {
     }
 
     // 2.1) JotForm 3x3 (font principal d'Ana — no crític, no trenca la inscripció)
-    try { submitToJotForm3x3_(data, justificantUpload); } catch (e) { Logger.log('JotForm 3x3 err: ' + e); }
+    // IMPORTANT: passem el payload RAW (no el normalitzat) perquè submitToJotForm3x3_
+    // espera els camps amb el prefix cap* (capNom, capCognom, capEmail, etc.)
+    // que el formulari envia directament. El payload normalitzat els ha fusionat
+    // (ex: capNom+capCognom → capita) i els camps individuals es perdrien.
+    raw.codiWR = data.codiWR;
+    try { submitToJotForm3x3_(raw, justificantUpload); } catch (e) { Logger.log('JotForm 3x3 err: ' + e); }
 
     // 2.5) Backup paranoid (no critic — cap d'aquests bloqueja la inscripció):
     //   a) JSON al repo GitHub privat (commit append)

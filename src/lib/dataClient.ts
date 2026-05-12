@@ -1,17 +1,23 @@
 /**
  * Data client per a la pàgina staff.
  *
- * Font de dades: el JSON `inscripcions-2026.json` que Apps Script va
- * actualitzant a un repo GitHub privat (vegeu writeToGitHubJson_ a Code.gs).
+ * Font de dades (per ordre de prioritat):
+ *   1. Apps Script `?action=inscripcions&token=TOKEN` — llig el Google Sheet directament.
+ *      El TOKEN és el valor de VITE_STAFF_PASSWORD_HASH (sha-256 del password staff).
+ *      Requereix que Apps Script tingui `METRICS_TOKEN` = el mateix valor.
+ *   2. GitHub JSON `inscripcions-2026.json` — backup paranoid escrit per Apps Script.
+ *      Requereix GitHub PAT read-only al login.
+ *
+ * Si la font 1 retorna dades, la 2 no s'usa.
+ * Si la font 1 falla (METRICS_TOKEN no configurat, etc.), cau a la 2.
  *
  * Autenticació:
- *   1. Password gate local (sha256 contra VITE_STAFF_PASSWORD_HASH).
- *   2. GitHub Personal Access Token (PAT) read-only que Ana enganxa al login.
- *      Es desa a localStorage per no haver de re-introduir-lo cada sessió.
- *      El PAT mai surt al bundle build — viu només al navegador d'Ana.
- *
- * Si el PAT caduca o és invàlid, la pàgina mostra error i demana renovar.
+ *   - Password gate local (sha256 contra VITE_STAFF_PASSWORD_HASH).
+ *   - GitHub PAT (opcional, per la font 2).
  */
+
+const WEBHOOK = (import.meta.env.VITE_GOOGLE_SHEET_WEBHOOK as string) || "";
+const STAFF_HASH = (import.meta.env.VITE_STAFF_PASSWORD_HASH as string) || "";
 
 const REPO = import.meta.env.VITE_BACKUP_REPO as string;
 const PATH = (import.meta.env.VITE_BACKUP_PATH as string) || "data/inscripcions-2026.json";
@@ -97,7 +103,24 @@ export async function staffLogin(password: string, pat: string): Promise<{ ok: b
 let cache: { ts: number; data: Inscripcio[] } | null = null;
 const CACHE_TTL_MS = 30_000; // 30s — durant el dia del torneig refresca sovint
 
-async function fetchJson(): Promise<Inscripcio[]> {
+/** Font 1: Apps Script Sheet endpoint — no requereix PAT */
+async function fetchFromAppsScript(): Promise<Inscripcio[] | null> {
+  if (!WEBHOOK || !STAFF_HASH) return null;
+  const url = `${WEBHOOK}?action=inscripcions&token=${encodeURIComponent(STAFF_HASH)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    const body = await r.json();
+    if (body.error === "Unauthorized") return null; // METRICS_TOKEN no configurat
+    if (Array.isArray(body.inscripcions)) return body.inscripcions as Inscripcio[];
+  } catch {
+    // xarxa, CORS, timeout — cau a la font 2
+  }
+  return null;
+}
+
+/** Font 2: GitHub JSON — requereix PAT */
+async function fetchFromGitHub(): Promise<Inscripcio[]> {
   const pat = getStaffPat();
   if (!pat) throw new Error("no_pat");
   const url = `https://api.github.com/repos/${REPO}/contents/${PATH}?ref=${BRANCH}`;
@@ -124,7 +147,16 @@ async function fetchJson(): Promise<Inscripcio[]> {
 
 export async function loadInscripcions(force = false): Promise<Inscripcio[]> {
   if (!force && cache && Date.now() - cache.ts < CACHE_TTL_MS) return cache.data;
-  const data = await fetchJson();
+
+  // Intent 1: Apps Script (llig el Sheet directament, sense PAT)
+  const fromScript = await fetchFromAppsScript();
+  if (fromScript !== null) {
+    cache = { ts: Date.now(), data: fromScript };
+    return fromScript;
+  }
+
+  // Intent 2: GitHub JSON (necessita PAT)
+  const data = await fetchFromGitHub();
   cache = { ts: Date.now(), data };
   return data;
 }
