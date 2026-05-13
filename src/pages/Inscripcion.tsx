@@ -8,7 +8,7 @@ import {
   TALLAS, GENERES, PRECIO_GEN_4, PRECIO_GEN_5, PRECIO_SENIOR_4, PRECIO_SENIOR_5,
   COD_DESC, IBAN, BENEFICIARI,
   precioByCat, buildConcepte, buildTeamId, buildEpcQr, calcTotal,
-  isEarlyBirdActive,
+  isEarlyBirdActive, isSeniorCat,
   schema, type FD,
 } from "./Inscripcion.logic";
 import {
@@ -286,80 +286,76 @@ function SGenereSelect({ value, onChange }: { value:string; onChange:(v:string)=
   );
 }
 
-/* ─── Submit to JotForm ─── */
-async function submitToJotForm(data: FD, descAplicat: boolean, descInvitacions: boolean, justificantNom: string) {
-  const params = new URLSearchParams();
+/* ─── Submit to JotForm (form 261286732245055) ─── */
+async function submitToJotForm(
+  data: FD,
+  descAplicat: boolean,
+  descInvitacions: boolean,
+  justificantNom: string,
+  total: number,
+  teamId: string,
+  checkinUrl: string,
+  submissionDate: string,
+) {
+  const p = new URLSearchParams();
 
-  // qid=38: nom equip
-  params.append("submission[38]", data.nomEquip);
-  // qid=3: capità nom complet
-  params.append("submission[3][first]", data.capNom);
-  params.append("submission[3][last]", data.capCognom);
-  // qid=6: email
-  params.append("submission[6]", data.capEmail);
-  // qid=36: telèfon jugador 1
-  params.append("submission[36][full]", data.capTelefon);
-  // qid=37: data naix jugador 1
-  if (data.capDataNaix) {
-    const [y,m,d2] = data.capDataNaix.split("-");
-    params.append("submission[37][month]", m);
-    params.append("submission[37][day]", d2);
-    params.append("submission[37][year]", y);
-  }
-  // qid=33: categoria jugador 1
-  params.append("submission[33]", data.capCategoria || "");
-  // qid=40: talla jugador 1
-  params.append("submission[40]", data.capTalla);
-  // qid=32: club jugador 1
-  params.append("submission[32]", data.capClub || "");
-  // qid=34: tutor nom
-  if (data.tutorNom) {
-    params.append("submission[34][first]", data.tutorNom);
-    params.append("submission[34][last]", data.tutorCognom || "");
-  }
-  // qid=35: tutor telèfon
-  if (data.tutorTelefon) params.append("submission[35][full]", data.tutorTelefon);
+  // Capità
+  p.set("q2_q2_textbox0",           data.nomEquip);
+  p.set("q3_q3_fullname1[first]",   data.capNom);
+  p.set("q3_q3_fullname1[last]",    data.capCognom);
+  p.set("q4_q4_email2",             data.capEmail);
+  p.set("q5_q5_phone3[full]",       data.capTelefon);
+  p.set("q8_categoria",             data.capCategoria || "");
+  p.set("q9_genereEquip",           data.capGenere || "");
+  p.set("q10_midaEquip",            data.midaEquip);
+  p.set("q11_dataNaix",             data.capDataNaix || "");
+  p.set("q12_tallaCapita",          data.capTalla || "");
+  p.set("q13_clubCapita",           data.capClub || "");
+  p.set("q14_poblacioCapita",       data.capPoblacio || "");
+  p.set("q15_tutorNom",             [data.tutorNom, data.tutorCognom].filter(Boolean).join(" "));
+  p.set("q16_tutorTelefon",         data.tutorTelefon || "");
+  p.set("q17_totalEur",             String(total));
+  const descInfo = [
+    descAplicat     ? "Codi 3X3AVIAT -5%"   : "",
+    descInvitacions ? "Viral -5%"            : "",
+  ].filter(Boolean).join(" + ") || "Cap";
+  p.set("q18_descompteAplicat",     descInfo);
+  p.set("q19_concepteTransferencia", buildConcepte(data.nomEquip));
+  p.set("q20_teamId",               teamId);
+  p.set("q21_checkinUrl",           checkinUrl);
+  p.set("q22_justificantDrive",     justificantNom || "No adjuntat");
+  p.set("q23_dataInscripcio",       submissionDate);
 
-  // Jugadors 2,3,4 (,5 si escau)
-  const jugQids = [
-    { nameQid:"39", dataNaixQid:"52", catQid:"46", tallaQid:"43", clubQid:"47" },
-    { nameQid:"41", dataNaixQid:"56", catQid:"51", tallaQid:"50", clubQid:"49" },
-    { nameQid:"42", dataNaixQid:"59", catQid:"55", tallaQid:"54", clubQid:null },
-  ];
-  const numExtra = data.midaEquip === "5" ? 4 : 3;
-  data.jugadors.slice(0, numExtra).forEach((j, idx) => {
-    const q = jugQids[idx];
-    if (!q) return;
-    params.append(`submission[${q.nameQid}][first]`, j.nom);
-    params.append(`submission[${q.nameQid}][last]`, j.cognom);
-    if (j.dataNaix) {
-      const [y,m,d2] = j.dataNaix.split("-");
-      params.append(`submission[${q.dataNaixQid}][month]`, m);
-      params.append(`submission[${q.dataNaixQid}][day]`, d2);
-      params.append(`submission[${q.dataNaixQid}][year]`, y);
-    }
-    if (j.categoria) params.append(`submission[${q.catQid}]`, j.categoria);
-    if (j.talla) params.append(`submission[${q.tallaQid}]`, j.talla);
-    if (j.club && q.clubQid) params.append(`submission[${q.clubQid}]`, j.club);
-  });
+  // Tots els jugadors (incl. nous camps) + camps extra que no tenen camp dedicat a JotForm
+  const numJug = data.midaEquip === "5" ? 4 : 3;
+  const jugadorsDetall = {
+    capita: {
+      campusClub:      data.capCampusClub      || "",
+      seniorCategoria: data.capSeniorCategoria || "",
+    },
+    jugadors: data.jugadors.slice(0, numJug).map(j => ({
+      nom:             j.nom,
+      cognom:          j.cognom,
+      email:           j.email,
+      telefon:         j.telefon,
+      dataNaix:        j.dataNaix,
+      categoria:       j.categoria,
+      talla:           j.talla,
+      club:            j.club,
+      campusClub:      (j as any).campusClub      || "",
+      seniorCategoria: (j as any).seniorCategoria || "",
+    })),
+    samarretesExtra: data.samarretesExtra || [],
+    codiDesc:        data.codiDesc   || "",
+    comentaris:      data.comentaris || "",
+  };
+  p.set("q24_jugadorsDetall", JSON.stringify(jugadorsDetall));
+  p.set("website", ""); // honeypot
 
-  // Comentaris + info addicional
-  const extraInfo = [
-    data.comentaris ? `Comentaris: ${data.comentaris}` : "",
-    descAplicat ? "Descompte 3X3AVIAT aplicat (5%)" : "",
-    descInvitacions ? "Descompte invitacions 5 amics + IG (10%)" : "",
-    justificantNom ? `Justificant: ${justificantNom}` : "",
-    data.midaEquip === "5" && data.jugadors[3] ? `Jugador 5: ${data.jugadors[3].nom} ${data.jugadors[3].cognom}` : "",
-  ].filter(Boolean).join(" | ");
-  if (extraInfo) params.append("submission[11]", extraInfo);
-
-  const url = `${JOTFORM_BASE_URL}/form/${JOTFORM_FORM_ID}/submissions?apiKey=${JOTFORM_API_KEY}`;
-  const res = await fetch(url, {
+  return fetch("https://eu-submit.jotform.com/submit/261286732245055", {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params.toString(),
+    body: p,
   });
-  return res;
 }
 
 /* ═══════════════════════════════════════════
@@ -378,6 +374,7 @@ export default function Inscripcion() {
   const [descAplicat, setDescAplicat] = useState(false);
   const [codError, setCodError]   = useState("");
   const [justFile, setJustFile]   = useState<File | null>(null);
+  const [justError, setJustError] = useState<string | null>(null);
   const [copied, setCopied]       = useState(false);
   // Gate viral: comparteix per WhatsApp + segueix @cbgrupbarna → 10% descompte.
   // Camí alternatiu (per qui no vol compartir): segueix @cbgrupbarna + @timechamber_es.
@@ -439,17 +436,17 @@ export default function Inscripcion() {
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const { register, handleSubmit, trigger, setValue, watch, control, reset, formState:{ errors } } = useForm<FD>({
+  const { register, handleSubmit, trigger, setValue, watch, getValues, control, reset, formState:{ errors } } = useForm<FD>({
     resolver: zodResolver(schema),
     defaultValues: {
       nomEquip: "",
       midaEquip: undefined,
       capNom: "", capCognom: "", capEmail: "", capTelefon: "",
       capDataNaix: "", capCategoria: "", capGenere: "", capTalla: "",
-      capClub: "", capPoblacio: "",
+      capClub: "", capPoblacio: "", capCampusClub: "", capSeniorCategoria: "",
       tutorNom: "", tutorCognom: "", tutorTelefon: "",
       comentaris: "", codiDesc: "",
-      jugadors: Array.from({ length: 3 }, () => ({ nom:"", cognom:"", email:"", telefon:"", dataNaix:"", categoria:"", talla:"", club:"" })),
+      jugadors: Array.from({ length: 3 }, () => ({ nom:"", cognom:"", email:"", telefon:"", dataNaix:"", categoria:"", talla:"", club:"", campusClub:"", seniorCategoria:"" })),
       samarretesExtra: [],
       acceptaBases: false,
       acceptaLopd: false,
@@ -547,21 +544,32 @@ export default function Inscripcion() {
       }
     }
     if (step === 2) {
-      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla","capClub","capPoblacio"];
-      ok = await trigger(fields2);
+      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla","capClub","capPoblacio","capCampusClub"];
+      const capCat = getValues("capCategoria");
+      const fields2Extra = isSeniorCat(capCat) ? [...fields2, "capSeniorCategoria" as keyof FD] : fields2;
+      ok = await trigger(fields2Extra);
     }
     if (step === 3) {
-      const jugF = Array.from({ length: numJugadors - 1 }, (_, i) => [
-        `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.email`,
-        `jugadors.${i}.talla`, `jugadors.${i}.dataNaix`, `jugadors.${i}.telefon`,
-        `jugadors.${i}.club`, `jugadors.${i}.categoria`,
-      ]).flat() as Parameters<typeof trigger>[0];
+      const jugF = Array.from({ length: numJugadors - 1 }, (_, i) => {
+        const jugCat = getValues(`jugadors.${i}.categoria` as any);
+        const baseFields = [
+          `jugadors.${i}.nom`, `jugadors.${i}.cognom`, `jugadors.${i}.email`,
+          `jugadors.${i}.talla`, `jugadors.${i}.dataNaix`, `jugadors.${i}.telefon`,
+          `jugadors.${i}.club`, `jugadors.${i}.categoria`, `jugadors.${i}.campusClub`,
+        ];
+        if (isSeniorCat(jugCat)) baseFields.push(`jugadors.${i}.seniorCategoria`);
+        return baseFields;
+      }).flat() as Parameters<typeof trigger>[0];
       ok = await trigger(jugF);
     }
     if (step === 4) {
       // Cada samarreta extra ha de tenir talla seleccionada.
       const extraF = extraFields.map((_, i) => `samarretesExtra.${i}.talla` as const);
       ok = extraF.length === 0 ? true : await trigger(extraF as unknown as Parameters<typeof trigger>[0]);
+      if (!justFile) {
+        setJustError("Has d'adjuntar el justificant de pagament (JPG, PNG o PDF)");
+        ok = false;
+      }
     }
     if (ok) {
       tracker.pasCompletat(step);
@@ -855,12 +863,9 @@ export default function Inscripcion() {
       // si l'usuari obre el form de nou (un altre equip) comenci en blanc.
       clearPersisted();
       // Enviem també a JotForm (CRM secundari) en paral·lel, sense bloquejar l'èxit.
-      // Si falla, ho registrem a la consola però no mostrem error a l'usuari.
-      if (JOTFORM_API_KEY) {
-        submitToJotForm(data, descAplicat, descInvitacions, justFile?.name || "").catch(
-          (jfErr) => console.warn("[JotForm] Error enviant:", jfErr)
-        );
-      }
+      submitToJotForm(data, descAplicat, descInvitacions, justFile?.name || "", total, newTeamId, newCheckinUrl, submissionDate).catch(
+        (jfErr) => console.warn("[JotForm] Error enviant:", jfErr)
+      );
       tracker.inscripcioCompletada({
         categoria: data.capCategoria,
         total,
@@ -1338,7 +1343,7 @@ export default function Inscripcion() {
                 nomEquip: 1, midaEquip: 1,
                 capNom: 2, capCognom: 2, capEmail: 2, capTelefon: 2,
                 capDataNaix: 2, capCategoria: 2, capTalla: 2, capPoblacio: 2,
-                capClub: 2, tutorNom: 2, tutorCognom: 2, tutorTelefon: 2,
+                capClub: 2, capCampusClub: 2, capSeniorCategoria: 2, tutorNom: 2, tutorCognom: 2, tutorTelefon: 2,
                 jugadors: 3,
                 samarretesExtra: 5,
                 acceptaBases: 5, acceptaLopd: 5, acceptaImatge: 5, acceptaCancellacio: 5,
@@ -1527,6 +1532,14 @@ export default function Inscripcion() {
                     <FieldRow label="Club actual *" error={errors.capClub?.message}>
                       <SInput {...register("capClub")} placeholder="Club on jugues (o 'Sense club')" />
                     </FieldRow>
+                    <FieldRow label="¿De qué clubs/campus eres? *" error={errors.capCampusClub?.message}>
+                      <SInput {...register("capCampusClub")} placeholder="p.ex. CB Grup Barna, Campus Time Chamber…" />
+                    </FieldRow>
+                    {isSeniorCat(watch("capCategoria")) && (
+                      <FieldRow label="¿En qué categoría juegas en senior? *" error={errors.capSeniorCategoria?.message}>
+                        <SInput {...register("capSeniorCategoria")} placeholder="p.ex. Divisió de Honor, 1a Catalana…" />
+                      </FieldRow>
+                    )}
                     {/* Tutor si menor */}
                     {isMinor && (
                       <div className="bg-yellow-500/10 border border-yellow-500/25 rounded-xl p-4 space-y-3">
@@ -1597,6 +1610,18 @@ export default function Inscripcion() {
                               <SInput {...register(`jugadors.${idx}.club`)} placeholder="Club on jugues (o 'Sense club')" />
                             </FieldRow>
                           </div>
+                          <div className="col-span-2">
+                            <FieldRow label="¿De qué clubs/campus eres? *" error={(errors.jugadors?.[idx] as any)?.campusClub?.message}>
+                              <SInput {...register(`jugadors.${idx}.campusClub`)} placeholder="p.ex. CB Grup Barna, Campus Time Chamber…" />
+                            </FieldRow>
+                          </div>
+                          {isSeniorCat(watch(`jugadors.${idx}.categoria`)) && (
+                            <div className="col-span-2">
+                              <FieldRow label="¿En qué categoría juegas en senior? *" error={(errors.jugadors?.[idx] as any)?.seniorCategoria?.message}>
+                                <SInput {...register(`jugadors.${idx}.seniorCategoria`)} placeholder="p.ex. Divisió de Honor, 1a Catalana…" />
+                              </FieldRow>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -1735,23 +1760,33 @@ export default function Inscripcion() {
                       {earlyBird && <p className="text-orange-300 text-xs mt-2 flex items-center gap-1">🔥 Ja tens el 10% Early Bird aplicat — no acumulable amb cap codi.</p>}
                     </div>
                     {/* Upload justificant */}
-                    <div
-                      className="border-2 border-dashed border-white/15 rounded-xl p-5 text-center hover:border-red-500/50 hover:bg-red-500/5 transition-colors cursor-pointer"
-                      onClick={() => fileRef.current?.click()}>
-                      <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
-                        onChange={e => { const f = e.target.files?.[0]; if(f) setJustFile(f); }} />
-                      {justFile ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <Check className="w-7 h-7 text-green-400"/>
-                          <p className="font-semibold text-green-400 text-sm">{justFile.name}</p>
-                          <p className="text-xs text-white/30">Fes clic per canviar</p>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-2">
-                          <Upload className="w-7 h-7 text-white/20"/>
-                          <p className="font-semibold text-sm text-white/60">Adjunta el justificant de pagament</p>
-                          <p className="text-xs text-white/30">JPG, PNG o PDF (opcional)</p>
-                        </div>
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-white/50 mb-2 flex items-center gap-1.5">
+                        Justificant de pagament *
+                      </p>
+                      <div
+                        className={`border-2 border-dashed rounded-xl p-5 text-center hover:border-red-500/50 hover:bg-red-500/5 transition-colors cursor-pointer ${justError && !justFile ? "border-red-500/60" : "border-white/15"}`}
+                        onClick={() => fileRef.current?.click()}>
+                        <input ref={fileRef} type="file" accept="image/*,.pdf" className="hidden"
+                          onChange={e => { const f = e.target.files?.[0]; if(f) { setJustFile(f); setJustError(null); } }} />
+                        {justFile ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <Check className="w-7 h-7 text-green-400"/>
+                            <p className="font-semibold text-green-400 text-sm">{justFile.name}</p>
+                            <p className="text-xs text-white/30">Fes clic per canviar</p>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="w-7 h-7 text-white/20"/>
+                            <p className="font-semibold text-sm text-white/60">Adjunta el justificant de pagament</p>
+                            <p className="text-xs text-white/30">JPG, PNG o PDF · màx 8 MB</p>
+                          </div>
+                        )}
+                      </div>
+                      {justError && !justFile && (
+                        <p className="text-red-400 text-xs mt-1.5 flex items-center gap-1">
+                          <span>⚠</span> {justError}
+                        </p>
                       )}
                     </div>
                     {/* Comentaris */}

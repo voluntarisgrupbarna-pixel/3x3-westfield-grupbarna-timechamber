@@ -157,6 +157,8 @@ export const jugSchema = z.object({
      categoria: reqStr("Selecciona categoria").min(1, "Selecciona categoria"),
      talla:    reqStr("Selecciona talla").min(1, "Selecciona talla"),
      club:     reqStr("Indica el club o escriu 'Sense club'").min(2, "Indica el club o escriu 'Sense club'"),
+     campusClub:      reqStr("Indica el campus o club d'origen").min(2, "Mínim 2 caràcters"),
+     seniorCategoria: z.string().optional(),
 });
 
 export const schema = z.object({
@@ -178,6 +180,8 @@ export const schema = z.object({
      capTalla:     reqStr("Selecciona talla").min(1, "Selecciona talla"),
      capClub:      reqStr("Indica el club o escriu 'Sense club'").min(2, "Indica el club o escriu 'Sense club'"),
      capPoblacio:  reqStr("Indica la teva població o barri").min(2, "Indica la teva població o barri"),
+     capCampusClub:      reqStr("Indica el campus o club d'origen").min(2, "Mínim 2 caràcters"),
+     capSeniorCategoria: z.string().optional(),
      tutorNom:     z.string().optional(),
      tutorCognom:  z.string().optional(),
      tutorTelefon: z.string().optional(),
@@ -195,6 +199,15 @@ export const schema = z.object({
      acceptaLopd:       z.boolean().refine(v => v === true, "Has d'acceptar la política de dades"),
      acceptaImatge:     z.boolean().refine(v => v === true, "Has d'acceptar els drets d'imatge"),
      acceptaCancellacio: z.boolean().refine(v => v === true, "Has d'acceptar la política de cancel·lació"),
+}).superRefine((data, ctx) => {
+     if (isSeniorCat(data.capCategoria) && !data.capSeniorCategoria?.trim()) {
+          ctx.addIssue({ code: "custom", path: ["capSeniorCategoria"], message: "Indica la categoria en sèniors" });
+     }
+     data.jugadors?.forEach((j, i) => {
+          if (isSeniorCat(j.categoria) && !j.seniorCategoria?.trim()) {
+               ctx.addIssue({ code: "custom", path: ["jugadors", i, "seniorCategoria"], message: "Indica la categoria en sèniors" });
+          }
+     });
 });
 
 export type FD = z.infer<typeof schema>;
