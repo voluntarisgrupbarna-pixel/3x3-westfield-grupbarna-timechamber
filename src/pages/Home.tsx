@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, X, ChevronLeft, ChevronRight, Zap, Medal, Star } from "lucide-react";
@@ -23,6 +23,34 @@ function ScrollProgressBar() {
       <div className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-red-400 transition-all duration-100"
         style={{ width: `${progress}%`, boxShadow: "0 0 6px rgba(220,38,38,0.7)" }} />
     </div>
+  );
+}
+
+/* ─── Early Bird countdown per al hero ─── */
+const EB_END_HOME = new Date("2026-05-20T23:59:59+02:00");
+function EarlyBirdPill() {
+  const calc = () => {
+    const diff = EB_END_HOME.getTime() - Date.now();
+    if (diff <= 0) return null;
+    const dies = Math.floor(diff / 86400000);
+    const hores = Math.floor((diff % 86400000) / 3600000);
+    return dies === 0 ? `🚨 Acaba AVUI — ${hores}h restants` : `⏰ Acaba en ${dies} dies ${hores}h`;
+  };
+  const [txt, setTxt] = useState(calc);
+  useEffect(() => {
+    const t = setInterval(() => setTxt(calc), 60000);
+    return () => clearInterval(t);
+  }, []);
+  if (!txt) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-500/50 text-orange-300 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-4 animate-pulse-slow"
+    >
+      🔥 Early Bird −10% · {txt}
+    </motion.div>
   );
 }
 
@@ -135,20 +163,25 @@ function isFullyBooked(count: number, capacity: number | null): boolean {
 }
 
 function EquipsBadge() {
-  const { count, capacity, loaded } = useEquipsInscrits();
+  const { count, capacity, byCategory, loaded } = useEquipsInscrits();
   if (!loaded) {
     return (
-      <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-        🔥 +60% OCUPAT · Inscripcions Obertes
-      </span>
+      <div className="flex flex-wrap gap-2">
+        <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+          <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+          🔥 +60% OCUPAT · Inscripcions Obertes
+        </span>
+      </div>
     );
   }
   const ple = isFullyBooked(count, capacity);
   const cap = capacity ?? TOTAL_CAPACITY;
-  // Floor 60% per prova social (mai baixem d'aquest % en el badge)
   const pct = Math.max(60, Math.min(100, Math.round((count / cap) * 100)));
   const remaining = Math.max(0, cap - count);
+
+  // Categories plenes (FOMO)
+  const fullCats = CATEGORIES.filter(cat => (byCategory[cat.name] || 0) >= cat.quota);
+
   if (ple) {
     return (
       <Link to="/llista-espera">
@@ -160,10 +193,17 @@ function EquipsBadge() {
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
-      <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-      🔥 {pct}% OCUPAT · {remaining} places lliures
-    </span>
+    <div className="flex flex-wrap gap-2">
+      <span className="inline-flex items-center gap-1.5 bg-red-900/30 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+        🔥 {pct}% OCUPAT · {remaining} places lliures
+      </span>
+      {fullCats.map(cat => (
+        <span key={cat.name} className="inline-flex items-center gap-1 bg-red-600/20 border border-red-500/50 text-red-300 text-xs font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-full">
+          🔴 {cat.name}: PLENA
+        </span>
+      ))}
+    </div>
   );
 }
 
@@ -816,6 +856,11 @@ export default function Home() {
                   <MapPin className="w-4 h-4 text-red-400" />
                   <strong className="text-white">3 seus · Barri del Clot, Barcelona</strong>
                 </span>
+              </motion.div>
+
+              {/* Early Bird urgency pill */}
+              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2.5}>
+                <EarlyBirdPill />
               </motion.div>
 
               {/* CTA */}

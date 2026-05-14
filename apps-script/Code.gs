@@ -2532,6 +2532,95 @@ function backfillIndividuals() {
   Logger.log('[backfill-indiv] COMPLET ✓ ' + ok + ' enviats · ' + errors + ' errors');
 }
 
+// ─── VERSIÓ REFETA (idempotent + categories + flag) ──────────────────────────
+// Substitueix l'anterior backfillIndividuals. Afegida a continuació com a nova
+// funció per no trencar res.
+
+/**
+ * Calcula la categoria 3x3 per any de naixement (temporada 2025-2026).
+ */
+function getCategoria3x3ByBirthDate_(dataNaix) {
+  if (!dataNaix) return '';
+  var d = dataNaix instanceof Date ? dataNaix : new Date(dataNaix);
+  if (isNaN(d.getTime())) return '';
+  var any = d.getFullYear();
+  if (any >= 2015) return 'Escola';
+  if (any >= 2013) return 'Premini';
+  if (any >= 2011) return 'Mini';
+  if (any >= 2009) return 'Infantil';
+  if (any >= 2007) return 'Cadet';
+  if (any >= 2005) return 'Junior';
+  return 'Sèniors';
+}
+
+/**
+ * FIX individuals existents (executa UNA SOLA VEGADA):
+ * 1. Calcula categoria per any de naixement si buida.
+ * 2. Regenera checkinUrl amb categoria correcta.
+ * 3. Marca "Email enviat" = "Sí" (les 2 persones ja van rebre email).
+ * Des del dashboard: selecciona "fixExistingIndividuals" i clica ▶.
+ */
+function fixExistingIndividuals() {
+  var id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var ss = SpreadsheetApp.openById(id);
+  var sheet = ss.getSheetByName('Jugadors_Individuals');
+  if (!sheet) { Logger.log('[fix-indiv] Sheet no trobat.'); return; }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { Logger.log('[fix-indiv] Sheet buit.'); return; }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h || '').trim(); });
+
+  // Afegir columnes que faltin
+  ['Codi WRI', 'Check-in URL', 'Email enviat'].forEach(function(col) {
+    if (headers.indexOf(col) === -1) {
+      sheet.getRange(1, headers.length + 1).setValue(col);
+      headers.push(col);
+    }
+  });
+
+  var C = {};
+  headers.forEach(function(h, i) { C[h] = i; });
+
+  var allRows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var fixed = 0;
+
+  allRows.forEach(function(r, i) {
+    var teamId   = String(r[C['Team ID']] || '').trim();
+    var nom      = String(r[C['Nom']]     || '').trim();
+    var cognom   = String(r[C['Cognom']]  || '').trim();
+    var email    = String(r[C['Email']]   || '').trim();
+    var dataNaix = r[C['Data naixement']] || '';
+    var poblacio = String(r[C['Població']]  || '').trim();
+    var telefon  = String(r[C['Telèfon']]   || '').trim();
+    if (!email) return;
+
+    // 1. Categoria per any de naixement
+    var catActual   = String(r[C['Categoria']] || '').trim();
+    var catCalculada = getCategoria3x3ByBirthDate_(dataNaix) || catActual;
+    if (catCalculada !== catActual) {
+      sheet.getRange(i + 2, C['Categoria'] + 1).setValue(catCalculada);
+      Logger.log('[fix-indiv] ' + nom + ' ' + cognom + ' → categoria: ' + catCalculada);
+    }
+
+    // 2. Regenerar checkinUrl amb categoria correcta
+    var checkinUrl = buildCheckinUrlIndividual_({
+      teamId: teamId, nom: nom, cognom: cognom,
+      categoria: catCalculada, poblacio: poblacio,
+      telefon: telefon, email: email, dataNaix: String(dataNaix || ''),
+    });
+    sheet.getRange(i + 2, C['Check-in URL'] + 1).setValue(checkinUrl);
+
+    // 3. Marcar "Email enviat" = "Sí" (ja enviat pel backfill anterior)
+    sheet.getRange(i + 2, C['Email enviat'] + 1).setValue('Sí');
+
+    Logger.log('[fix-indiv] ✓ ' + nom + ' ' + cognom + ' | ' + catCalculada + ' | URL actualitzada | enviat marcat');
+    fixed++;
+  });
+
+  Logger.log('[fix-indiv] COMPLET — ' + fixed + ' files actualitzades');
+}
+
 /**
  * Captura un abandonament del formulari d'inscripció.
  * Escriu a la pestanya "Abandonaments" del Sheet.

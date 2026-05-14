@@ -212,6 +212,22 @@ function clearPersisted(): void {
   try { localStorage.removeItem(GATE_LS_KEY); localStorage.removeItem(FORM_LS_KEY); } catch {}
 }
 
+/* ─── Hook: compte enrere Early Bird ─── */
+const EB_END = new Date("2026-05-20T23:59:59+02:00");
+function calcEbCountdown() {
+  const diff = EB_END.getTime() - Date.now();
+  if (diff <= 0) return { dies: 0, hores: 0, minuts: 0, actiu: false };
+  return { dies: Math.floor(diff / 86400000), hores: Math.floor((diff % 86400000) / 3600000), minuts: Math.floor((diff % 3600000) / 60000), actiu: true };
+}
+function useEarlyBirdCountdown() {
+  const [state, setState] = useState(calcEbCountdown);
+  useEffect(() => {
+    const t = setInterval(() => setState(calcEbCountdown), 30000);
+    return () => clearInterval(t);
+  }, []);
+  return state;
+}
+
 /* ─── Textos de WhatsApp (variados para no parecer spam) ─── */
 const SHARE_TEXTS = [
   "🏀 Ei! Munto equip pel 3×3 Westfield Glòries (6-7 Juny · Barcelona). 2.000€ Prize Money (Sèniors M/F) i punts FIBA. T'apuntes?",
@@ -381,6 +397,7 @@ export default function Inscripcion() {
   // Lazy initializers: si tornem d'una pestanya WhatsApp/Instagram que el SO ha matat,
   // restaurem el progrés persistit en localStorage.
   const earlyBird = isEarlyBirdActive();
+  const ebCountdown = useEarlyBirdCountdown();
   // Sempre mostrem el gate viral perquè l'usuari pugui compartir i seguir @cbgrupbarna.
   // Durant l'Early Bird el descompte del gate no s'acumula (el 10% ja s'aplica automàticament),
   // però volem que els usuaris comparteixin i segueixin igualment.
@@ -1308,10 +1325,33 @@ export default function Inscripcion() {
             );
           })()}
 
+          {/* Reptar rival — el botó més viral del torneig */}
+          <button
+            type="button"
+            onClick={() => {
+              const nom = watch("nomEquip") || "el nostre equip";
+              const cat = watch("capCategoria") || "3x3";
+              const msg = `🏀 REPTE! L'equip "${nom}" (${cat}) ja s'ha inscrit al 3×3 Westfield Glòries — Barcelona, 6-7 Juny 2026. 2.000€ Prize Money i punts FIBA. Vosaltres us atreviu? 👊 Inscripció: https://cbgrupbarna-3x3timechamber.com/inscripcion`;
+              window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+              track("viral_rival_challenge_click", { teamName: nom, categoria: cat });
+            }}
+            className="w-full mb-3 bg-green-600/15 hover:bg-green-600/25 active:bg-green-600/30 border border-green-500/40 hover:border-green-500/60 rounded-2xl p-5 text-left transition-all group"
+          >
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">💬</span>
+              <div className="flex-1">
+                <p className="text-xs font-black uppercase tracking-wider text-green-300 mb-0.5">Reptar rivals per WhatsApp</p>
+                <p className="text-base font-black text-white group-hover:text-green-100 transition-colors">"Vine si t'atreveixes" 👊</p>
+                <p className="text-xs text-white/50 mt-0.5">Envia el repte a l'equip rival — ells fan màrqueting per tu</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-green-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </button>
+
           <div className="flex flex-col sm:flex-row gap-3">
             <button type="button" onClick={() => setWaLeadOpen(true)}
-              className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl transition-all hover:scale-105">
-              📱 WhatsApp
+              className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 border border-white/20 text-white font-bold uppercase tracking-wider py-4 rounded-xl transition-all hover:scale-105">
+              📱 Contacte WhatsApp
             </button>
             <Link to="/" className="flex-1">
               <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider py-4 rounded-xl hover:scale-105 transition-all h-auto">
@@ -1414,12 +1454,18 @@ export default function Inscripcion() {
           <motion.div initial={{ opacity:0, y:-8 }} animate={{ opacity:1, y:0 }} className="mb-6 rounded-2xl overflow-hidden border border-white/10">
             {earlyBird && (
               <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-orange-500/20 to-red-500/20">
-                <span className="text-2xl">🔥</span>
-                <div>
-                  <p className="text-orange-300 text-xs font-black uppercase tracking-wider">Early Bird actiu — fins el 20 de maig</p>
-                  <p className="text-white font-bold text-sm">−10% aplicat automàticament</p>
+                <span className="text-2xl">⏰</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-orange-300 text-xs font-black uppercase tracking-wider">
+                    {ebCountdown.actiu && ebCountdown.dies === 0
+                      ? `🚨 ÚLTIMES ${ebCountdown.hores}h — Early Bird acaba avui!`
+                      : ebCountdown.actiu
+                        ? `⚡ Early Bird acaba en ${ebCountdown.dies}d ${ebCountdown.hores}h`
+                        : "Early Bird actiu — fins el 20 de maig"}
+                  </p>
+                  <p className="text-white font-bold text-sm">−10% aplicat automàticament · Estalvia fins a 10,50€</p>
                 </div>
-                <span className="ml-auto text-2xl font-black text-orange-400">−10%</span>
+                <span className="ml-auto text-2xl font-black text-orange-400 flex-shrink-0">−10%</span>
               </div>
             )}
             {descInvitacions && (
