@@ -2108,48 +2108,59 @@ function backfillJotForm() {
 
   var ok = 0, skipped = 0, errors = 0;
 
-  rows.forEach(function(r, i) {
-    var teamId   = String(r[idx['Team ID']]  || '').trim();
-    var nomEquip = String(r[idx['Nom equip']] || '').trim();
-    if (!teamId && !nomEquip) { skipped++; return; }  // fila buida
+  // Columnes fixes segons writeToSheet_ (la capçalera real del Sheet pot tenir etiquetes antigues)
+  // Ordre: Data(0) TeamID(1) Concepte(2) Categoria(3) NomEquip(4) Capita(5) Poblacio(6)
+  //        Email(7) Telefon(8) Jugadors(9) Mida(10) Notes(11) Total(12) DescAplic(13)
+  //        DescInv(14) JustifUrl(15) CheckinUrl(16) SamExtra(17) TallesExtra(18)
+  //        PagEstat(19) Arribat(20) Genere(21) DescEB(22) EstatCRM(23) NotesCRM(24)
+  //        ProxSeg(25) CodiWR(26)
+  var C = { data:0,teamId:1,concepte:2,categoria:3,nomEquip:4,capita:5,poblacio:6,
+             email:7,telefon:8,jugadors:9,mida:10,notes:11,total:12,descAplic:13,
+             descInv:14,justifUrl:15,checkinUrl:16,samExtra:17,tallesExtra:18,
+             pagEstat:19,arribat:20,genere:21,descEB:22,estatCRM:23,notesCRM:24,
+             proxSeg:25,codiWR:26 };
 
-    // Capità: "Nom Cognom" → partir per primer espai
-    var capitaFull = String(r[idx['Capità']] || '').trim();
+  function str(v) { return String(v === undefined || v === null ? '' : v).trim(); }
+
+  rows.forEach(function(r, i) {
+    var teamId   = str(r[C.teamId]);
+    var nomEquip = str(r[C.nomEquip]);
+    if (!nomEquip) { skipped++; return; }  // fila buida
+
+    // Capità: és el nom complet ("Nom Cognom") — partir per primer espai
+    var capitaFull = str(r[C.capita]);
     var spaceIdx   = capitaFull.indexOf(' ');
     var capNom    = spaceIdx > 0 ? capitaFull.substring(0, spaceIdx) : capitaFull;
     var capCognom = spaceIdx > 0 ? capitaFull.substring(spaceIdx + 1) : '';
 
-    // Jugadors: "A · B · C" → array d'objectes
-    var jugadorsRaw  = String(r[idx['Jugadors']] || '');
-    var jugadorsArr  = jugadorsRaw
+    // Jugadors: "A · B · C"
+    var jugadorsRaw = str(r[C.jugadors]);
+    var jugadorsArr = jugadorsRaw
       ? jugadorsRaw.split(' · ').map(function(n) { return n.trim(); }).filter(Boolean)
       : [];
     var jugadorsRows = jugadorsArr.map(function(n) { return { 'Nombre completo': n }; });
     var jugadorsJSON = JSON.stringify(jugadorsArr.map(function(n) { return { nom: n }; }));
 
-    var nomEquipUpper = nomEquip.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
-    var concepte = teamId ? ('3X3+' + nomEquipUpper) : '';
-
     var payload = {
       'submission[2]':        nomEquip,
       'submission[3][first]': capNom,
       'submission[3][last]':  capCognom,
-      'submission[4]':        String(r[idx['Email']]              || ''),
-      'submission[5]':        String(r[idx['Telèfon']]            || ''),
+      'submission[4]':        str(r[C.email]),
+      'submission[5]':        str(r[C.telefon]),
       'submission[6]':        JSON.stringify(jugadorsRows),
-      'submission[8]':        String(r[idx['Categoria']]          || ''),
-      'submission[9]':        String(r[idx['Gènere']]             || ''),
-      'submission[10]':       String(r[idx['Mida samarretes']]    || ''),
-      'submission[14]':       String(r[idx['Població']]           || ''),
-      'submission[17]':       String(r[idx['Total (€)']] || r[idx['Total €']] || ''),
-      'submission[18]':       String(r[idx['Desc. aplicat?']]     || '') === 'Sí' ? 'Sí' : '',
-      'submission[19]':       concepte,
+      'submission[8]':        str(r[C.categoria]),
+      'submission[9]':        str(r[C.genere]),
+      'submission[10]':       str(r[C.mida]),
+      'submission[14]':       str(r[C.poblacio]),
+      'submission[17]':       str(r[C.total]),
+      'submission[18]':       str(r[C.descAplic]) === 'Sí' ? 'Sí' : '',
+      'submission[19]':       str(r[C.concepte]) || ('3X3+' + nomEquip.toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_|_$/g,'')),
       'submission[20]':       teamId,
-      'submission[21]':       String(r[idx['Check-in URL']]       || ''),
-      'submission[22]':       String(r[idx['Justificant Drive URL']] || ''),
-      'submission[23]':       String(r[idx['Data']]               || ''),
+      'submission[21]':       str(r[C.checkinUrl]),
+      'submission[22]':       str(r[C.justifUrl]),
+      'submission[23]':       str(r[C.data]),
       'submission[24]':       jugadorsJSON,
-      'submission[25]':       String(r[idx['Codi WR']]            || ''),
+      'submission[25]':       str(r[C.codiWR]),
     };
 
     var form = Object.keys(payload).filter(function(k) {
