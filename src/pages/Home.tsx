@@ -1154,6 +1154,20 @@ export default function Home() {
             </div>
           </motion.div>
 
+          {/* FIBA Play link */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="flex justify-center mb-8">
+            <a
+              href="https://play.fiba3x3.com/events/4a4773cb-79be-4777-b164-220b36aacbe6"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/30 text-white/80 hover:text-white text-sm font-semibold px-5 py-3 rounded-xl transition-all"
+            >
+              <span className="text-base">🏀</span>
+              Seguiment oficial a FIBA Play
+              <span className="text-white/40 text-xs font-normal">↗</span>
+            </a>
+          </motion.div>
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {categories.map((cat, i) => (
               <motion.div key={cat.name} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.4}
