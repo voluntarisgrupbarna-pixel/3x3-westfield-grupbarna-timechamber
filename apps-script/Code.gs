@@ -834,35 +834,48 @@ function writeToSheet_(data, justificantUpload) {
   const numExtras = extraArr.length;
   const tallesExtra = extraArr.map(function (s) { return (s && s.talla) ? s.talla : '?'; }).join(', ');
   const pagEstat = data && data.pag === 'ok' ? 'Verificat' : 'Pendent';
-  sheet.appendRow([
-    d.data,
-    d.teamId,
-    d.concepte,
-    d.categoria,
-    d.nomEquip,
-    d.capita,
-    d.poblacio,
-    d.email,
-    d.telefon,
-    jugadors,
-    d.mida,
-    d.notes,
-    d.total,
-    d.descAplicat ? 'Sí' : 'No',
-    d.descInvitacions ? 'Sí' : 'No',
-    justifUrl,
-    d.checkinUrl,
-    numExtras,
-    tallesExtra,
-    pagEstat,
-    '',  // "Arribat" buit fins que algú escanegi el QR el dia del torneig
-    d.genere,
-    d.descEarlyBird ? 'Sí' : 'No',
-    'Nou',  // Estat CRM inicial
-    '',     // Notes CRM (Ana omple manualment)
-    '',     // Proper seguiment (data)
-    d.codiWR || '',
-  ]);
+
+  // Escriptura per capçalera (no posicional) — funciona tant amb l'esquema antic com el nou.
+  // Llegim els headers ACTUALS del Sheet (que ara inclouen els nous camps afegits per migració).
+  const currentHeaders = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h || '').trim(); });
+
+  // Mapa camp → valor per a tots els EXPECTED_HEADERS
+  var valueByHeader = {
+    'Data':                  d.data,
+    'Team ID':               d.teamId,
+    'Concepte':              d.concepte,
+    'Categoria':             d.categoria,
+    'Nom equip':             d.nomEquip,
+    'Capità':                d.capita,
+    'Població':              d.poblacio,
+    'Email':                 d.email,
+    'Telèfon':               d.telefon,
+    'Jugadors':              jugadors,
+    'Mida samarretes':       d.mida,
+    'Notes':                 d.notes,
+    'Total (€)':             d.total,
+    'Desc. aplicat?':        d.descAplicat ? 'Sí' : 'No',
+    'Desc. invitacions?':    d.descInvitacions ? 'Sí' : 'No',
+    'Justificant Drive URL': justifUrl,
+    'Check-in URL':          d.checkinUrl,
+    'Samarretes extra':      numExtras,
+    'Talles extra':          tallesExtra,
+    'Pagament estat':        pagEstat,
+    'Arribat (timestamp)':   '',
+    'Gènere':                d.genere,
+    'Desc. early-bird?':     d.descEarlyBird ? 'Sí' : 'No',
+    'Estat CRM':             'Nou',
+    'Notes CRM':             '',
+    'Proper seguiment':      '',
+    'Codi WR':               d.codiWR || '',
+  };
+
+  // Construïm la fila respectant l'ordre real del Sheet (columna per columna)
+  var row = currentHeaders.map(function(h) {
+    return valueByHeader[h] !== undefined ? valueByHeader[h] : '';
+  });
+  sheet.appendRow(row);
 }
 
 /**
@@ -878,16 +891,22 @@ function addIndividualPlayer_(data) {
     'Data', 'Team ID', 'Concepte', 'Nom', 'Cognom', 'Data naixement', 'Categoria',
     'Email', 'Telèfon', 'Població', 'Talla', 'Posició preferida', 'Nivell',
     'Observacions', 'Equip assignat', 'Pagat?', 'Arribat (timestamp)',
-    'Codi WRI', 'Check-in URL'
+    'Codi WRI', 'Check-in URL', 'Email enviat'
   ];
   if (sheet.getLastRow() === 0) {
     sheet.appendRow(INDIV_HEADERS);
   } else {
-    // Migració: afegeix columnes que faltin (Codi WRI, Check-in URL)
     const existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
       .map(function(h) { return String(h || '').trim(); });
     const missing = INDIV_HEADERS.filter(function(h) { return existing.indexOf(h) === -1; });
     if (missing.length) sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
+  }
+  // Auto-calcular categoria si no ve informada
+  var categoria = data.categoria || getCategoria3x3ByBirthDate_(data.dataNaix) || '';
+  // Auto-generar checkinUrl si no ve del frontend
+  var checkinUrl = data.checkinUrl || '';
+  if (!checkinUrl && data.teamId) {
+    checkinUrl = buildCheckinUrlIndividual_(Object.assign({}, data, { categoria: categoria }));
   }
   sheet.appendRow([
     data.data || new Date().toLocaleString('ca-ES'),
@@ -896,7 +915,7 @@ function addIndividualPlayer_(data) {
     data.nom || '',
     data.cognom || '',
     data.dataNaix || '',
-    data.categoria || '',
+    categoria,
     data.email || '',
     data.telefon || '',
     data.poblacio || '',
@@ -908,8 +927,10 @@ function addIndividualPlayer_(data) {
     'No',         // Pagat?
     '',           // Arribat (timestamp)
     data.codiWR || '',
-    data.checkinUrl || '',
+    checkinUrl,
+    '',           // Email enviat (es marca després de sendEmailsIndividual_)
   ]);
+  return { categoria: categoria, checkinUrl: checkinUrl };
 }
 
 /**
@@ -1371,6 +1392,7 @@ function buildFilloutBody_(data, justificantUpload) {
   const detalls = {
     concepte: data.concepte || ('3X3+' + String(data.nomEquip || 'EQUIP').toUpperCase()),
     categoria: data.categoria || '',
+    genere: data.genere || data.capGenere || '',
     telefon: data.telefon || '',
     total: data.total || 0,
     jugadors: jugadors,
@@ -2598,4 +2620,49 @@ function addAbandonament_(data) {
     ].filter(Boolean).join('\n');
     sendCallMeBot_(msg);
   } catch (e) { Logger.log('[abandon] CallMeBot err: ' + e); }
+
+  // Email als admins (només primera vegada)
+  try {
+    const pasLabels = ['—', 'Equip', 'Capità', 'Jugadors', 'Pagament', 'Bases'];
+    const pasLabel = pasLabels[pas] || 'Pas ' + pas;
+    const sheetUrl = 'https://docs.google.com/spreadsheets/d/'
+      + (PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA')
+      + '/edit#gid=0';
+    const mailtoRecuperar = 'mailto:' + email
+      + '?subject=' + encodeURIComponent('Ei! Has deixat a mitges la inscripció al 3×3 Glòries 🏀')
+      + '&body=' + encodeURIComponent(
+          'Hola' + (nomEquip ? ' ' + nomEquip : '') + ',\n\n'
+        + 'Hem vist que has començat a inscriure\'t al 3×3 Westfield Glòries (6-7 Juny) però no has acabat.\n\n'
+        + 'Si tens algun dubte o necessites ajuda, respon aquest email i t\'ajudem!\n\n'
+        + 'Inscriu-te ara: https://cbgrupbarna-3x3timechamber.com/inscripcion\n\n'
+        + 'Fins aviat!\nAna · CB Grup Barna'
+      );
+    const html = '<div style="font-family:sans-serif;max-width:520px;margin:0 auto">'
+      + '<div style="background:#dc2626;padding:20px 24px;border-radius:12px 12px 0 0">'
+      + '<h2 style="color:#fff;margin:0;font-size:18px">⚠️ Abandonament formulari 3×3</h2>'
+      + '</div>'
+      + '<div style="background:#18181b;padding:24px;border-radius:0 0 12px 12px;color:#e4e4e7">'
+      + '<table style="width:100%;border-collapse:collapse">'
+      + '<tr><td style="color:#a1a1aa;padding:6px 0;width:120px">Email</td>'
+      + '<td style="padding:6px 0"><strong><a href="' + mailtoRecuperar + '" style="color:#f87171">' + email + '</a></strong></td></tr>'
+      + (nomEquip ? '<tr><td style="color:#a1a1aa;padding:6px 0">Equip</td><td style="padding:6px 0">' + nomEquip + '</td></tr>' : '')
+      + (categoria ? '<tr><td style="color:#a1a1aa;padding:6px 0">Categoria</td><td style="padding:6px 0">' + categoria + '</td></tr>' : '')
+      + (mida ? '<tr><td style="color:#a1a1aa;padding:6px 0">Mida</td><td style="padding:6px 0">' + mida + ' jugadors</td></tr>' : '')
+      + (telefon ? '<tr><td style="color:#a1a1aa;padding:6px 0">Telèfon</td><td style="padding:6px 0"><a href="https://wa.me/' + telefon.replace(/[^0-9]/g,'') + '" style="color:#4ade80">' + telefon + '</a></td></tr>' : '')
+      + '<tr><td style="color:#a1a1aa;padding:6px 0">Abandonat a</td><td style="padding:6px 0">Pas ' + pas + '/5 — ' + pasLabel + '</td></tr>'
+      + '<tr><td style="color:#a1a1aa;padding:6px 0">Data</td><td style="padding:6px 0">' + now.toLocaleString('ca-ES') + '</td></tr>'
+      + '</table>'
+      + '<div style="margin-top:20px;display:flex;gap:12px">'
+      + '<a href="' + mailtoRecuperar + '" style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">✉️ Enviar email recuperació</a>'
+      + (telefon ? ' <a href="https://wa.me/' + telefon.replace(/[^0-9]/g,'') + '" style="background:#25D366;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block">💬 WhatsApp</a>' : '')
+      + '</div>'
+      + '<p style="margin-top:16px;font-size:12px;color:#71717a">Veure tots els abandonaments: <a href="' + sheetUrl + '" style="color:#a1a1aa">Google Sheets</a></p>'
+      + '</div></div>';
+
+    sendMail_({
+      to: getAdminEmails_(),
+      subject: '⚠️ Abandonament 3×3 — ' + (nomEquip || email) + ' (pas ' + pas + '/5)',
+      htmlBody: html,
+    });
+  } catch (e) { Logger.log('[abandon] admin mail err: ' + e); }
 }
