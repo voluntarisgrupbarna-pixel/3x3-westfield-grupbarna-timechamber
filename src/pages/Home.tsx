@@ -473,12 +473,12 @@ const fadeUp = {
 
 const categories = [
   { name: "SÈNIORS", gender: "♂ ♀", desc: "Prize Money 1.000€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)", day: 6 },
-  { name: "VETERANS", gender: "♂ ♀", desc: "Trofeus i medalles · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "70€ (4 jug.)", day: 6 },
-  { name: "MÀGICS · INCLUSIVA", gender: "♂ ♀", desc: "Categoria inclusiva Barna Màgics · Novetat 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "INCLUSIVA", price: "70€ (4 jug.)", day: 6 },
-  { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "70€ (4 jug.)", day: 7 },
-  { name: "U16 CADET", gender: "♂", desc: "Competició formativa d'elit", color: "from-emerald-500/15 to-emerald-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)", day: 7 },
-  { name: "U14 INFANTIL", gender: "♂", desc: "Primer pas cap a la competició", color: "from-violet-500/15 to-violet-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)", day: 7 },
-  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-slate-500/15 to-slate-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)", day: 7 },
+  { name: "VETERANS", gender: "♂ ♀", desc: "Trofeus i medalles · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "85€ (4 jug.)", day: 6 },
+  { name: "MÀGICS · INCLUSIVA", gender: "♂ ♀", desc: "Categoria inclusiva Barna Màgics · Novetat 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "INCLUSIVA", price: "75€ (4 jug.)", day: 6 },
+  { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "75€ (4 jug.)", day: 7 },
+  { name: "U16 CADET", gender: "♂", desc: "Competició formativa d'elit", color: "from-emerald-500/15 to-emerald-600/10", badge: "FORMACIÓ", price: "75€ (4 jug.)", day: 7 },
+  { name: "U14 INFANTIL", gender: "♂", desc: "Primer pas cap a la competició", color: "from-violet-500/15 to-violet-600/10", badge: "FORMACIÓ", price: "75€ (4 jug.)", day: 7 },
+  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-slate-500/15 to-slate-600/10", badge: "INICIACIÓ", price: "75€ (4 jug.)", day: 7 },
 ];
 
 /* Premi econòmic per categoria — només pel 1r classificat de Sèniors M/F.
@@ -823,7 +823,7 @@ export default function Home() {
                 <Link to="/inscripcion">
                   <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-7 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl"
                     style={{ boxShadow: "0 8px 30px rgba(220,38,38,0.4)" }}>
-                    🏀 Inscriu el teu Equip — des de 70€
+                    🏀 Inscriu el teu Equip — des de 75€
                   </Button>
                 </Link>
                 <a href="#evento">
@@ -893,7 +893,7 @@ export default function Home() {
                   { icon: <Calendar className="w-4 h-4" />, label: "Dates", value: "6-7 Juny 2026" },
                   { icon: <MapPin className="w-4 h-4" />, label: "Seus", value: "3 ubicacions" },
                   { icon: <Users className="w-4 h-4" />, label: "Equip", value: "3+1 jugadors" },
-                  { icon: <Trophy className="w-4 h-4" />, label: "Inscripció", value: "des de 70€" },
+                  { icon: <Trophy className="w-4 h-4" />, label: "Inscripció", value: "des de 75€" },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 hover:border-red-500/30 transition-colors">
                     <span className="text-red-400">{item.icon}</span>
@@ -1264,7 +1264,7 @@ export default function Home() {
             <h2 className="text-4xl md:text-6xl font-black mb-5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
               PREPARAT PER<br /><span className="text-red-500">COMPETIR?</span>
             </h2>
-            <p className="text-white/50 text-base mb-3 max-w-md mx-auto">Places limitades. Des de 70€ per equip, inclou samarreta oficial.</p>
+            <p className="text-white/50 text-base mb-3 max-w-md mx-auto">Places limitades. Des de 75€ per equip, inclou samarreta oficial.</p>
             <p className="text-orange-300 text-sm font-semibold mb-7">
               🏷️ Codi <strong className="font-mono bg-orange-500/15 px-2 py-0.5 rounded border border-orange-500/30">3X3AVIAT</strong> · 5% descompte fins al 15 de juny
             </p>
@@ -1377,7 +1377,7 @@ export default function Home() {
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-950/95 backdrop-blur border-t border-white/10 p-3">
         <Link to="/inscripcion">
           <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider py-4 text-sm shadow-xl">
-            🏀 Inscriu-te — des de 70€/equip
+            🏀 Inscriu-te — des de 75€/equip
           </Button>
         </Link>
       </div>

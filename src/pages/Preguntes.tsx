@@ -39,7 +39,7 @@ const FAQS: FAQ[] = [
   },
   {
     q: "Quantes categories hi ha i quin dia juga cada una?",
-    a: "10 categories en total. Dissabte 6 de juny: Sèniors (♂♀, punts FIBA + prize money), Veterans (+35 anys, ♂♀) i Màgics (categoria inclusiva, ♂♀). Diumenge 7 de juny: Junior (U18, ♂♀), Cadet (U16, ♂), Infantil (U14, ♂), Premini, Mini i Escola (categories d'iniciació, ♂). Les categories formatives (Escola → Junior) tenen preu reduït (des de 70€); Sèniors i Veterans paguen una mica més com a categoria principal.",
+    a: "10 categories en total. Dissabte 6 de juny: Sèniors (♂♀, punts FIBA + prize money), Veterans (+35 anys, ♂♀) i Màgics (categoria inclusiva, ♂♀). Diumenge 7 de juny: Junior (U18, ♂♀), Cadet (U16, ♂), Infantil (U14, ♂), Premini, Mini i Escola (categories d'iniciació, ♂). Les categories formatives (Escola → Junior) tenen preu des de 75€ (4 jug.); Sèniors i Veterans paguen una mica més (85-105€) com a categoria principal.",
     tags: ["categories", "edats", "dia", "horari", "calendari"],
   },
   {
