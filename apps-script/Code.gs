@@ -332,6 +332,7 @@ function doGet(e) {
   if (action === 'dashboard') return getDashboardData_();
   if (action === 'ga4') return getGa4Data_(e);
   if (action === 'inscripcions') return getInscripcionsForStaff_(e);
+  if (action === 'leads') return getLeadsForStaff_(e);
 
   // Comptador: font primària = Sheet (sempre actualitzat per cada inscripció).
   // Fillout s'usa com a font addicional però NO com a font de veritat per al comptador
@@ -421,6 +422,62 @@ function getInscripcionsForStaff_(e) {
     return jsonOut_({ inscripcions: inscripcions, ts: new Date().toISOString() });
   } catch (err) {
     Logger.log('getInscripcionsForStaff_ error: ' + err);
+    return jsonOut_({ error: String(err), ts: new Date().toISOString() });
+  }
+}
+
+/**
+ * Retorna els leads WhatsApp de les 3 pestanyes (3x3, Campus, PortesObertes)
+ * per al dashboard de staff. Mateix esquema d'autenticació que inscripcions.
+ * Cridat amb ?action=leads&token=<METRICS_TOKEN>
+ */
+function getLeadsForStaff_(e) {
+  var token = (e && e.parameter && e.parameter.token) || '';
+  var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
+  if (!validToken || token !== validToken) {
+    return jsonOut_({ error: 'Unauthorized', ts: new Date().toISOString() });
+  }
+
+  var sheetNames = ['Llista_Difusio_3x3', 'Llista_Difusio_Campus', 'Llista_Difusio_PortesObertes'];
+  var id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var ss = SpreadsheetApp.openById(id);
+  var allLeads = [];
+
+  try {
+    sheetNames.forEach(function(name) {
+      var sheet = ss.getSheetByName(name);
+      if (!sheet || sheet.getLastRow() < 2) return;
+      var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+        .map(function(h) { return String(h || '').trim(); });
+      var idx = {};
+      headers.forEach(function(h, i) { idx[h] = i; });
+      var rows = sheet.getRange(2, 1, sheet.getLastRow() - 1, sheet.getLastColumn()).getValues();
+      rows.forEach(function(r) {
+        var telefon = String(r[idx['Telèfon']] || '').replace(/[^0-9+]/g, '');
+        if (!telefon) return; // sense telèfon, no podem fer follow-up
+        allLeads.push({
+          sheet:            name,
+          data:             String(r[idx['Data']] || ''),
+          nom:              String(r[idx['Nom']] || ''),
+          telefon:          telefon,
+          email:            String(r[idx['Email']] || ''),
+          dubte:            String(r[idx['Dubte / Consulta']] || ''),
+          source:           String(r[idx['Source']] || ''),
+          event:            String(r[idx['Event']] || ''),
+          intent:           String(r[idx['Intent']] || ''),
+          edat:             String(r[idx['Edat']] || ''),
+          nivell:           String(r[idx['Nivell']] || ''),
+          estat:            String(r[idx['Estat']] || 'Nou'),
+          ultim_contacte:   String(r[idx['Últim contacte']] || ''),
+          seguent_seguim:   String(r[idx['Següent seguiment']] || ''),
+          notes:            String(r[idx['Notes']] || ''),
+          utm_source:       String(r[idx['utm_source']] || ''),
+          utm_campaign:     String(r[idx['utm_campaign']] || ''),
+        });
+      });
+    });
+    return jsonOut_({ leads: allLeads, ts: new Date().toISOString() });
+  } catch (err) {
     return jsonOut_({ error: String(err), ts: new Date().toISOString() });
   }
 }
@@ -2018,4 +2075,105 @@ function getGa4Data_(e) {
     totals: { sessions: totalSessions, users: totalUsers },
     ts: new Date().toISOString(),
   });
+}
+
+/**
+ * BACKFILL JotForm — envia a JotForm TOTES les inscripcions existents al Sheet.
+ *
+ * Executa manualment des del dashboard d'Apps Script:
+ *   1. Selecciona la funció "backfillJotForm" al desplegable
+ *   2. Clica ▶ Ejecutar
+ *   3. Obre "Registro de ejecución" per veure el progrés
+ *
+ * Si una inscripció ja existia a JotForm, JotForm la duplicarà.
+ * Per evitar duplicats, executa-la UNA SOLA VEGADA.
+ */
+function backfillJotForm() {
+  var props = PropertiesService.getScriptProperties();
+  var apiKey = props.getProperty('JOTFORM_3X3_API_KEY') || '';
+  if (!apiKey) { Logger.log('[backfill] JOTFORM_3X3_API_KEY no configurada. Atura.'); return; }
+
+  var formId = props.getProperty('JOTFORM_3X3_FORM_ID') || '261286732245055';
+  var url = 'https://eu-api.jotform.com/form/' + formId + '/submissions?apiKey=' + apiKey;
+
+  var sheet = getSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { Logger.log('[backfill] Sheet buit.'); return; }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h || '').trim(); });
+  var idx = {};
+  headers.forEach(function(h, i) { idx[h] = i; });
+  var rows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+
+  var ok = 0, skipped = 0, errors = 0;
+
+  rows.forEach(function(r, i) {
+    var teamId   = String(r[idx['Team ID']]  || '').trim();
+    var nomEquip = String(r[idx['Nom equip']] || '').trim();
+    if (!teamId && !nomEquip) { skipped++; return; }  // fila buida
+
+    // Capità: "Nom Cognom" → partir per primer espai
+    var capitaFull = String(r[idx['Capità']] || '').trim();
+    var spaceIdx   = capitaFull.indexOf(' ');
+    var capNom    = spaceIdx > 0 ? capitaFull.substring(0, spaceIdx) : capitaFull;
+    var capCognom = spaceIdx > 0 ? capitaFull.substring(spaceIdx + 1) : '';
+
+    // Jugadors: "A · B · C" → array d'objectes
+    var jugadorsRaw  = String(r[idx['Jugadors']] || '');
+    var jugadorsArr  = jugadorsRaw
+      ? jugadorsRaw.split(' · ').map(function(n) { return n.trim(); }).filter(Boolean)
+      : [];
+    var jugadorsRows = jugadorsArr.map(function(n) { return { 'Nombre completo': n }; });
+    var jugadorsJSON = JSON.stringify(jugadorsArr.map(function(n) { return { nom: n }; }));
+
+    var nomEquipUpper = nomEquip.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_|_$/g, '');
+    var concepte = teamId ? ('3X3+' + nomEquipUpper) : '';
+
+    var payload = {
+      'submission[2]':        nomEquip,
+      'submission[3][first]': capNom,
+      'submission[3][last]':  capCognom,
+      'submission[4]':        String(r[idx['Email']]              || ''),
+      'submission[5]':        String(r[idx['Telèfon']]            || ''),
+      'submission[6]':        JSON.stringify(jugadorsRows),
+      'submission[8]':        String(r[idx['Categoria']]          || ''),
+      'submission[9]':        String(r[idx['Gènere']]             || ''),
+      'submission[10]':       String(r[idx['Mida samarretes']]    || ''),
+      'submission[14]':       String(r[idx['Població']]           || ''),
+      'submission[17]':       String(r[idx['Total (€)']] || r[idx['Total €']] || ''),
+      'submission[18]':       String(r[idx['Desc. aplicat?']]     || '') === 'Sí' ? 'Sí' : '',
+      'submission[19]':       concepte,
+      'submission[20]':       teamId,
+      'submission[21]':       String(r[idx['Check-in URL']]       || ''),
+      'submission[22]':       String(r[idx['Justificant Drive URL']] || ''),
+      'submission[23]':       String(r[idx['Data']]               || ''),
+      'submission[24]':       jugadorsJSON,
+      'submission[25]':       String(r[idx['Codi WR']]            || ''),
+    };
+
+    var form = Object.keys(payload).filter(function(k) {
+      var v = payload[k]; return v && v.toString().trim() !== '' && v !== '[]' && v !== 'null';
+    }).map(function(k) {
+      return encodeURIComponent(k) + '=' + encodeURIComponent(payload[k]);
+    }).join('&');
+
+    try {
+      var resp = UrlFetchApp.fetch(url, {
+        method: 'post',
+        contentType: 'application/x-www-form-urlencoded',
+        payload: form,
+        muteHttpExceptions: true,
+      });
+      var code = resp.getResponseCode();
+      Logger.log('[backfill] Fila ' + (i + 2) + ' · ' + nomEquip + ' → HTTP ' + code);
+      if (code === 200) ok++; else { errors++; Logger.log(resp.getContentText().substring(0, 200)); }
+    } catch (e) {
+      Logger.log('[backfill] ERROR fila ' + (i + 2) + ': ' + e);
+      errors++;
+    }
+    Utilities.sleep(350);  // 350ms entre peticions per respectar el rate-limit de JotForm
+  });
+
+  Logger.log('[backfill] COMPLET ✓ ' + ok + ' enviades · ' + errors + ' errors · ' + skipped + ' saltades');
 }
