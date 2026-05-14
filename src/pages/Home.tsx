@@ -484,13 +484,16 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: {
 function VideoReel() {
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-2xl"
-      style={{ aspectRatio: "9/16", maxWidth: 340, boxShadow: "0 0 40px rgba(220,38,38,0.2)" }}>
+      style={{ aspectRatio: "9/16", maxWidth: 340, width: 340, height: 604, boxShadow: "0 0 40px rgba(220,38,38,0.2)" }}>
       <video
         src="/video/reel.mp4"
         autoPlay
         muted
         loop
         playsInline
+        width={340}
+        height={604}
+        poster="/images/hero-edicio-anterior.jpg"
         className="w-full h-full object-cover"
       />
       {/* IG badge overlay */}
@@ -777,6 +780,7 @@ export default function Home() {
                 rel="noopener noreferrer" title={logo.name} className="group">
                 <div className="w-12 h-12 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center group-hover:border-red-400/60 transition-all shadow-md">
                   <img src={logo.img} alt={logo.name} loading="lazy" decoding="async"
+                    width="48" height="48"
                     className="w-full h-full object-contain p-0.5"
                     style={logo.invert ? { filter: "invert(1)" } : {}} />
                 </div>
@@ -815,7 +819,7 @@ export default function Home() {
       </nav>
 
       {/* ══ HERO ══ */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
+      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden pt-16" style={{ contain: "layout" }}>
         {/* BG */}
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
           style={{ backgroundImage: `url(/images/hero-edicio-anterior.jpg)`, transform: `translateY(${heroOffset}px)` }} />
@@ -956,7 +960,9 @@ export default function Home() {
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <img src="/images/basquet-3x3-barcelona.jpg"
-                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async" className="w-full h-96 object-cover" />
+                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async"
+                  width="1024" height="575"
+                  className="w-full h-96 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <div className="absolute bottom-5 left-5">
                   <span className="text-xs font-bold uppercase tracking-wider text-red-400">#1 Esport Urbà del Món</span>
@@ -1290,7 +1296,7 @@ export default function Home() {
                 whileHover={{ scale: 1.03 }}
                 className="relative overflow-hidden rounded-xl aspect-square border border-white/8 group cursor-pointer"
                 onClick={() => openLightbox(i)}>
-                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" width="600" height="600" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-2 left-2 right-2 text-xs font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity">{img.alt}</div>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1">
