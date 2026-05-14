@@ -333,6 +333,27 @@ function doGet(e) {
   if (action === 'ga4') return getGa4Data_(e);
   if (action === 'inscripcions') return getInscripcionsForStaff_(e);
   if (action === 'leads') return getLeadsForStaff_(e);
+  if (action === 'headers') {
+    try {
+      const sheet = getSheet_();
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      return jsonOut_({ headers: headers, totalCols: headers.length, totalRows: sheet.getLastRow() });
+    } catch(err) { return jsonOut_({ error: String(err) }); }
+  }
+  if (action === 'migrateGenere') {
+    // Afegeix la columna Gènere al Sheet si no hi és (sense necessitar nova inscripció)
+    try {
+      const sheet = getSheet_();
+      const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+      const headerStrs = headers.map(function(h){ return String(h||'').trim(); });
+      if (headerStrs.indexOf('Gènere') === -1) {
+        sheet.getRange(1, sheet.getLastColumn() + 1, 1, 1).setValue('Gènere');
+        return jsonOut_({ ok: true, msg: 'Columna Gènere afegida a posició ' + (sheet.getLastColumn()) });
+      } else {
+        return jsonOut_({ ok: true, msg: 'Gènere ja existia a posició ' + (headerStrs.indexOf('Gènere') + 1) });
+      }
+    } catch(err) { return jsonOut_({ error: String(err) }); }
+  }
 
   // Comptador: font primària = Sheet (sempre actualitzat per cada inscripció).
   // Fillout s'usa com a font addicional però NO com a font de veritat per al comptador
@@ -347,9 +368,14 @@ function doGet(e) {
     Logger.log('doGet Sheet count error: ' + err);
   }
 
-  // Per-categoria counts llegits del Sheet
+  // Per-categoria counts llegits del Sheet (total + desglosament per gènere)
   let byCategory = {};
-  try { byCategory = getByCategoryFromSheet_(); } catch (e) { Logger.log('byCategory err: ' + e); }
+  let byCatGen = {};
+  try {
+    const result = getByCategoryFromSheet_();
+    byCategory = result.byCategory || result; // compatibilitat amb versió antiga
+    byCatGen   = result.byCatGen   || {};
+  } catch (e) { Logger.log('byCategory err: ' + e); }
 
   // Si byCategory suma més que Sheet count (improbable però defensiu), fem servir la suma
   const catSum = Object.values(byCategory).reduce(function(a, b) { return a + b; }, 0);
@@ -359,6 +385,7 @@ function doGet(e) {
     count: count,
     capacity: getCapacitat_(),
     byCategory: byCategory,
+    byCatGen: byCatGen,
     source: source,
     ts: new Date().toISOString(),
   });
@@ -488,17 +515,51 @@ function getLeadsForStaff_(e) {
  */
 function getByCategoryFromSheet_() {
   const sheet = getSheet_();
-  if (sheet.getLastRow() < 2) return {};
+  if (sheet.getLastRow() < 2) return { byCategory: {}, byCatGen: {} };
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const catCol = headers.indexOf('Categoria');
-  if (catCol < 0) return {};
-  const cats = sheet.getRange(2, catCol + 1, sheet.getLastRow() - 1, 1).getValues();
-  const counts = {};
-  cats.forEach(function(row) {
-    const c = String(row[0] || '').trim();
-    if (c) counts[c] = (counts[c] || 0) + 1;
+
+  // Cerca robust de columna per nom (sense accents, case-insensitive)
+  // + fallback a posició fixa si el nom no es troba (compatibilitat amb Sheets antics)
+  function findCol(candidates, fallbackPos) {
+    var norm = function(s) { return String(s||'').trim().toLowerCase().replace(/[^\x00-\x7F]/g, function(c) {
+      return c.normalize ? c.normalize('NFD').replace(/[̀-ͯ]/g, '') : c;
+    }); };
+    for (var i = 0; i < headers.length; i++) {
+      var h = norm(headers[i]);
+      for (var j = 0; j < candidates.length; j++) {
+        if (h === norm(candidates[j])) return i;
+      }
+    }
+    // Fallback per posició si tenim prou columnes
+    if (fallbackPos !== undefined && headers.length > fallbackPos) return fallbackPos;
+    return -1;
+  }
+
+  const catCol = findCol(['Categoria'], 3);
+  // Gènere és la col 21 (0-indexed) a l'esquema actual del Sheet
+  const genCol = findCol(['Gènere','Genere','Genre','Gènere equip','Genere equip'], 21);
+  if (catCol < 0) return { byCategory: {}, byCatGen: {} };
+
+  const numRows = sheet.getLastRow() - 1;
+  const numCols = (genCol >= 0 ? Math.max(catCol, genCol) : catCol) + 1;
+  const data = sheet.getRange(2, 1, numRows, numCols).getValues();
+
+  const byCategory = {};
+  const byCatGen   = {}; // { "Infantil": { "Masculí": 5, "Femení": 3 }, ... }
+
+  data.forEach(function(row) {
+    const cat = String(row[catCol] || '').trim();
+    if (!cat) return;
+    byCategory[cat] = (byCategory[cat] || 0) + 1;
+
+    if (genCol >= 0) {
+      const gen = String(row[genCol] || '').trim() || 'No especificat';
+      if (!byCatGen[cat]) byCatGen[cat] = {};
+      byCatGen[cat][gen] = (byCatGen[cat][gen] || 0) + 1;
+    }
   });
-  return counts;
+
+  return { byCategory: byCategory, byCatGen: byCatGen };
 }
 
 /**
@@ -544,6 +605,14 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // ─── Acció abandon (formulari abandonat amb email capturat) ───
+    if (raw.action === 'abandon' && raw.email) {
+      try { addAbandonament_(raw); } catch (err) { Logger.log('abandon error: ' + err); }
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: true, action: 'abandon' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     // ─── Acció subscribe (newsletter del blog) ───
     if (raw.action === 'subscribe' && raw.email) {
       try { addBlogSubscriber_(raw); } catch (err) { Logger.log('subscribe error: ' + err); }
@@ -554,11 +623,21 @@ function doPost(e) {
 
     // ─── Acció individual (jugador sense equip, 20€) ───
     if (raw.action === 'individual' && raw.email) {
+      // Genera codiWRI i checkinUrl al servidor (no dependre del frontend)
+      if (!raw.codiWR) {
+        var _indivSs = SpreadsheetApp.openById(PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA');
+        var _indivSh = _indivSs.getSheetByName('Jugadors_Individuals');
+        var _indivCount = _indivSh ? Math.max(0, _indivSh.getLastRow() - 1) : 0;
+        var _indivNum = String(_indivCount + 1); while (_indivNum.length < 3) _indivNum = '0' + _indivNum;
+        raw.codiWR = 'WRI-' + _indivNum;
+      }
+      if (!raw.checkinUrl && raw.teamId) {
+        raw.checkinUrl = buildCheckinUrlIndividual_(raw);
+      }
       try { addIndividualPlayer_(raw); } catch (err) { Logger.log('individual error: ' + err); }
-      // Continuem el flow normal d'emails (QR check-in personal arriba al jugador)
-      // raw porta teamId/checkinUrl ja generats al frontend
+      // Email personalitzat per a jugadors individuals (QR + codi WRI)
       const data = normalizeFormData_(raw);
-      try { sendEmails_(data, null); } catch (e) { Logger.log('individual mail err: ' + e); }
+      try { sendEmailsIndividual_(data); } catch (e) { Logger.log('individual mail err: ' + e); }
       // Enviar a JotForm adaptat (mateixa funció que equips, camps capXxx mapeats des de nom/cognom/...)
       const rawForJotForm = Object.assign({}, raw, {
         capNom:      raw.nom      || '',
@@ -795,13 +874,20 @@ function addIndividualPlayer_(data) {
   const ss = SpreadsheetApp.openById(id);
   let sheet = ss.getSheetByName('Jugadors_Individuals');
   if (!sheet) sheet = ss.insertSheet('Jugadors_Individuals');
+  const INDIV_HEADERS = [
+    'Data', 'Team ID', 'Concepte', 'Nom', 'Cognom', 'Data naixement', 'Categoria',
+    'Email', 'Telèfon', 'Població', 'Talla', 'Posició preferida', 'Nivell',
+    'Observacions', 'Equip assignat', 'Pagat?', 'Arribat (timestamp)',
+    'Codi WRI', 'Check-in URL'
+  ];
   if (sheet.getLastRow() === 0) {
-    sheet.appendRow([
-      'Data', 'Team ID', 'Concepte', 'Nom', 'Cognom', 'Data naixement', 'Categoria',
-      'Email', 'Telèfon', 'Població', 'Talla', 'Posició preferida', 'Nivell',
-      'Observacions', 'Accepta bases', 'Accepta LOPD', 'Accepta imatge',
-      'Equip assignat', 'Pagat?', 'Arribat (timestamp)'
-    ]);
+    sheet.appendRow(INDIV_HEADERS);
+  } else {
+    // Migració: afegeix columnes que faltin (Codi WRI, Check-in URL)
+    const existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(function(h) { return String(h || '').trim(); });
+    const missing = INDIV_HEADERS.filter(function(h) { return existing.indexOf(h) === -1; });
+    if (missing.length) sheet.getRange(1, sheet.getLastColumn() + 1, 1, missing.length).setValues([missing]);
   }
   sheet.appendRow([
     data.data || new Date().toLocaleString('ca-ES'),
@@ -818,12 +904,11 @@ function addIndividualPlayer_(data) {
     data.posicio || '',
     data.nivell || '',
     data.observacions || '',
-    data.acceptaBases  ? 'Sí' : 'No',
-    data.acceptaLopd   ? 'Sí' : 'No',
-    data.acceptaImatge ? 'Sí' : 'No',
-    '',  // Equip assignat (Ana ho omple a mà)
-    'No',
-    '',  // Arribat
+    '',           // Equip assignat (Ana ho omple a mà)
+    'No',         // Pagat?
+    '',           // Arribat (timestamp)
+    data.codiWR || '',
+    data.checkinUrl || '',
   ]);
 }
 
@@ -2187,4 +2272,330 @@ function backfillJotForm() {
   });
 
   Logger.log('[backfill] COMPLET ✓ ' + ok + ' enviades · ' + errors + ' errors · ' + skipped + ' saltades');
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Jugadors individuals — helpers i backfill
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Construeix la URL de check-in per a un jugador individual.
+ * Replicat al servidor (el frontend pot no enviar-la sempre).
+ */
+function buildCheckinUrlIndividual_(raw) {
+  var id    = raw.teamId || '';
+  var nom   = ((raw.nom || '') + ' ' + (raw.cognom || '')).trim();
+  var cat   = raw.categoria || raw.capCategoria || '';
+  var pob   = raw.poblacio  || raw.capPoblacio  || '';
+  var tel   = String(raw.telefon || raw.capTelefon || '');
+  var email = raw.email || raw.capEmail || '';
+  var data  = raw.dataNaix || '';
+  return 'https://cbgrupbarna-3x3timechamber.com/checkin?' + [
+    'id='    + encodeURIComponent(id),
+    'nom='   + encodeURIComponent(nom),
+    'cap='   + encodeURIComponent(nom),
+    'cat='   + encodeURIComponent(cat),
+    'pob='   + encodeURIComponent(pob),
+    'jug=1',
+    'mida=',
+    'tel='   + encodeURIComponent(tel),
+    'email=' + encodeURIComponent(email),
+    'data='  + encodeURIComponent(data),
+  ].join('&');
+}
+
+/**
+ * Envia email de confirmació + QR al jugador individual i notificació a l'admin.
+ */
+function sendEmailsIndividual_(data) {
+  var checkinUrl = data.checkinUrl || '';
+  var codiWR     = data.codiWR    || '';
+  var nom        = data.capita    || data.nomEquip || '';
+
+  // Genera QR blob (SVG del worker)
+  var qrBlob = null;
+  if (checkinUrl) {
+    try {
+      var qrUrl = 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data=' + encodeURIComponent(checkinUrl);
+      var qrResp = UrlFetchApp.fetch(qrUrl, { muteHttpExceptions: true });
+      if (qrResp.getResponseCode() === 200) qrBlob = qrResp.getBlob().setName('checkin-qr.svg');
+    } catch (e) { Logger.log('Individual QR error: ' + e); }
+  }
+
+  // Email al jugador
+  if (data.email) {
+    try {
+      sendMail_({
+        to: data.email,
+        subject: '✅ Inscripció individual rebuda · 3×3 Westfield Glòries 2026',
+        htmlBody: buildEmailIndividualHTML_(data),
+        attachments: qrBlob ? [qrBlob] : undefined,
+      });
+    } catch (e) { Logger.log('Individual email error: ' + e); }
+  }
+
+  // Notificació a l'admin
+  try {
+    sendMail_({
+      to: getAdminEmails_(),
+      subject: '📩 Jugador individual: ' + nom + (codiWR ? ' (' + codiWR + ')' : ''),
+      htmlBody: [
+        '<h2>📩 Jugador individual</h2>',
+        '<table cellpadding="6" style="border-collapse:collapse;font-family:Arial,sans-serif">',
+        '<tr><td><strong>Codi</strong></td><td><strong style="color:#dc2626">' + codiWR + '</strong></td></tr>',
+        '<tr><td><strong>Nom</strong></td><td>' + nom + '</td></tr>',
+        '<tr><td><strong>Categoria</strong></td><td>' + (data.categoria || '—') + '</td></tr>',
+        '<tr><td><strong>Email</strong></td><td>' + (data.email || '') + '</td></tr>',
+        '<tr><td><strong>Telèfon</strong></td><td>' + (data.telefon || '') + '</td></tr>',
+        '<tr><td><strong>Població</strong></td><td>' + (data.poblacio || '—') + '</td></tr>',
+        '<tr><td><strong>Total</strong></td><td>20 €</td></tr>',
+        checkinUrl ? '<tr><td><strong>Check-in URL</strong></td><td><a href="' + checkinUrl + '">' + checkinUrl.substring(0, 60) + '…</a></td></tr>' : '',
+        '</table>',
+      ].join(''),
+      attachments: qrBlob ? [qrBlob] : undefined,
+    });
+  } catch (e) { Logger.log('Individual admin email error: ' + e); }
+}
+
+function buildEmailIndividualHTML_(data) {
+  var nom        = data.capita || data.nomEquip || '';
+  var codiWR     = data.codiWR    || '';
+  var checkinUrl = data.checkinUrl || '';
+  var qrPngUrl   = checkinUrl
+    ? 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data=' + encodeURIComponent(checkinUrl)
+    : '';
+  return [
+    '<h2 style="color:#dc2626">✅ Inscripció individual rebuda</h2>',
+    '<p>Hola <strong>' + nom + '</strong>,</p>',
+    '<p>Hem registrat la teva inscripció com a <strong>jugador/a individual</strong> al torneig <strong>3×3 Westfield Glòries 2026</strong>.</p>',
+    '<p>T\'assignarem a un equip una setmana abans del torneig, segons la teva categoria i posició preferida.</p>',
+    codiWR ? (
+      '<div style="margin:20px 0;padding:16px 24px;background:#fef2f2;border:2px solid #dc2626;border-radius:12px;text-align:center">' +
+      '<p style="margin:0 0 4px;font-size:11px;color:#7f1d1d;text-transform:uppercase;letter-spacing:1px;font-weight:bold">Codi de reserva</p>' +
+      '<p style="margin:0;font-size:28px;font-weight:900;color:#dc2626;letter-spacing:3px">' + codiWR + '</p>' +
+      '<p style="margin:4px 0 0;font-size:11px;color:#7f1d1d">Guarda\'l — el necessitaràs per a qualsevol consulta i el dia del torneig</p>' +
+      '</div>'
+    ) : '',
+    '<p><strong>Total a pagar:</strong> 20 € · Transferència bancària a:</p>',
+    '<p style="font-family:monospace;background:#f5f5f5;padding:10px;border-radius:6px">',
+    'Beneficiari: CB Grup Barna<br>',
+    'IBAN: ES42 0182 1797 3902 0409 9747<br>',
+    'Concepte: ' + (data.teamId || data.nomEquip || nom),
+    '</p>',
+    '<p>Quan rebem la transferència, confirmarem la plaça per email.</p>',
+    qrPngUrl ? (
+      '<div style="margin:24px 0;padding:20px;background:#fef2f2;border:2px solid #dc2626;border-radius:16px;text-align:center">' +
+      '<p style="margin:0 0 8px;font-weight:bold;color:#dc2626;text-transform:uppercase;letter-spacing:1px;font-size:13px">🎟️ El teu QR personal</p>' +
+      '<img src="' + qrPngUrl + '" alt="QR check-in" style="width:220px;height:220px;display:block;margin:8px auto"/>' +
+      '<p style="margin:8px 0 0;font-size:12px;color:#7f1d1d"><strong>Guarda aquest email</strong> o el QR. El necessites el dia del torneig per al <strong>check-in</strong>.</p>' +
+      '<p style="margin:8px 0 0;font-size:11px;color:#7f1d1d">O obre directament: <a href="' + checkinUrl + '" style="color:#dc2626">' + checkinUrl + '</a></p>' +
+      '</div>'
+    ) : '',
+    '<p>Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp del club (+34 698 425 153)</a>.</p>',
+    '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot · 6-7 juny 2026</p>',
+  ].join('');
+}
+
+/**
+ * BACKFILL Individuals — envia email de confirmació + QR als jugadors individuals existents
+ * que no van rebre email en el moment de la inscripció.
+ *
+ * Executa manualment UNA SOLA VEGADA:
+ *   1. Selecciona la funció "backfillIndividuals" al desplegable
+ *   2. Clica ▶ Ejecutar
+ *   3. Comprova "Registro de ejecución"
+ */
+function backfillIndividuals() {
+  var id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var ss = SpreadsheetApp.openById(id);
+  var sheet = ss.getSheetByName('Jugadors_Individuals');
+  if (!sheet) { Logger.log('[backfill-indiv] Sheet Jugadors_Individuals no trobat.'); return; }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) { Logger.log('[backfill-indiv] Sheet buit.'); return; }
+
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h || '').trim(); });
+
+  // Afegeix columnes Codi WRI i Check-in URL si no existeixen
+  if (headers.indexOf('Codi WRI') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Codi WRI');
+    headers.push('Codi WRI');
+  }
+  if (headers.indexOf('Check-in URL') === -1) {
+    sheet.getRange(1, headers.length + 1).setValue('Check-in URL');
+    headers.push('Check-in URL');
+  }
+
+  var C = {};
+  headers.forEach(function(h, i) { C[h] = i; });
+
+  var allRows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var ok = 0, errors = 0;
+
+  allRows.forEach(function(r, i) {
+    var teamId = String(r[C['Team ID']] || '').trim();
+    var nom    = String(r[C['Nom']]     || '').trim();
+    var cognom = String(r[C['Cognom']]  || '').trim();
+    var email  = String(r[C['Email']]   || '').trim();
+    if (!email || !teamId) {
+      Logger.log('[backfill-indiv] Fila ' + (i + 2) + ' sense email/teamId, saltada.');
+      return;
+    }
+
+    var fullName  = (nom + ' ' + cognom).trim();
+    var categoria = String(r[C['Categoria']] || '').trim();
+    var poblacio  = String(r[C['Població']]  || '').trim();
+    var telefon   = String(r[C['Telèfon']]   || '').trim();
+
+    // Genera codiWRI si no el té al Sheet
+    var codiWRI = String(r[C['Codi WRI']] || '').trim();
+    if (!codiWRI) {
+      var num = String(i + 1); while (num.length < 3) num = '0' + num;
+      codiWRI = 'WRI-' + num;
+      sheet.getRange(i + 2, C['Codi WRI'] + 1).setValue(codiWRI);
+      Logger.log('[backfill-indiv] Generat ' + codiWRI + ' per a ' + fullName);
+    }
+
+    // Genera checkinUrl si no la té al Sheet
+    var checkinUrl = String(r[C['Check-in URL']] || '').trim();
+    if (!checkinUrl) {
+      checkinUrl = buildCheckinUrlIndividual_({
+        teamId: teamId, nom: nom, cognom: cognom,
+        categoria: categoria, poblacio: poblacio,
+        telefon: telefon, email: email, dataNaix: '',
+      });
+      sheet.getRange(i + 2, C['Check-in URL'] + 1).setValue(checkinUrl);
+    }
+
+    // Genera QR blob
+    var qrBlob = null;
+    try {
+      var qrUrl = 'https://og-3x3-glories.cbgrupbarna.workers.dev/qr.svg?size=400&data=' + encodeURIComponent(checkinUrl);
+      var qrResp = UrlFetchApp.fetch(qrUrl, { muteHttpExceptions: true });
+      if (qrResp.getResponseCode() === 200) qrBlob = qrResp.getBlob().setName('checkin-qr.svg');
+    } catch (e) { Logger.log('[backfill-indiv] QR error: ' + e); }
+
+    // Envia email al jugador
+    try {
+      sendMail_({
+        to: email,
+        subject: '✅ Inscripció individual rebuda · 3×3 Westfield Glòries 2026',
+        htmlBody: buildEmailIndividualHTML_({
+          capita: fullName, nomEquip: fullName, teamId: teamId,
+          codiWR: codiWRI, checkinUrl: checkinUrl,
+          categoria: categoria, poblacio: poblacio,
+          email: email, telefon: telefon, total: 20,
+        }),
+        attachments: qrBlob ? [qrBlob] : undefined,
+      });
+      Logger.log('[backfill-indiv] ✓ Email enviat → ' + email + ' | ' + codiWRI);
+      ok++;
+    } catch (e) {
+      Logger.log('[backfill-indiv] ✗ Error email ' + email + ': ' + e);
+      errors++;
+    }
+
+    // Notifica admin
+    try {
+      sendMail_({
+        to: getAdminEmails_(),
+        subject: '📩 Jugador individual (backfill): ' + fullName + ' (' + codiWRI + ')',
+        htmlBody: '<p>Backfill: email enviat a <strong>' + email + '</strong> amb codi <strong>' + codiWRI + '</strong>.</p><p>Check-in URL: <a href="' + checkinUrl + '">' + checkinUrl.substring(0, 80) + '</a></p>',
+      });
+    } catch (e) { Logger.log('[backfill-indiv] Admin notify error: ' + e); }
+
+    Utilities.sleep(500);
+  });
+
+  Logger.log('[backfill-indiv] COMPLET ✓ ' + ok + ' enviats · ' + errors + ' errors');
+}
+
+/**
+ * Captura un abandonament del formulari d'inscripció.
+ * Escriu a la pestanya "Abandonaments" del Sheet.
+ *
+ * Camps rebuts del frontend:
+ *   email, nomEquip, categoria, midaEquip, telefon, pas, ts
+ *
+ * Lògica de dedupe:
+ *   Si ja existeix una fila amb el mateix email (columna B),
+ *   actualitza el pas màxim i el timestamp en comptes de crear duplicat.
+ *
+ * Notifica via CallMeBot (primer abandonament d'un email nou).
+ */
+function addAbandonament_(data) {
+  const id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  const ss  = SpreadsheetApp.openById(id);
+  let sheet = ss.getSheetByName('Abandonaments');
+  if (!sheet) sheet = ss.insertSheet('Abandonaments');
+
+  const HEADERS = [
+    'Data', 'Email', 'Nom Equip', 'Categoria', 'Mida Equip',
+    'Telèfon', 'Pas Abandonat', 'Vegades', 'Recuperat',
+  ];
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(HEADERS);
+    // Format capçalera
+    const hRange = sheet.getRange(1, 1, 1, HEADERS.length);
+    hRange.setFontWeight('bold');
+    hRange.setBackground('#1a1a2e');
+    hRange.setFontColor('#ffffff');
+    sheet.setFrozenRows(1);
+  }
+
+  const email    = String(data.email || '').trim().toLowerCase();
+  const nomEquip = String(data.nomEquip  || '').trim();
+  const categoria= String(data.categoria || '').trim();
+  const mida     = String(data.midaEquip || '').trim();
+  const telefon  = String(data.telefon   || '').trim();
+  const pas      = Number(data.pas) || 1;
+  const now      = new Date();
+
+  // Dedupe: cerca si l'email ja existeix (columna B, des de la fila 2)
+  const lastRow = sheet.getLastRow();
+  let existingRow = -1;
+  let existingPas = 0;
+  if (lastRow >= 2) {
+    const emailVals = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+    for (var i = 0; i < emailVals.length; i++) {
+      if (String(emailVals[i][0]).trim().toLowerCase() === email) {
+        existingRow = i + 2; // fila real al Sheet (1-indexed, +1 per capçalera)
+        existingPas = Number(sheet.getRange(existingRow, 7).getValue()) || 0;
+        break;
+      }
+    }
+  }
+
+  if (existingRow > 0) {
+    // Actualitza: nou pas màxim + data + vegades (+1)
+    const vegades = Number(sheet.getRange(existingRow, 8).getValue()) || 1;
+    sheet.getRange(existingRow, 1).setValue(now);           // Data
+    sheet.getRange(existingRow, 3).setValue(nomEquip || sheet.getRange(existingRow, 3).getValue());
+    sheet.getRange(existingRow, 4).setValue(categoria || sheet.getRange(existingRow, 4).getValue());
+    sheet.getRange(existingRow, 5).setValue(mida      || sheet.getRange(existingRow, 5).getValue());
+    sheet.getRange(existingRow, 6).setValue(telefon   || sheet.getRange(existingRow, 6).getValue());
+    sheet.getRange(existingRow, 7).setValue(Math.max(pas, existingPas)); // pas màxim
+    sheet.getRange(existingRow, 8).setValue(vegades + 1);
+    Logger.log('[abandon] Update email=' + email + ' pas=' + pas + ' vegades=' + (vegades + 1));
+    return; // ja estava → no tornem a notificar
+  }
+
+  // Nou abandonament
+  sheet.appendRow([
+    now, email, nomEquip, categoria, mida, telefon, pas, 1, 'No',
+  ]);
+  Logger.log('[abandon] Nou email=' + email + ' pas=' + pas);
+
+  // Notificació CallMeBot (només primera vegada — dedupe ja filtra repetits)
+  try {
+    const msg = [
+      '⚠️ Abandonament formulari 3×3',
+      '✉️ ' + email,
+      nomEquip ? '🏀 ' + nomEquip : '',
+      categoria ? '📋 ' + categoria : '',
+      '📍 Pas ' + pas + '/5',
+      telefon ? '📱 ' + telefon : '',
+    ].filter(Boolean).join('\n');
+    sendCallMeBot_(msg);
+  } catch (e) { Logger.log('[abandon] CallMeBot err: ' + e); }
 }

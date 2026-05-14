@@ -402,10 +402,62 @@ export default function Inscripcion() {
   const [showExitIntent, setShowExitIntent] = useState(false);
   const exitIntentFiredRef = useRef(false);
 
+  // Abandonment tracking refs
+  const stepRef         = useRef(1);
+  const submittedRef    = useRef(false);
+  const abandonSentRef  = useRef(false);
+
   // GA4: usuari entra a la pàgina d'inscripció
   useEffect(() => {
     tracker.inscripcioIniciada();
   }, []);
+
+  // Sincronitzem els refs de step i submitted perquè el handler beforeunload
+  // (definit una sola vegada al mount) pugui llegir els valors actuals sense
+  // recrear l'event listener en cada render.
+  useEffect(() => { stepRef.current = step; }, [step]);
+  useEffect(() => { submittedRef.current = submitted; }, [submitted]);
+
+  // Abandonment beacon: quan l'usuari tanca la pestanya / navega fora / el SO
+  // mata l'app (mòbil), capturem les dades parcials i les enviem a Sheets.
+  // Condicions: email introduït + formulari no enviat + beacon no enviat ja.
+  useEffect(() => {
+    const sendAbandon = () => {
+      if (submittedRef.current || abandonSentRef.current) return;
+      const vals = getValues();
+      const email = (vals.capEmail || "").trim();
+      if (!email.includes("@")) return; // email buit o invàlid → no val la pena
+      abandonSentRef.current = true;
+      const payload = JSON.stringify({
+        action: "abandon",
+        email,
+        nomEquip:  vals.nomEquip     || "",
+        categoria: vals.capCategoria || "",
+        midaEquip: vals.midaEquip    || "",
+        telefon:   vals.capTelefon   || "",
+        pas: stepRef.current,
+        ts: new Date().toISOString(),
+      });
+      if (!GOOGLE_WEBHOOK) return;
+      try {
+        // sendBeacon és l'únic mecanisme fiable quan la pàgina es tanca.
+        // Fallback: fetch keepalive per navegadors sense sendBeacon.
+        if (navigator.sendBeacon) {
+          navigator.sendBeacon(GOOGLE_WEBHOOK, new Blob([payload], { type: "application/json" }));
+        } else {
+          fetch(GOOGLE_WEBHOOK, { method: "POST", body: payload, keepalive: true }).catch(() => {});
+        }
+      } catch { /* silent fail — l'usuari ja ha marxat */ }
+    };
+    const onVisibility = () => { if (document.visibilityState === "hidden") sendAbandon(); };
+    window.addEventListener("beforeunload", sendAbandon);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("beforeunload", sendAbandon);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // only on mount — llegeix valors actuals via refs i getValues()
 
   // Persistim el progrés del gate cada vegada que canvia (defensa belt-and-braces:
   // els handlers ja escriuen a LS abans de window.open, però aquest effect cobreix
