@@ -558,7 +558,7 @@ export default function Inscripcion() {
   const goNext = async () => {
     let ok = false;
     if (step === 1) {
-      ok = await trigger(["nomEquip","midaEquip"]);
+      ok = await trigger(["nomEquip","capEmail","capCategoria"]);
       if (ok && !nameAvailable) {
         toast({
           title: "Nom d'equip ja registrat",
@@ -569,7 +569,7 @@ export default function Inscripcion() {
       }
     }
     if (step === 2) {
-      const fields2: (keyof FD)[] = ["capNom","capCognom","capEmail","capTelefon","capDataNaix","capCategoria","capGenere","capTalla","capClub","capPoblacio","capCampusClub"];
+      const fields2: (keyof FD)[] = ["midaEquip","capNom","capCognom","capTelefon","capDataNaix","capGenere","capTalla","capClub","capPoblacio","capCampusClub"];
       const capCat = getValues("capCategoria");
       const fields2Extra = isSeniorCat(capCat) ? [...fields2, "capSeniorCategoria" as keyof FD] : fields2;
       ok = await trigger(fields2Extra);
@@ -1420,9 +1420,9 @@ export default function Inscripcion() {
               const erroredFields = Object.keys(formErrors);
               if (erroredFields.length === 0) return;
               const fieldToStep: Record<string, number> = {
-                nomEquip: 1, midaEquip: 1,
-                capNom: 2, capCognom: 2, capEmail: 2, capTelefon: 2,
-                capDataNaix: 2, capCategoria: 2, capTalla: 2, capPoblacio: 2,
+                nomEquip: 1, capEmail: 1, capCategoria: 1,
+                midaEquip: 2, capNom: 2, capCognom: 2, capTelefon: 2,
+                capDataNaix: 2, capGenere: 2, capTalla: 2, capPoblacio: 2,
                 capClub: 2, capCampusClub: 2, capSeniorCategoria: 2, tutorNom: 2, tutorCognom: 2, tutorTelefon: 2,
                 jugadors: 3,
                 samarretesExtra: 5,
@@ -1463,44 +1463,8 @@ export default function Inscripcion() {
               {step === 1 && (
                 <motion.div key="s1" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
-                    <Trophy className="w-5 h-5 text-red-500"/> Nom i mida de l'equip
+                    <Trophy className="w-5 h-5 text-red-500"/> El teu equip
                   </h2>
-
-                  {/* ── Bloc descompte viral: sempre visible a l'Step 1 ── */}
-                  <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
-                    <p className="text-xs font-bold uppercase tracking-widest text-white/50">
-                      🎁 Desbloqueja un <span className="text-orange-400">−5% extra</span>
-                    </p>
-                    {descInvitacions ? (
-                      <div className="flex items-center gap-2 bg-green-500/15 border border-green-400/30 rounded-xl px-4 py-2.5">
-                        <span className="text-green-400 text-lg">✅</span>
-                        <span className="text-green-300 text-sm font-bold">−5% addicional desbloquejat!</span>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <button
-                          type="button"
-                          onClick={() => shareWith()}
-                          className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1da851] active:scale-95 transition-all text-white font-bold text-sm px-4 py-3 rounded-xl"
-                        >
-                          <span>📲</span>
-                          Comparteix per WhatsApp ({sharedSlots.filter(Boolean).length}/5)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIgFollowed(true);
-                            saveGateState({ sharedSlots, igFollowed: true, igTimechamberFollowed, gateState, descInvitacions });
-                            window.open("https://www.instagram.com/cbgrupbarna/", "_blank", "noopener,noreferrer");
-                          }}
-                          className={`flex-1 flex items-center justify-center gap-2 transition-all font-bold text-sm px-4 py-3 rounded-xl border ${igFollowed ? "bg-purple-500/20 border-purple-400/40 text-purple-300" : "bg-white/8 border-white/20 text-white hover:bg-white/15 active:scale-95"}`}
-                        >
-                          <span>📸</span>
-                          {igFollowed ? "✓ Segueixes @cbgrupbarna" : "Seguir @cbgrupbarna"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
 
                   <div className="space-y-5">
                     <FieldRow label="Nom de l'equip *" error={errors.nomEquip?.message}>
@@ -1520,34 +1484,51 @@ export default function Inscripcion() {
                         )}
                       />
                     </FieldRow>
-                    <div>
-                      <Label className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3 block">Mida de l'equip *</Label>
-                      <div className="grid grid-cols-2 gap-3">
-                        {(["4","5"] as const).map(n => (
-                          <button key={n} type="button"
-                            onClick={() => {
-                              setValue("midaEquip", n);
-                              // jugadors = N-1 entrades (el capità és el jug. #1).
-                              // Abans creàvem N entrades, deixant l'última buida i fent
-                              // que la validació final del schema fallés silenciosament
-                              // a step 5 sense missatge visible.
-                              const extras = Math.max(0, Number(n) - 1);
-                              setValue("jugadors", Array.from({ length: extras }, () => ({
-                                nom:"", cognom:"", email:"", telefon:"", dataNaix:"", categoria:"", talla:"", club:""
-                              })));
-                            }}
-                            className={`border-2 rounded-xl p-4 text-center transition-all ${midaEquip===n ? "border-red-500 bg-red-500/10" : "border-white/10 hover:border-white/25"}`}>
-                            <div className="text-3xl font-black font-mono text-red-400">{n}</div>
-                            <div className="text-sm font-bold text-white mt-0.5">jugadors</div>
-                            <div className="text-xs text-red-400 font-bold mt-1">
-                              {`${precioByCat(capCategoria, n)}€`}
-                              {!capCategoria && <span className="text-white/40 font-normal"> · {n==="4" ? `${PRECIO_GEN_4}-${PRECIO_SENIOR_4}` : `${PRECIO_GEN_5}-${PRECIO_SENIOR_5}`}€</span>}
-                            </div>
+                    <FieldRow label="Email del capità *" error={errors.capEmail?.message}>
+                      <SInput {...register("capEmail")} type="email" placeholder="email@exemple.com" />
+                    </FieldRow>
+                    <FieldRow label="Categoria *" error={errors.capCategoria?.message}>
+                      <Controller control={control} name="capCategoria" render={({ field }) => (
+                        <SCatSelect value={field.value||""} onChange={field.onChange} />
+                      )} />
+                    </FieldRow>
+
+                    {/* ── Bloc descompte viral ── */}
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 space-y-3">
+                      <p className="text-xs font-bold uppercase tracking-widest text-white/50">
+                        🎁 Desbloqueja un <span className="text-orange-400">−5% extra</span>
+                      </p>
+                      {descInvitacions ? (
+                        <div className="flex items-center gap-2 bg-green-500/15 border border-green-400/30 rounded-xl px-4 py-2.5">
+                          <span className="text-green-400 text-lg">✅</span>
+                          <span className="text-green-300 text-sm font-bold">−5% addicional desbloquejat!</span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            type="button"
+                            onClick={() => shareWith()}
+                            className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#1da851] active:scale-95 transition-all text-white font-bold text-sm px-4 py-3 rounded-xl"
+                          >
+                            <span>📲</span>
+                            Comparteix per WhatsApp ({sharedSlots.filter(Boolean).length}/5)
                           </button>
-                        ))}
-                      </div>
-                      {errors.midaEquip && <p className="text-red-400 text-xs mt-2">{errors.midaEquip.message || "Selecciona la mida de l'equip"}</p>}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIgFollowed(true);
+                              saveGateState({ sharedSlots, igFollowed: true, igTimechamberFollowed, gateState, descInvitacions });
+                              window.open("https://www.instagram.com/cbgrupbarna/", "_blank", "noopener,noreferrer");
+                            }}
+                            className={`flex-1 flex items-center justify-center gap-2 transition-all font-bold text-sm px-4 py-3 rounded-xl border ${igFollowed ? "bg-purple-500/20 border-purple-400/40 text-purple-300" : "bg-white/8 border-white/20 text-white hover:bg-white/15 active:scale-95"}`}
+                          >
+                            <span>📸</span>
+                            {igFollowed ? "✓ Segueixes @cbgrupbarna" : "Seguir @cbgrupbarna"}
+                          </button>
+                        </div>
+                      )}
                     </div>
+
                     {/* Promo banner */}
                     <div className="bg-orange-500/10 border border-orange-500/25 rounded-xl p-4 flex items-center justify-between gap-3">
                       <div>
@@ -1565,9 +1546,34 @@ export default function Inscripcion() {
               {step === 2 && (
                 <motion.div key="s2" custom={dir} variants={slide} initial="hidden" animate="visible" exit="exit">
                   <h2 className="text-lg font-black mb-5 flex items-center gap-2">
-                    <User className="w-5 h-5 text-red-500"/> Capità / Responsable
+                    <User className="w-5 h-5 text-red-500"/> Mida de l'equip i capità
                   </h2>
                   <div className="space-y-4">
+                    {/* ── Mida de l'equip ── */}
+                    <div>
+                      <Label className="text-xs font-semibold text-white/70 uppercase tracking-wider mb-3 block">Mida de l'equip *</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {(["4","5"] as const).map(n => (
+                          <button key={n} type="button"
+                            onClick={() => {
+                              setValue("midaEquip", n);
+                              const extras = Math.max(0, Number(n) - 1);
+                              setValue("jugadors", Array.from({ length: extras }, () => ({
+                                nom:"", cognom:"", email:"", telefon:"", dataNaix:"", categoria:"", talla:"", club:""
+                              })));
+                            }}
+                            className={`border-2 rounded-xl p-4 text-center transition-all ${midaEquip===n ? "border-red-500 bg-red-500/10" : "border-white/10 hover:border-white/25"}`}>
+                            <div className="text-3xl font-black font-mono text-red-400">{n}</div>
+                            <div className="text-sm font-bold text-white mt-0.5">jugadors</div>
+                            <div className="text-xs text-red-400 font-bold mt-1">
+                              {`${precioByCat(capCategoria, n)}€`}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      {errors.midaEquip && <p className="text-red-400 text-xs mt-2">{errors.midaEquip.message || "Selecciona la mida de l'equip"}</p>}
+                    </div>
+
                     <div className="grid grid-cols-2 gap-3">
                       <FieldRow label="Nom *" error={errors.capNom?.message}>
                         <SInput {...register("capNom")} placeholder="Nom" />
@@ -1577,26 +1583,16 @@ export default function Inscripcion() {
                       </FieldRow>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <FieldRow label="Email *" error={errors.capEmail?.message}>
-                        <SInput {...register("capEmail")} type="email" placeholder="email@exemple.com" />
-                      </FieldRow>
                       <FieldRow label="Telèfon *" error={errors.capTelefon?.message}>
                         <SInput {...register("capTelefon")} type="tel" placeholder="+34 600 000 000" />
                       </FieldRow>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
                       <FieldRow label="Data de naixement *" error={errors.capDataNaix?.message}>
                         <SInput {...register("capDataNaix")} type="date" />
                       </FieldRow>
-                      <FieldRow label="Població *" error={errors.capPoblacio?.message}>
-                        <SInput {...register("capPoblacio")} placeholder="Sant Martí, Barcelona…" />
-                      </FieldRow>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
-                      <FieldRow label="Categoria *" error={errors.capCategoria?.message}>
-                        <Controller control={control} name="capCategoria" render={({ field }) => (
-                          <SCatSelect value={field.value||""} onChange={field.onChange} />
-                        )} />
+                      <FieldRow label="Població *" error={errors.capPoblacio?.message}>
+                        <SInput {...register("capPoblacio")} placeholder="Sant Martí, Barcelona…" />
                       </FieldRow>
                       <FieldRow label="Gènere de l'equip *" error={errors.capGenere?.message}>
                         <Controller control={control} name="capGenere" render={({ field }) => (
