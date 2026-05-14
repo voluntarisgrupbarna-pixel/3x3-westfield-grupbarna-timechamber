@@ -472,13 +472,13 @@ const fadeUp = {
 };
 
 const categories = [
-  { name: "SÈNIORS", gender: "♂ ♀", desc: "Prize Money 1.000€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)" },
-  { name: "VETERANS", gender: "♂ ♀", desc: "Trofeus i medalles · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "70€ (4 jug.)" },
-  { name: "EQUALS · INCLUSIVA", gender: "♂ ♀", desc: "Specials i jugadors sense discapacitat compartint pista. NOVETAT 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "NOU 2026", price: "70€ (4 jug.)" },
-  { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "70€ (4 jug.)" },
-  { name: "U16 CADET", gender: "♂", desc: "Competició formativa d'elit", color: "from-emerald-500/15 to-emerald-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)" },
-  { name: "U14 INFANTIL", gender: "♂", desc: "Primer pas cap a la competició", color: "from-violet-500/15 to-violet-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)" },
-  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-slate-500/15 to-slate-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)" },
+  { name: "SÈNIORS", gender: "♂ ♀", desc: "Prize Money 1.000€ · Punts Rànquing FIBA", color: "from-red-500/15 to-orange-500/10", badge: "FIBA OFFICIAL", price: "90€ (5 jug.)", day: 6 },
+  { name: "VETERANS", gender: "♂ ♀", desc: "Trofeus i medalles · Esport intergeneracional (+35)", color: "from-cyan-500/15 to-teal-500/10", badge: "+35 ANYS", price: "70€ (4 jug.)", day: 6 },
+  { name: "MÀGICS · INCLUSIVA", gender: "♂ ♀", desc: "Categoria inclusiva Barna Màgics · Novetat 2026.", color: "from-pink-500/15 to-fuchsia-500/10", badge: "INCLUSIVA", price: "70€ (4 jug.)", day: 6 },
+  { name: "U18 JUNIOR", gender: "♂ ♀", desc: "Categoria juvenil d'alt nivell", color: "from-blue-500/15 to-blue-600/10", badge: "JUVENIL", price: "70€ (4 jug.)", day: 7 },
+  { name: "U16 CADET", gender: "♂", desc: "Competició formativa d'elit", color: "from-emerald-500/15 to-emerald-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)", day: 7 },
+  { name: "U14 INFANTIL", gender: "♂", desc: "Primer pas cap a la competició", color: "from-violet-500/15 to-violet-600/10", badge: "FORMACIÓ", price: "70€ (4 jug.)", day: 7 },
+  { name: "PREMINI · BENJ · ALEV", gender: "♂", desc: "Iniciació i diversió garantida", color: "from-slate-500/15 to-slate-600/10", badge: "INICIACIÓ", price: "70€ (4 jug.)", day: 7 },
 ];
 
 /* Premi econòmic per categoria — només pel 1r classificat de Sèniors M/F.
@@ -823,7 +823,7 @@ export default function Home() {
                 <Link to="/inscripcion">
                   <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-7 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl"
                     style={{ boxShadow: "0 8px 30px rgba(220,38,38,0.4)" }}>
-                    🏀 Inscriu el teu Equip — des de 75€
+                    🏀 Inscriu el teu Equip — des de 70€
                   </Button>
                 </Link>
                 <a href="#evento">
@@ -1138,13 +1138,34 @@ export default function Home() {
             <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">Competició</span>
             <h2 className="text-4xl md:text-5xl font-black" style={{ fontFamily: "'Rajdhani', sans-serif" }}>CATEGORIES</h2>
           </motion.div>
+
+          {/* Resum calendari per dia */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="grid sm:grid-cols-2 gap-4 mb-8">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-2xl p-5">
+              <p className="text-red-400 text-xs font-bold uppercase tracking-widest mb-1">Dissabte 6 de Juny</p>
+              <p className="text-white font-black text-lg" style={{ fontFamily: "'Rajdhani', sans-serif" }}>Sèniors · Veterans · Màgics</p>
+              <p className="text-white/40 text-xs mt-1">Masculí i Femení · Prize Money + Punts FIBA</p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
+              <p className="text-white/40 text-xs font-bold uppercase tracking-widest mb-1">Diumenge 7 de Juny</p>
+              <p className="text-white font-black text-lg" style={{ fontFamily: "'Rajdhani', sans-serif" }}>Junior · Cadet · Infantil · Premini · Mini · Escola</p>
+              <p className="text-white/40 text-xs mt-1">Categories formatives · Trofeus i medalles</p>
+            </div>
+          </motion.div>
+
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {categories.map((cat, i) => (
               <motion.div key={cat.name} variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={i * 0.4}
                 whileHover={{ scale: 1.02, y: -2 }}
                 className={`relative bg-gradient-to-br ${cat.color} border border-white/10 rounded-2xl p-5 hover:border-white/20 transition-all`}>
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-red-300 bg-red-500/15 px-2 py-0.5 rounded-full">{cat.badge}</span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold uppercase tracking-wider text-red-300 bg-red-500/15 px-2 py-0.5 rounded-full">{cat.badge}</span>
+                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${cat.day === 6 ? "text-orange-300 bg-orange-500/15" : "text-blue-300 bg-blue-500/15"}`}>
+                      Dia {cat.day}
+                    </span>
+                  </div>
                   <span className="text-xl">{cat.gender}</span>
                 </div>
                 <h3 className="text-lg font-black mb-1.5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>{cat.name}</h3>

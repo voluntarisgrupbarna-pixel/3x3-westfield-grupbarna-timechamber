@@ -24,8 +24,8 @@ const FAQS: FAQ[] = [
   },
   {
     q: "Quan i on es juga el torneig 2026?",
-    a: "Es disputa el dissabte 6 i diumenge 7 de juny de 2026 a tres seus del barri del Clot-Glòries de Barcelona: Westfield Glòries (Av. Diagonal 208, seu principal), La Nau del Clot (Carrer de la Llacuna 172, pavelló oficial) i Rambleta del Clot (pista exterior).",
-    tags: ["data", "lloc", "seu"],
+    a: "Es disputa el dissabte 6 i diumenge 7 de juny de 2026 a tres seus del barri del Clot-Glòries de Barcelona: Westfield Glòries (Av. Diagonal 208, seu principal), La Nau del Clot (Carrer de la Llacuna 172, pavelló oficial) i Rambleta del Clot (pista exterior). El dissabte 6 de juny juguen Sèniors, Veterans i Màgics (masculí i femení). El diumenge 7 de juny juguen les categories formatives: Junior, Cadet, Infantil, Premini, Mini i Escola.",
+    tags: ["data", "lloc", "seu", "dia", "horari", "calendari"],
   },
   {
     q: "Com m'inscric al 3×3 Westfield Glòries?",
@@ -38,9 +38,9 @@ const FAQS: FAQ[] = [
     tags: ["preu", "cost", "descompte"],
   },
   {
-    q: "Quantes categories hi ha?",
-    a: "10 categories agrupades: Escola, Premini, Mini, Preinfantil, Infantil, Cadet, Junior, Sèniors, Veterans i Màgics (categoria inclusiva). Les categories formatives (Escola → Junior) tenen preu reduït; les Sèniors i Veterans paguen una mica més com a categoria principal.",
-    tags: ["categories", "edats"],
+    q: "Quantes categories hi ha i quin dia juga cada una?",
+    a: "10 categories en total. Dissabte 6 de juny: Sèniors (♂♀, punts FIBA + prize money), Veterans (+35 anys, ♂♀) i Màgics (categoria inclusiva, ♂♀). Diumenge 7 de juny: Junior (U18, ♂♀), Cadet (U16, ♂), Infantil (U14, ♂), Premini, Mini i Escola (categories d'iniciació, ♂). Les categories formatives (Escola → Junior) tenen preu reduït (des de 70€); Sèniors i Veterans paguen una mica més com a categoria principal.",
+    tags: ["categories", "edats", "dia", "horari", "calendari"],
   },
   {
     q: "Hi ha categoria femenina?",

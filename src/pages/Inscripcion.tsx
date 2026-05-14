@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { QRCodeSVG } from "qrcode.react";
-import { tracker } from "@/lib/track";
+import { tracker, track } from "@/lib/track";
 import { CAT_NAMES } from "@/lib/categories";
 import WhatsAppLeadForm from "@/components/WhatsAppLeadForm";
 import SEO from "@/components/SEO";
@@ -398,6 +398,10 @@ export default function Inscripcion() {
   const [queuePos, setQueuePos]     = useState(0);
   const [queueInitial, setQueueInitial] = useState(0);
 
+  // Exit-intent popup: mostra el codi 3X3AVIAT quan l'usuari intenta sortir
+  const [showExitIntent, setShowExitIntent] = useState(false);
+  const exitIntentFiredRef = useRef(false);
+
   // GA4: usuari entra a la pàgina d'inscripció
   useEffect(() => {
     tracker.inscripcioIniciada();
@@ -433,6 +437,27 @@ export default function Inscripcion() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Exit-intent: el ratolí surt per la part superior (≤ 20px) després de 3s d'engagement.
+  // Només es dispara 1 vegada per sessió.
+  useEffect(() => {
+    if (sessionStorage.getItem("exitIntentShown")) return;
+    let ready = false;
+    const timeout = setTimeout(() => { ready = true; }, 3000);
+    const handler = (e: MouseEvent) => {
+      if (!ready || exitIntentFiredRef.current || e.clientY > 20) return;
+      exitIntentFiredRef.current = true;
+      sessionStorage.setItem("exitIntentShown", "1");
+      setShowExitIntent(true);
+      track("exit_intent_shown", { page: "inscripcion" });
+    };
+    document.addEventListener("mousemove", handler);
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener("mousemove", handler);
+    };
+  }, []);
+
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -1256,6 +1281,61 @@ export default function Inscripcion() {
         description="Inscriu el teu equip al torneig 3×3 FIBA Barcelona: Premini fins a Sèniors Pro · 2.400€ prize money · 6-7 juny 2026 al Clot-Glòries. Inscripcions obertes."
         path="/inscripcion"
       />
+
+      {/* ─── Exit-intent popup ─── */}
+      <AnimatePresence>
+        {showExitIntent && (
+          <motion.div
+            key="exit-intent-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+            onClick={() => setShowExitIntent(false)}
+          >
+            <motion.div
+              key="exit-intent-modal"
+              initial={{ opacity: 0, scale: 0.85, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.85, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              className="bg-slate-900 border border-red-500/40 rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="text-5xl mb-3">🏀</div>
+              <p className="text-red-400 text-xs font-bold uppercase tracking-[0.18em] mb-1">Espera un moment!</p>
+              <h2 className="text-xl font-black text-white mb-2" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+                5% de DESCOMPTE per a tu
+              </h2>
+              <p className="text-white/60 text-sm mb-4 leading-relaxed">
+                Aplica aquest codi al formulari i estalvia en la teva inscripció. Vàlid fins al 15 de juny.
+              </p>
+              <div
+                className="bg-slate-800 border border-red-500/50 rounded-xl px-5 py-3 mb-4 cursor-pointer group"
+                onClick={() => {
+                  navigator.clipboard?.writeText("3X3AVIAT").catch(() => {});
+                  track("exit_intent_code_copied", {});
+                  toast({ title: "Codi copiat! 🎉", description: "Enganxa'l al camp 'Codi de descompte' del formulari." });
+                  setShowExitIntent(false);
+                }}
+              >
+                <p className="text-2xl font-black font-mono tracking-widest text-red-400 group-hover:text-red-300 transition-colors">
+                  3X3AVIAT
+                </p>
+                <p className="text-xs text-white/30 mt-0.5">Toca per copiar</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowExitIntent(false)}
+                className="text-white/30 text-xs hover:text-white/60 transition-colors"
+              >
+                Continuar sense descompte
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="border-b border-white/10 bg-slate-950/95 backdrop-blur sticky top-0 z-50">
         <div className="container mx-auto px-4 h-14 flex items-center justify-between">
