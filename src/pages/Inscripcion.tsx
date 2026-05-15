@@ -1370,7 +1370,7 @@ export default function Inscripcion() {
     <div className="min-h-screen bg-slate-950 text-white">
       <SEO
         title="Inscripció d'equips · 3×3 Westfield Glòries 2026"
-        description="Inscriu el teu equip al torneig 3×3 FIBA Barcelona: Premini fins a Sèniors Pro · 2.400€ prize money · 6-7 juny 2026 al Clot-Glòries. Inscripcions obertes."
+        description="Inscriu el teu equip al torneig 3×3 FIBA Barcelona: Premini fins a Sèniors Pro · 2.000€ prize money (Sèniors M/F) · 6-7 juny 2026 al Clot-Glòries. Inscripcions obertes."
         path="/inscripcion"
       />
 

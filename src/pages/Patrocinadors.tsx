@@ -63,7 +63,7 @@ const STATS = [
   { icon: Users, value: "100", label: "equips inscrits", sub: "~400 jugadors" },
   { icon: Eye, value: "5K+", label: "visitants únics web", sub: "període pre-event" },
   { icon: Megaphone, value: "20K+", label: "abast social media", sub: "Instagram + TikTok 2026" },
-  { icon: Trophy, value: "2.400€", label: "prize money", sub: "premis FIBA + comerços" },
+  { icon: Trophy, value: "2.000€", label: "prize money", sub: "Sèniors M/F · 1.000€ c/u" },
 ];
 
 export default function Patrocinadors() {
