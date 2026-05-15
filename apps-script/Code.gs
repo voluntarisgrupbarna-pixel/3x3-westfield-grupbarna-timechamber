@@ -14,7 +14,7 @@
  * Configuració REQUERIDA: Script Properties (Project Settings → Script properties → Add):
  *   - SHEET_ID              = 1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA
  *   - SHEET_NAME            = Inscripcions 2026
- *   - ADMIN_EMAILS          = voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info  (CSV; preferit)
+ *   - ADMIN_EMAILS          = voluntarisgrupbarna@gmail.com  (CSV; preferit)
  *   - ADMIN_EMAIL           = (fallback single, només si ADMIN_EMAILS no està)
  *   - FILLOUT_API_KEY       = sk_prod_... (la teva clau de Fillout, des de Settings → Developer)
  *   - FILLOUT_FORM_ID       = qHCxiyaw5bus (form "My form" a Fillout)
@@ -129,15 +129,12 @@ function toMailAppOpts_(opts) {
  * Prioritat:
  *   1. Script Property `ADMIN_EMAILS` (CSV) — ex: "a@x.com,b@y.com"
  *   2. Script Property `ADMIN_EMAIL` (single string)
- *   3. Fallback hardcoded: voluntarisgrupbarna@gmail.com + voluntaris@grupbarna.info
- *
- * Així Ana rep TOTS els avisos al Gmail (preferit) i a l'email del domini
- * del club com a redundància, sense haver de configurar res.
+ *   3. Fallback hardcoded: anafernandezduran78@gmail.com,voluntarisgrupbarna@gmail.com
  */
 function getAdminEmails_() {
   const csv = PROPS.getProperty('ADMIN_EMAILS')
     || PROPS.getProperty('ADMIN_EMAIL')
-    || 'anafernandezduran78@gmail.com,voluntarisgrupbarna@gmail.com,voluntaris@grupbarna.info';
+    || 'anafernandezduran78@gmail.com,voluntarisgrupbarna@gmail.com';
   return String(csv).split(',').map(function(s) { return s.trim(); }).filter(Boolean);
 }
 

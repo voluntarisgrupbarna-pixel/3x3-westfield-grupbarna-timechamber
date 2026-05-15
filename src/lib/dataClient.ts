@@ -182,6 +182,69 @@ export async function searchByText(q: string): Promise<Inscripcio[]> {
   });
 }
 
+/* ─── Leads WhatsApp (Llista_Difusio) ─── */
+
+export type Lead = {
+  sheet: string;          // pestanya origen (Llista_Difusio_3x3 / Campus / PortesObertes)
+  data: string;
+  nom: string;
+  telefon: string;        // normalitzat (només dígits i +)
+  email: string;
+  dubte: string;
+  source: string;
+  event: string;          // tres_x_tres | campus | portes_obertes | general
+  intent: string;
+  edat: string;
+  nivell: string;
+  estat: string;          // Nou | Contactat | En seguiment | Tancat-OK | Tancat-NoInteressa
+  ultim_contacte: string;
+  seguent_seguim: string;
+  notes: string;
+  utm_source: string;
+  utm_campaign: string;
+};
+
+let leadsCache: { ts: number; data: Lead[] } | null = null;
+
+export async function loadLeads(force = false): Promise<Lead[]> {
+  if (!force && leadsCache && Date.now() - leadsCache.ts < CACHE_TTL_MS) return leadsCache.data;
+  if (!WEBHOOK || !STAFF_HASH) return [];
+  const url = `${WEBHOOK}?action=leads&token=${encodeURIComponent(STAFF_HASH)}`;
+  try {
+    const r = await fetch(url);
+    if (!r.ok) return [];
+    const body = await r.json();
+    if (body.error) return [];
+    const data = Array.isArray(body.leads) ? (body.leads as Lead[]) : [];
+    leadsCache = { ts: Date.now(), data };
+    return data;
+  } catch {
+    return [];
+  }
+}
+
+/** Normalitza un telèfon a només dígits (sense + ni espais ni guions) per comparació. */
+export function normalizePhone(raw: string | null | undefined): string {
+  return String(raw || '').replace(/[^0-9]/g, '');
+}
+
+/** Creua leads vs inscripcions per telèfon. Retorna leads que NO han registrat equip. */
+export function leadsNotRegistered(leads: Lead[], inscripcions: Inscripcio[]): Lead[] {
+  const registeredPhones = new Set(
+    inscripcions
+      .map(i => normalizePhone(i.telefon))
+      .filter(p => p.length >= 8)
+  );
+  return leads.filter(l => {
+    const phone = normalizePhone(l.telefon);
+    if (phone.length < 8) return false;
+    if (registeredPhones.has(phone)) return false;
+    // També exclou els ja marcats com a tancats al CRM
+    if (l.estat === 'Tancat-OK' || l.estat === 'Tancat-NoInteressa') return false;
+    return true;
+  });
+}
+
 export async function searchByPagament(opts: {
   amount?: number;
   from?: string;

@@ -112,7 +112,7 @@ export default function PortesObertes() {
         <p className="text-[11px] text-white/40 text-center leading-relaxed mt-8">
           CB Grup Barna · Bàsquet al barri del Clot des de 1965<br/>
           Pavelló NAU del Clot · Parc del Clot, Barcelona<br/>
-          <a href="mailto:voluntaris@grupbarna.info" className="text-white/55 hover:text-red-300">voluntaris@grupbarna.info</a>
+          <a href="mailto:voluntarisgrupbarna@gmail.com" className="text-white/55 hover:text-red-300">voluntarisgrupbarna@gmail.com</a>
         </p>
       </div>
 

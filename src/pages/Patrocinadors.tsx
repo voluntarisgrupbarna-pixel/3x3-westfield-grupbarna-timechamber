@@ -226,7 +226,7 @@ export default function Patrocinadors() {
             <Button onClick={() => setWaOpen(true)} size="lg" className="bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-bold uppercase tracking-wider">
               💬 WhatsApp: parlem ara
             </Button>
-            <a href="mailto:voluntaris@grupbarna.info?subject=Patrocini%20·%203x3%20Westfield%20Gl%C3%B2ries%202026">
+            <a href="mailto:voluntarisgrupbarna@gmail.com?subject=Patrocini%20·%203x3%20Westfield%20Gl%C3%B2ries%202026">
               <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/30 text-white/85 hover:bg-white/10 font-bold uppercase tracking-wider">
                 <Mail className="w-4 h-4 mr-2"/>Escriu-nos email
               </Button>

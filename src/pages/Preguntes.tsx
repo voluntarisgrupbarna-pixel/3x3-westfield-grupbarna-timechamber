@@ -203,7 +203,7 @@ export default function Preguntes() {
           <h3 className="font-black text-xl sm:text-2xl mb-2">No has trobat la teva resposta?</h3>
           <p className="text-white/60 text-sm mb-5">Contacta'ns per email o WhatsApp i et resolem qualsevol dubte en menys de 24h.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="mailto:voluntaris@grupbarna.info?subject=Pregunta%20sobre%203x3%20Westfield%20Gl%C3%B2ries">
+            <a href="mailto:voluntarisgrupbarna@gmail.com?subject=Pregunta%20sobre%203x3%20Westfield%20Gl%C3%B2ries">
               <Button variant="outline" className="border-white/30 text-white/85 hover:bg-white/10 font-bold uppercase tracking-wider w-full sm:w-auto">
                 ✉️ Email
               </Button>

@@ -81,9 +81,9 @@ export default function Hub() {
             sub="Web del club · notícies, equips, escola"
           />
           <SmallLink
-            href="mailto:voluntaris@grupbarna.info"
+            href="mailto:voluntarisgrupbarna@gmail.com"
             icon={Mail}
-            label="voluntaris@grupbarna.info"
+            label="voluntarisgrupbarna@gmail.com"
             sub="Contacte directe"
           />
         </motion.div>

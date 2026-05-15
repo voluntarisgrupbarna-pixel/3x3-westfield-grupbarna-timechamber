@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard · 3x3 Westfield Glòries 2026</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  body { background: #020617; }
+  .spin { animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="text-white min-h-screen font-sans antialiased">
+
+<!-- ═══════════════════════════════════════════════════════════════
+     ⚙️  CONFIGURACIÓ — edita aquí les dues constants
+═══════════════════════════════════════════════════════════════ -->
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwKLnFoBtf9LJm591f2MDBhs6gmoAMhTApqQRiEKQ60kxyeITJipUj7teZFmv6XJNYgMQ/exec";
+const METRICS_TOKEN   = ""; // ← Posa aquí el valor de METRICS_TOKEN que has guardat a Script Properties
+</script>
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- Header -->
+<header class="sticky top-0 z-20 bg-slate-950/95 backdrop-blur border-b border-slate-800 px-5 py-3.5 flex items-center justify-between">
+  <div class="flex items-center gap-2.5">
+    <span class="text-xl leading-none">🏀</span>
+    <div>
+      <p class="text-sm font-bold leading-tight">Dashboard 3x3 Westfield Glòries 2026</p>
+      <p class="text-[11px] text-slate-500" id="lastUpdated">Carregant…</p>
+    </div>
+  </div>
+  <button onclick="loadAll(true)"
+    class="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-colors">
+    <svg id="refreshIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+    </svg>
+    Actualitzar
+  </button>
+</header>
+
+<!-- Tabs -->
+<div class="border-b border-slate-800 px-5">
+  <div class="flex gap-1 max-w-5xl mx-auto">
+    <button onclick="setTab('inscripcions')" id="tab-inscripcions"
+      class="tab-btn flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 border-red-500 text-white transition-colors">
+      👥 Inscripcions
+    </button>
+    <button onclick="setTab('trafic')" id="tab-trafic"
+      class="tab-btn flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 transition-colors">
+      📊 Tràfic Web (GA4)
+    </button>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="max-w-5xl mx-auto p-4 space-y-5 pb-16">
+
+  <!-- ─── ERROR BANNER ─── -->
+  <div id="errorBanner" class="hidden bg-red-900/40 border border-red-700 rounded-xl px-4 py-3 text-sm text-red-300"></div>
+
+  <!-- ══════════════════════════════════════════════
+       PESTANYA INSCRIPCIONS
+  ══════════════════════════════════════════════ -->
+  <div id="pane-inscripcions">
+
+    <!-- KPIs Inscripcions -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">Equips inscrits</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-equips">—</p>
+        <p class="text-xs text-slate-500" id="kpi-equips-sub">de — places</p>
+        <div class="mt-2 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div id="kpi-bar" class="h-full bg-red-500 rounded-full transition-all duration-500" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">Ingressos totals</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-ingressos">—</p>
+        <p class="text-xs text-slate-500">registrats</p>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">% Ocupació</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-ocupacio">—</p>
+        <p class="text-xs text-slate-500">sobre aforament</p>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">Dies per torneig</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-dies">—</p>
+        <p class="text-xs text-slate-500">6-7 juny 2026</p>
+      </div>
+    </div>
+
+    <!-- Gràfic per categoria -->
+    <div class="bg-slate-900 rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-slate-300 mb-4">Equips per categoria</h2>
+      <div id="loading-cat" class="h-56 flex items-center justify-center">
+        <div class="w-8 h-8 border-4 border-red-500/30 border-t-red-500 rounded-full spin"></div>
+      </div>
+      <canvas id="chartCategory" class="hidden" style="max-height:220px"></canvas>
+    </div>
+
+  </div><!-- /pane-inscripcions -->
+
+
+  <!-- ══════════════════════════════════════════════
+       PESTANYA TRÀFIC WEB
+  ══════════════════════════════════════════════ -->
+  <div id="pane-trafic" class="hidden space-y-5">
+
+    <!-- KPIs GA4 -->
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">Sessions (30 dies)</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-sessions">—</p>
+        <p class="text-xs text-slate-500">visites totals</p>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4">
+        <p class="text-xs text-slate-400 mb-1">Usuaris únics (30 dies)</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-users">—</p>
+        <p class="text-xs text-slate-500">persones diferents</p>
+      </div>
+      <div class="bg-slate-900 rounded-xl p-4 col-span-2 md:col-span-1">
+        <p class="text-xs text-slate-400 mb-1">Conversió inscripció</p>
+        <p class="text-2xl font-bold tabular-nums" id="kpi-conversion">—</p>
+        <p class="text-xs text-slate-500">sessions → inscripció</p>
+      </div>
+    </div>
+
+    <!-- Gràfic línia: sessions per dia -->
+    <div class="bg-slate-900 rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-slate-300 mb-4">Sessions per dia · últims 30 dies</h2>
+      <div id="loading-daily" class="h-48 flex items-center justify-center">
+        <div class="w-8 h-8 border-4 border-red-500/30 border-t-red-500 rounded-full spin"></div>
+      </div>
+      <canvas id="chartDaily" class="hidden" style="max-height:200px"></canvas>
+    </div>
+
+    <!-- Fonts tràfic + Funnel -->
+    <div class="grid md:grid-cols-2 gap-4">
+
+      <!-- Fonts de tràfic -->
+      <div class="bg-slate-900 rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-slate-300 mb-4">Fonts de tràfic (canals)</h2>
+        <div id="loading-sources" class="h-52 flex items-center justify-center">
+          <div class="w-8 h-8 border-4 border-red-500/30 border-t-red-500 rounded-full spin"></div>
+        </div>
+        <canvas id="chartSources" class="hidden" style="max-height:220px"></canvas>
+        <div id="sourcesLegend" class="mt-3 space-y-1 hidden"></div>
+      </div>
+
+      <!-- Funnel d'inscripció -->
+      <div class="bg-slate-900 rounded-xl p-5">
+        <h2 class="text-sm font-semibold text-slate-300 mb-4">Funnel d'inscripció (60 dies)</h2>
+        <div id="loading-funnel" class="h-52 flex items-center justify-center">
+          <div class="w-8 h-8 border-4 border-red-500/30 border-t-red-500 rounded-full spin"></div>
+        </div>
+        <canvas id="chartFunnel" class="hidden" style="max-height:220px"></canvas>
+      </div>
+    </div>
+
+    <!-- Avís GA4 -->
+    <div id="ga4Warning" class="hidden bg-yellow-900/30 border border-yellow-700/50 rounded-xl p-4 text-xs text-yellow-300/80 space-y-1">
+      <p class="font-semibold text-yellow-300">⚠️ Dades de GA4 no disponibles</p>
+      <p id="ga4WarningMsg"></p>
+      <p>Comprova que <code class="bg-yellow-900/50 px-1 rounded">GA4_PROPERTY_ID</code> i <code class="bg-yellow-900/50 px-1 rounded">METRICS_TOKEN</code> estan configurats a Script Properties i que has re-autoritzat l'Apps Script.</p>
+    </div>
+
+  </div><!-- /pane-trafic -->
+
+</div><!-- /content -->
+
+
+<script>
+// ─── Estat ────────────────────────────────────────────────────────────────────
+let activeTab = 'inscripcions';
+let charts = {};
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+function setTab(tab) {
+  activeTab = tab;
+  ['inscripcions', 'trafic'].forEach(t => {
+    const pane = document.getElementById('pane-' + t);
+    const btn  = document.getElementById('tab-' + t);
+    if (t === tab) {
+      pane.classList.remove('hidden');
+      btn.classList.replace('border-transparent','border-red-500');
+      btn.classList.replace('text-slate-400','text-white');
+    } else {
+      pane.classList.add('hidden');
+      btn.classList.replace('border-red-500','border-transparent');
+      btn.classList.replace('text-white','text-slate-400');
+    }
+  });
+}
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
+function fmt(n) { return (n ?? 0).toLocaleString('ca-ES'); }
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+function hideError() { document.getElementById('errorBanner').classList.add('hidden'); }
+function spinRefresh(on) {
+  document.getElementById('refreshIcon').classList.toggle('spin', on);
+}
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+// ─── Carrega principal ────────────────────────────────────────────────────────
+async function loadAll(force = false) {
+  hideError();
+  spinRefresh(true);
+  try {
+    await Promise.allSettled([loadDashboard(), loadGa4()]);
+    document.getElementById('lastUpdated').textContent =
+      'Actualitzat: ' + new Date().toLocaleTimeString('ca-ES', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+  } finally {
+    spinRefresh(false);
+  }
+}
+
+// ─── Inscripcions (action=dashboard) ─────────────────────────────────────────
+async function loadDashboard() {
+  try {
+    const url = APPS_SCRIPT_URL + '?action=dashboard';
+    const res  = await fetch(url);
+    const data = await res.json();
+    const insc = data.inscripcions3x3 || {};
+    const total    = insc.total    ?? 0;
+    const capacity = insc.capacity ?? 100;
+    const ingressos = insc.ingressos ?? 0;
+    const pct = capacity > 0 ? Math.round((total / capacity) * 100) : 0;
+
+    document.getElementById('kpi-equips').textContent       = fmt(total);
+    document.getElementById('kpi-equips-sub').textContent   = `de ${fmt(capacity)} places`;
+    document.getElementById('kpi-ingressos').textContent    = fmt(ingressos) + ' €';
+    document.getElementById('kpi-ocupacio').textContent     = pct + '%';
+    document.getElementById('kpi-bar').style.width          = Math.min(pct, 100) + '%';
+
+    const tornDate = new Date('2026-06-06T09:00:00');
+    const dies = Math.max(0, Math.ceil((tornDate - Date.now()) / 86400000));
+    document.getElementById('kpi-dies').textContent = dies;
+
+    // Gràfic categories
+    const byCategory = insc.byCategory || {};
+    const labels = Object.keys(byCategory);
+    const values = labels.map(k => byCategory[k]);
+    document.getElementById('loading-cat').classList.add('hidden');
+    const canvas = document.getElementById('chartCategory');
+    canvas.classList.remove('hidden');
+    destroyChart('chartCategory');
+    const COLORS = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#14b8a6'];
+    charts['chartCategory'] = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{ data: values, backgroundColor: COLORS.slice(0, labels.length), borderRadius: 4, borderSkipped: false }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.raw + ' equips' } } },
+        scales: {
+          x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e293b' } },
+          y: { ticks: { color: '#cbd5e1', font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+  } catch (err) {
+    showError('Error carregant inscripcions: ' + err.message);
+    document.getElementById('loading-cat').innerHTML = '<p class="text-slate-600 text-sm">Error</p>';
+  }
+}
+
+// ─── GA4 (action=ga4) ─────────────────────────────────────────────────────────
+async function loadGa4() {
+  const tokenParam = METRICS_TOKEN ? '&token=' + encodeURIComponent(METRICS_TOKEN) : '';
+  try {
+    const url = APPS_SCRIPT_URL + '?action=ga4' + tokenParam;
+    const res  = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      showGa4Warning(data.error);
+      return;
+    }
+
+    // Totals
+    const totals = data.totals || {};
+    document.getElementById('kpi-sessions').textContent = fmt(totals.sessions);
+    document.getElementById('kpi-users').textContent    = fmt(totals.users);
+
+    // Conversió
+    const completades = (data.funnel || {})['inscripcio_completada'] || 0;
+    const convPct = totals.sessions > 0 ? ((completades / totals.sessions) * 100).toFixed(1) : '0.0';
+    document.getElementById('kpi-conversion').textContent = convPct + '%';
+
+    // Gràfic sessions per dia
+    renderDailyChart(data.daily || []);
+    // Gràfic fonts tràfic
+    renderSourcesChart(data.sources || []);
+    // Gràfic funnel
+    renderFunnelChart(data.funnel || {});
+
+  } catch (err) {
+    showGa4Warning('No s\'han pogut carregar les dades de GA4: ' + err.message);
+  }
+}
+
+function showGa4Warning(msg) {
+  document.getElementById('ga4WarningMsg').textContent = msg;
+  document.getElementById('ga4Warning').classList.remove('hidden');
+  ['loading-daily','loading-sources','loading-funnel'].forEach(id => {
+    document.getElementById(id).innerHTML = '<p class="text-slate-600 text-sm">No disponible</p>';
+  });
+}
+
+function renderDailyChart(daily) {
+  document.getElementById('loading-daily').classList.add('hidden');
+  const canvas = document.getElementById('chartDaily');
+  canvas.classList.remove('hidden');
+  destroyChart('chartDaily');
+  charts['chartDaily'] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: daily.map(d => d.date),
+      datasets: [
+        {
+          label: 'Sessions',
+          data: daily.map(d => d.sessions),
+          borderColor: '#ef4444',
+          backgroundColor: 'rgba(239,68,68,0.08)',
+          fill: true,
+          tension: 0.3,
+          borderWidth: 2,
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        },
+        {
+          label: 'Usuaris',
+          data: daily.map(d => d.users),
+          borderColor: '#3b82f6',
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.3,
+          borderWidth: 1.5,
+          borderDash: [4, 3],
+          pointRadius: 0,
+          pointHoverRadius: 4,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: '#94a3b8', font: { size: 11 }, boxWidth: 12 } },
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 }, maxTicksLimit: 10 }, grid: { color: '#1e293b' } },
+        y: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' } },
+      },
+    },
+  });
+}
+
+function renderSourcesChart(sources) {
+  document.getElementById('loading-sources').classList.add('hidden');
+  const canvas = document.getElementById('chartSources');
+  canvas.classList.remove('hidden');
+  destroyChart('chartSources');
+  const CHANNEL_COLORS = {
+    'Organic Search': '#22c55e',
+    'Direct': '#3b82f6',
+    'Organic Social': '#a855f7',
+    'Referral': '#f97316',
+    'Email': '#eab308',
+    'Paid Search': '#06b6d4',
+    'Unassigned': '#64748b',
+  };
+  const labels = sources.map(s => s.channel);
+  const values = sources.map(s => s.sessions);
+  const total  = values.reduce((a, b) => a + b, 0);
+  const colors = labels.map(l => CHANNEL_COLORS[l] || '#94a3b8');
+  charts['chartSources'] = new Chart(canvas, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
+              return ` ${ctx.label}: ${fmt(ctx.raw)} sessions (${pct}%)`;
+            },
+          },
+        },
+      },
+    },
+  });
+  // Llegenda manual
+  const legend = document.getElementById('sourcesLegend');
+  legend.classList.remove('hidden');
+  legend.innerHTML = sources.map((s, i) => `
+    <div class="flex items-center justify-between text-xs">
+      <span class="flex items-center gap-1.5 text-slate-300">
+        <span class="w-2 h-2 rounded-full flex-shrink-0" style="background:${colors[i]}"></span>
+        ${s.channel}
+      </span>
+      <span class="text-slate-400 tabular-nums">${fmt(s.sessions)}</span>
+    </div>
+  `).join('');
+}
+
+function renderFunnelChart(funnel) {
+  document.getElementById('loading-funnel').classList.add('hidden');
+  const canvas = document.getElementById('chartFunnel');
+  canvas.classList.remove('hidden');
+  destroyChart('chartFunnel');
+  const steps = [
+    { key: 'cta_inscripcio_click', label: '👆 Cliquen Inscriu-te', color: '#818cf8' },
+    { key: 'inscripcio_iniciada',  label: '📝 Inicien formulari',  color: '#a78bfa' },
+    { key: 'queue_passada',        label: '⏳ Passen cua',         color: '#f59e0b' },
+    { key: 'viral_gate_passat',    label: '🎁 Gate viral passat',  color: '#f97316' },
+    { key: 'inscripcio_completada',label: '🎉 Inscrits',           color: '#22c55e' },
+  ];
+  const labels = steps.map(s => s.label);
+  const values = steps.map(s => funnel[s.key] || 0);
+  const colors = steps.map(s => s.color);
+  charts['chartFunnel'] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderRadius: 4, borderSkipped: false }],
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + fmt(ctx.raw) + ' events' } },
+      },
+      scales: {
+        x: { ticks: { color: '#64748b', font: { size: 10 } }, grid: { color: '#1e293b' } },
+        y: { ticks: { color: '#cbd5e1', font: { size: 10 } }, grid: { display: false } },
+      },
+    },
+  });
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>

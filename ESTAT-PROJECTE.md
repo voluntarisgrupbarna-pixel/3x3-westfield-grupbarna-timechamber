@@ -96,7 +96,7 @@
 ### Legal
 - Apartat legal Timechamber Experience al form (heretat del JotForm Campus)
 - 3 checkboxes obligatoris: bases, apartat legal, drets imatge
-- Email contacte unificat: `voluntaris@grupbarna.info`
+- Email contacte unificat: `voluntarisgrupbarna@gmail.com`
 - WhatsApp Q&A: `+34 698 425 153`
 
 ### Documentació
@@ -223,7 +223,7 @@ WEB 3X3/
 |---|---|---|
 | `SHEET_ID` | `1MG5_8c…` | Sheet "Inscripcions 2026" |
 | `SHEET_NAME` | `Inscripcions 2026` | Pestanya principal |
-| `ADMIN_EMAIL` | `voluntaris@grupbarna.info` | Receptor d'alertes |
+| `ADMIN_EMAIL` | `voluntarisgrupbarna@gmail.com` | Receptor d'alertes |
 | `FILLOUT_API_KEY` | `sk_prod_…` | Auth per a tots els forms Fillout |
 | `FILLOUT_FORM_ID` | `qHCxiyaw5bus` | Form inscripcions equip |
 | `FILLOUT_BLOG_FORM_ID` | `mRRK9kAMDhus` (default codi) | Form subscriptors blog |
@@ -252,7 +252,7 @@ WEB 3X3/
 
 ## 🆘 SUPORT
 
-- Email: voluntaris@grupbarna.info
+- Email: voluntarisgrupbarna@gmail.com
 - WhatsApp: +34 698 425 153
 - Web: https://cbgrupbarna-3x3timechamber.com
 - Repo: https://github.com/voluntarisgrupbarna-pixel/3x3-westfield-grupbarna-timechamber

@@ -66,7 +66,7 @@ Aquesta és la llista de **passos manuals** que NO es poden automatitzar (requer
 - [ ] Per a cada email: copia el bloc `Assumpte:` i el cos.
 - [ ] Personalitza el saludo amb el nom del periodista (cerca a Twitter/LinkedIn de cada mitjà qui escriu d'esports).
 - [ ] Adjunta el press kit (cartell + dossier — descàrregues a `/premsa` o als fitxers de `/public/images/`).
-- [ ] Envia des de `voluntaris@grupbarna.info`.
+- [ ] Envia des de `voluntarisgrupbarna@gmail.com`.
 - [ ] Marca la caixa al calendari quan l'enviïs.
 
 ---

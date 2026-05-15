@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, X, ChevronLeft, ChevronRight, Zap, Medal, Star } from "lucide-react";
@@ -23,34 +23,6 @@ function ScrollProgressBar() {
       <div className="h-full bg-gradient-to-r from-red-600 via-orange-500 to-red-400 transition-all duration-100"
         style={{ width: `${progress}%`, boxShadow: "0 0 6px rgba(220,38,38,0.7)" }} />
     </div>
-  );
-}
-
-/* ─── Early Bird countdown per al hero ─── */
-const EB_END_HOME = new Date("2026-05-20T23:59:59+02:00");
-function EarlyBirdPill() {
-  const calc = () => {
-    const diff = EB_END_HOME.getTime() - Date.now();
-    if (diff <= 0) return null;
-    const dies = Math.floor(diff / 86400000);
-    const hores = Math.floor((diff % 86400000) / 3600000);
-    return dies === 0 ? `🚨 Acaba AVUI — ${hores}h restants` : `⏰ Acaba en ${dies} dies ${hores}h`;
-  };
-  const [txt, setTxt] = useState(calc);
-  useEffect(() => {
-    const t = setInterval(() => setTxt(calc), 60000);
-    return () => clearInterval(t);
-  }, []);
-  if (!txt) return null;
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.3 }}
-      className="inline-flex items-center gap-2 bg-orange-500/15 border border-orange-500/50 text-orange-300 text-xs font-black uppercase tracking-widest px-4 py-2 rounded-full mb-4 animate-pulse-slow"
-    >
-      🔥 Early Bird −10% · {txt}
-    </motion.div>
   );
 }
 
@@ -481,34 +453,6 @@ function Lightbox({ images, index, onClose, onPrev, onNext }: {
 }
 
 /* ─── Autoplay Video Reel ─── */
-function VideoReel() {
-  return (
-    <div className="relative w-full rounded-2xl overflow-hidden border border-white/15 shadow-2xl"
-      style={{ aspectRatio: "9/16", maxWidth: 340, width: 340, height: 604, boxShadow: "0 0 40px rgba(220,38,38,0.2)" }}>
-      <video
-        src="/video/reel.mp4"
-        autoPlay
-        muted
-        loop
-        playsInline
-        width={340}
-        height={604}
-        poster="/images/hero-edicio-anterior.jpg"
-        className="w-full h-full object-cover"
-      />
-      {/* IG badge overlay */}
-      <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm rounded-full px-2.5 py-1">
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-        <span className="text-white text-xs font-semibold">@cbgrupbarna</span>
-      </div>
-      <div className="absolute bottom-3 left-3 flex gap-1.5">
-        <span className="text-xs bg-red-500/80 text-white font-bold px-2 py-0.5 rounded-full">#3x3</span>
-        <span className="text-xs bg-red-500/80 text-white font-bold px-2 py-0.5 rounded-full">#3x3time</span>
-      </div>
-    </div>
-  );
-}
-
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
   visible: (i = 0) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] } })
@@ -625,7 +569,7 @@ function EdicionsAnterior() {
           {[
             { num: "1ª", date: "Maig 2024", equips: 80, jugadors: "~360", cats: "Cadet M, Infantil F, Infantil M", color: "from-slate-500/15 to-slate-600/10", border: "border-white/15" },
             { num: "2ª", date: "Maig 2025", equips: 100, jugadors: "~450", cats: "+ Veterans · creixement +25%", color: "from-red-500/20 to-orange-500/10", border: "border-red-500/40" },
-            { num: "3ª", date: "6-7 Juny 2026", equips: "—", jugadors: "Tu hi pots ser", cats: "+ EQUALS (inclusiva) · Senior Pro Prize Money", color: "from-orange-500/20 to-yellow-500/10", border: "border-orange-400/50" },
+            { num: "4ª", date: "6-7 Juny 2026", equips: "—", jugadors: "Tu hi pots ser", cats: "+ EQUALS (inclusiva) · Senior Pro Prize Money", color: "from-orange-500/20 to-yellow-500/10", border: "border-orange-400/50" },
           ].map((ed, i) => (
             <motion.div
               key={ed.num}
@@ -739,15 +683,8 @@ function EdicionsAnterior() {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
-  const [heroOffset, setHeroOffset] = useState(0);
   const [activeUbic, setActiveUbic] = useState(0);
   const anunciVisible = useAnunciVisible();
-
-  useEffect(() => {
-    const onScroll = () => setHeroOffset(window.scrollY * 0.25);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const openLightbox = useCallback((i: number) => setLightboxIdx(i), []);
   const closeLightbox = useCallback(() => setLightboxIdx(null), []);
@@ -819,123 +756,23 @@ export default function Home() {
       </nav>
 
       {/* ══ HERO ══ */}
-      <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden pt-16" style={{ contain: "layout" }}>
-        {/* BG */}
-        <div className="absolute inset-0 bg-cover bg-center bg-no-repeat will-change-transform"
-          style={{ backgroundImage: `url(/images/hero-edicio-anterior.jpg)`, transform: `translateY(${heroOffset}px)` }} />
-        {/* Elegant gradient overlay – less black, more refined */}
-        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(15,10,30,0.88) 0%, rgba(20,10,20,0.72) 50%, rgba(10,5,20,0.92) 100%)" }} />
-        <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at 30% 50%, rgba(220,38,38,0.12) 0%, transparent 60%)" }} />
-
-        <div className="relative z-10 container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            {/* Left: title + info + counters */}
-            <div>
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0} className="mb-4">
-                <span className="inline-flex items-center gap-2 bg-red-500/15 border border-red-500/30 text-red-300 text-xs font-bold uppercase tracking-[0.2em] px-3 py-1.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
-                  3ª Edició · Inscripcions Obertes
-                </span>
-              </motion.div>
-
-              {/* Compact title */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="mb-5">
-                <h1 className="font-black uppercase leading-none tracking-tight" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
-                  <span className="block text-red-500" style={{ fontSize: "clamp(2rem, 6vw, 3.5rem)", textShadow: "0 0 40px rgba(220,38,38,0.4)" }}>
-                    3×3 WESTFIELD GLÒRIES
-                  </span>
-                  <span className="block text-white/80" style={{ fontSize: "clamp(1rem, 2.8vw, 1.6rem)", letterSpacing: "0.04em", marginTop: "0.2em" }}>
-                    × GRUP BARNA · TIME CHAMBER · EIX CLOT
-                  </span>
-                </h1>
-              </motion.div>
-
-              {/* Date + location */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2} className="flex flex-wrap gap-x-5 gap-y-2 mb-6 text-sm text-white/70">
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="w-4 h-4 text-red-400" />
-                  <strong className="text-white">6 i 7 de Juny 2026</strong>
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-red-400" />
-                  <strong className="text-white">3 seus · Barri del Clot, Barcelona</strong>
-                </span>
-              </motion.div>
-
-              {/* Early Bird urgency pill */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2.5}>
-                <EarlyBirdPill />
-              </motion.div>
-
-              {/* CTA */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3} className="flex flex-wrap gap-3 mb-3">
-                <Link to="/inscripcion">
-                  <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-7 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl"
-                    style={{ boxShadow: "0 8px 30px rgba(220,38,38,0.4)" }}>
-                    🏀 Inscriu el teu Equip — des de 75€
-                  </Button>
-                </Link>
-                <a href="#evento">
-                  <Button variant="outline" size="lg" className="border-white/20 text-white/70 hover:text-white hover:border-white/50 font-medium px-7 py-5 rounded-xl bg-white/5">
-                    Saber més <ChevronDown className="w-4 h-4 ml-1" />
-                  </Button>
-                </a>
-              </motion.div>
-
-              {/* CTA secundari: inscripció individual (per qui no té equip) */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={3.3} className="mb-8">
-                <Link to="/inscripcio-individual" className="inline-flex items-center gap-2 text-sm font-semibold text-orange-300 hover:text-orange-200 bg-orange-500/10 hover:bg-orange-500/15 border border-orange-500/30 hover:border-orange-500/50 px-4 py-2 rounded-full transition-all">
-                  👤 No tens equip? Apunta't sol per <span className="font-black">20€</span> · t'assignem un equip →
-                </Link>
-              </motion.div>
-
-              {/* Counters – page 1 */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={4}
-                className="grid grid-cols-4 gap-3 bg-white/5 backdrop-blur border border-white/10 rounded-2xl p-4">
-                {stats.map(s => (
-                  <div key={s.label} className="text-center">
-                    <div className="text-lg sm:text-2xl font-bold font-mono text-red-400">
-                      <Counter end={s.value} suffix={s.suffix} />
-                    </div>
-                    <div className="text-[10px] text-white/40 mt-0.5 uppercase tracking-wide leading-tight">{s.label}</div>
-                  </div>
-                ))}
-              </motion.div>
-
-              {/* Urgency badge — live */}
-              <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={5} className="mt-4">
-                <EquipsBadge />
-              </motion.div>
-            </div>
-
-            {/* Right: Instagram Reel */}
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={2}
-              className="flex flex-col items-center lg:items-end">
-              <VideoReel />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Countdown banner */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent py-6">
-          <Countdown target={EVENT_DATE} />
-        </div>
-      </section>
-
-      {/* ══ EL TORNEIG ══ */}
-      <section id="evento" className="py-20 scroll-mt-20 bg-slate-900">
-        <div className="container mx-auto px-4">
+      <section className="relative min-h-[100dvh] flex items-center bg-slate-900 overflow-hidden pt-16">
+        <div className="relative z-10 container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-10 items-center">
-            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+            {/* Esquerra: títol + descripció + 4 targetes + CTA */}
+            <motion.div variants={fadeUp} initial="hidden" animate="visible">
               <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">El Torneig</span>
-              <h2 className="text-4xl md:text-5xl font-black leading-tight mb-5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+              <h1 className="text-4xl md:text-5xl font-black leading-tight mb-5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
                 EL TORNEIG URBÀ<br /><span className="text-red-500">MÉS POTENT</span><br />DE BARCELONA
-              </h2>
+              </h1>
               <p className="text-white/60 leading-relaxed mb-5">
-                El <strong className="text-white">3×3 Westfield Glòries</strong> organitzat per <strong className="text-white">CB Grup Barna, Time Chamber i Eix Clot</strong> torna amb més equips, més categories i més espectacle.
+                El <strong className="text-white">3×3 Westfield Glòries</strong> organitzat per{" "}
+                <strong className="text-white">CB Grup Barna, Time Chamber i Eix Clot</strong>{" "}
+                torna amb més equips, més categories i més espectacle.
               </p>
               <p className="text-white/60 leading-relaxed mb-7">
-                Tres seus de competició official FIBA al barri del Clot-Glòries. Des de Premini fins a Senior Pro amb Prize Money i punts per al rànquing mundial.
+                Tres seus de competició official FIBA al barri del Clot-Glòries. Des de Premini
+                fins a Senior Pro amb Prize Money i punts per al rànquing mundial.
               </p>
               <div className="grid grid-cols-2 gap-3 mb-7">
                 {[
@@ -953,14 +790,19 @@ export default function Home() {
                   </div>
                 ))}
               </div>
-              {/* Progress — live */}
-              <EquipsProgress />
+              <Link to="/inscripcion">
+                <Button size="lg" className="bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-7 py-5 rounded-xl hover:scale-105 transition-transform shadow-xl"
+                  style={{ boxShadow: "0 8px 30px rgba(220,38,38,0.4)" }}>
+                  🏀 Inscriu el teu Equip al 3×3 Barcelona →
+                </Button>
+              </Link>
             </motion.div>
 
-            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
+            {/* Dreta: foto d'acció + badge 4ª EDICIÓ */}
+            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <img src="/images/basquet-3x3-barcelona.jpg"
-                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async"
+                  alt="3x3 Basketball Barcelona" loading="eager" decoding="async"
                   width="1024" height="575"
                   className="w-full h-96 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
@@ -970,18 +812,36 @@ export default function Home() {
                 </div>
               </div>
               <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-xl p-3 text-center shadow-xl">
-                <div className="text-xl font-black font-mono">3ª</div>
+                <div className="text-xl font-black font-mono">4ª</div>
                 <div className="text-xs font-bold uppercase tracking-wider">Edició</div>
               </div>
             </motion.div>
           </div>
 
-          {/* Visualització "100 caselles" — com s'omple el torneig en directe */}
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-12">
+          {/* Countdown sota el grid */}
+          <div className="mt-12">
+            <Countdown target={EVENT_DATE} />
+          </div>
+        </div>
+      </section>
+
+      {/* ══ ESTADÍSTIQUES EN VIU ══ */}
+      <section id="evento" className="py-20 scroll-mt-20 bg-slate-950">
+        <div className="container mx-auto px-4">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-8">
+            <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block text-center">Inscripcions en directe</span>
+            <h2 className="text-3xl md:text-4xl font-black text-center mb-6" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+              COM S'OMPLE EL TORNEIG · <span className="text-red-500">EN DIRECTE</span>
+            </h2>
+            <EquipsProgress />
+          </motion.div>
+
+          {/* Visualització "100 caselles" */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-8">
             <CategoryFillGrid />
           </motion.div>
 
-          {/* Gràfic detallat per categoria amb barres de progrés */}
+          {/* Gràfic detallat per categoria */}
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-6">
             <CategoryChart />
           </motion.div>
@@ -1376,7 +1236,7 @@ export default function Home() {
           </div>
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mt-12">
             <p className="text-white/30 text-sm mb-3">Vols ser patrocinador del torneig?</p>
-            <a href="mailto:voluntaris@grupbarna.info" className="inline-flex items-center gap-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors px-5 py-2.5 rounded-xl font-semibold text-sm">
+            <a href="mailto:voluntarisgrupbarna@gmail.com" className="inline-flex items-center gap-2 border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors px-5 py-2.5 rounded-xl font-semibold text-sm">
               Contacta amb nosaltres <ExternalLink className="w-4 h-4" />
             </a>
           </motion.div>
@@ -1421,7 +1281,7 @@ export default function Home() {
             <div>
               <div className="text-xs font-bold uppercase tracking-wider text-white/30 mb-3">Contacte</div>
               <div className="space-y-3 text-sm text-white/40">
-                <div><a href="mailto:voluntaris@grupbarna.info" className="text-red-400 hover:underline">voluntaris@grupbarna.info</a></div>
+                <div><a href="mailto:voluntarisgrupbarna@gmail.com" className="text-red-400 hover:underline">voluntarisgrupbarna@gmail.com</a></div>
                 <div>
                   <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">@cbgrupbarna</a>
                   <span className="mx-2 opacity-30">·</span>

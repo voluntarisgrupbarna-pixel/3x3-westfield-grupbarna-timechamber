@@ -277,7 +277,7 @@ export default function WhatsAppLeadForm({
         setStep(1);
       }, 300);
     } catch {
-      setError("Error enviant. Prova de nou o escriu-nos a voluntaris@grupbarna.info");
+      setError("Error enviant. Prova de nou o escriu-nos a voluntarisgrupbarna@gmail.com");
     } finally {
       setSending(false);
     }

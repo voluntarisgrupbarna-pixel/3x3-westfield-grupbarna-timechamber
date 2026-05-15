@@ -75,7 +75,7 @@ export default function Contacte() {
           </button>
 
           <p className="text-[11px] text-white/40 mt-6 leading-relaxed">
-            També pots escriure a <a href="mailto:voluntaris@grupbarna.info" className="text-white/60 hover:text-[#25D366]">voluntaris@grupbarna.info</a>
+            També pots escriure a <a href="mailto:voluntarisgrupbarna@gmail.com" className="text-white/60 hover:text-[#25D366]">voluntarisgrupbarna@gmail.com</a>
           </p>
         </motion.div>
       </div>

@@ -103,7 +103,7 @@ export default function SobreNosaltres() {
             L'organització del torneig la fem voluntaris i voluntàries del CB Grup Barna i Time Chamber. <strong>Ana Fernández</strong> coordina la inscripció, comunicació i logística. La part esportiva (arbitratge, format) la lidera el cos tècnic de Time Chamber.
           </p>
           <p className="text-xs text-white/40 mt-2">
-            Contacte premsa, voluntariat o partnerships: <a href="mailto:voluntaris@grupbarna.info" className="text-red-300 hover:underline">voluntaris@grupbarna.info</a> · <button type="button" onClick={() => setWaOpen(true)} className="text-red-300 hover:underline">WhatsApp +34 698 425 153</button>
+            Contacte premsa, voluntariat o partnerships: <a href="mailto:voluntarisgrupbarna@gmail.com" className="text-red-300 hover:underline">voluntarisgrupbarna@gmail.com</a> · <button type="button" onClick={() => setWaOpen(true)} className="text-red-300 hover:underline">WhatsApp +34 698 425 153</button>
           </p>
         </Section>
 

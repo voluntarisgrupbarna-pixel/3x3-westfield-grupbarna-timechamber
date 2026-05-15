@@ -8,6 +8,7 @@ import { BarChart2, Users, Euro, TrendingUp, RefreshCw, ArrowLeft, LogOut, Exter
 import {
   isPasswordVerified, getStaffPat, clearStaffSession,
   loadInscripcions, type Inscripcio,
+  loadLeads, leadsNotRegistered, normalizePhone, type Lead,
 } from "@/lib/dataClient";
 import { CATEGORIES, TOTAL_CAPACITY } from "@/lib/categories";
 
@@ -20,6 +21,7 @@ export default function StaffDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ActiveTab>("inscripcions");
   const [inscripcions, setInscripcions] = useState<Inscripcio[]>([]);
+  const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [refreshedAt, setRefreshedAt] = useState<Date | null>(null);
@@ -36,8 +38,12 @@ export default function StaffDashboard() {
   async function fetchData(force = false) {
     setRefreshing(true);
     try {
-      const data = await loadInscripcions(force);
-      setInscripcions(data);
+      const [inscData, leadsData] = await Promise.all([
+        loadInscripcions(force),
+        loadLeads(force).catch(() => []),
+      ]);
+      setInscripcions(inscData);
+      setLeads(leadsData);
       setRefreshedAt(new Date());
       setError("");
     } catch {
@@ -177,7 +183,7 @@ export default function StaffDashboard() {
         </div>
       </div>
 
-      {activeTab === "accions" && <AccionsTab byCategory={metrics.byCategory} totalEquips={metrics.totalEquips} />}
+      {activeTab === "accions" && <AccionsTab byCategory={metrics.byCategory} totalEquips={metrics.totalEquips} leads={leads} inscripcions={inscripcions} />}
       {activeTab === "trafic" && <TraficWebTab />}
 
       {activeTab === "inscripcions" && (
@@ -699,7 +705,8 @@ function AnalyticsCard({
 
 type CategoryRow = { name: string; emoji: string; quota: number; ocupat: number };
 
-function AccionsTab({ byCategory, totalEquips }: { byCategory: CategoryRow[]; totalEquips: number }) {
+function AccionsTab({ byCategory, totalEquips, leads, inscripcions }: { byCategory: CategoryRow[]; totalEquips: number; leads: Lead[]; inscripcions: Inscripcio[] }) {
+  const pendingLeads = useMemo(() => leadsNotRegistered(leads, inscripcions), [leads, inscripcions]);
   // Càlcul de dies fins al torneig
   const daysToEvent = Math.max(0, Math.ceil((new Date(EVENT_DATE_ISO).getTime() - Date.now()) / 86400000));
   const totalQuota = byCategory.reduce((s, c) => s + c.quota, 0);
@@ -730,6 +737,17 @@ function AccionsTab({ byCategory, totalEquips }: { byCategory: CategoryRow[]; to
           <Stat label="Ritme necessari" value={`${daysToEvent > 0 ? (totalGap / daysToEvent).toFixed(1) : "—"}`} sub="equips/dia" color="text-yellow-300" />
         </div>
       </div>
+
+      {/* Leads pendents de seguir · NO han registrat equip */}
+      {pendingLeads.length > 0 && (
+        <Section
+          title={`📞 Leads sense inscriure (${pendingLeads.length})`}
+          subtitle="Gent que va contactar via WhatsApp però encara no ha registrat equip. Cal fer follow-up per tancar."
+          variant="warning"
+        >
+          <PendingLeadsList leads={pendingLeads} />
+        </Section>
+      )}
 
       {/* Categories crítiques (0 inscrits) */}
       {critiques.length > 0 && (
@@ -861,6 +879,124 @@ function AccionsTab({ byCategory, totalEquips }: { byCategory: CategoryRow[]; to
       <Section title="🎯 Diagnòstic ràpid de la teva situació" subtitle="Auto-generat a partir de les inscripcions actuals." variant="info">
         <Diagnostic critiques={critiques.length} baixes={baixes.length} totalEquips={totalEquips} totalQuota={totalQuota} daysToEvent={daysToEvent} />
       </Section>
+    </div>
+  );
+}
+
+/* Llista de leads sense inscripció · cada lead amb btn WhatsApp directe pre-omplit */
+function PendingLeadsList({ leads }: { leads: Lead[] }) {
+  const [showAll, setShowAll] = useState(false);
+  const visible = showAll ? leads : leads.slice(0, 8);
+
+  function waUrl(lead: Lead): string {
+    // Telèfon ja normalitzat al backend
+    const phone = normalizePhone(lead.telefon);
+    const nom = lead.nom || "";
+    const intent = lead.intent || "";
+    const dubte = lead.dubte || "";
+
+    // Plantilla optimitzada per recuperar conversions
+    const greeting = nom ? `Hola ${nom.split(/\s+/)[0]}! ` : "Hola! ";
+    let body = `T'escric del CB Grup Barna — fa uns dies ens vas contactar pel 3×3 Westfield Glòries.`;
+
+    if (intent === "info") {
+      body += ` Volia saber si t'ha quedat algun dubte d'última hora o necessites algun aclariment per tancar la inscripció.`;
+    } else if (intent === "reserva") {
+      body += ` Volia confirmar si voleu tirar endavant amb la reserva. Encara queden places però se'ns omplen ràpid.`;
+    } else if (intent === "prueba") {
+      body += ` Volia saber si necessites més info sobre el dia del torneig o algun detall per decidir-vos.`;
+    } else {
+      body += ` Volia veure si necessites ajuda per inscriure el teu equip — quedan poques places i et puc ajudar amb el formulari si vols.`;
+    }
+
+    if (dubte && dubte.length > 5 && dubte.length < 100) {
+      body += `\n\nDe la teva consulta sobre "${dubte}" — t'ho aclareixo pel mòbil ràpid si vols.`;
+    }
+
+    body += `\n\nInscripcions a cbgrupbarna-3x3timechamber.com/inscripcion\nO si vols, et passo el link directe per categoria.`;
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(greeting + body)}`;
+  }
+
+  function intentBadge(intent: string): { text: string; color: string } {
+    switch (intent) {
+      case "reserva": return { text: "Vol reservar", color: "bg-red-900/40 text-red-300 border-red-800" };
+      case "info":    return { text: "Vol info", color: "bg-blue-900/40 text-blue-300 border-blue-800" };
+      case "prueba":  return { text: "Vol provar", color: "bg-purple-900/40 text-purple-300 border-purple-800" };
+      default:        return { text: intent || "Contacte", color: "bg-slate-800 text-slate-400 border-slate-700" };
+    }
+  }
+
+  function eventLabel(event: string): string {
+    return ({ tres_x_tres: "3×3", campus: "Campus", portes_obertes: "Portes Obertes", general: "" })[event] || event || "3×3";
+  }
+
+  function daysSince(iso: string): number | null {
+    if (!iso) return null;
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return null;
+    return Math.floor((Date.now() - d.getTime()) / 86400000);
+  }
+
+  return (
+    <div className="space-y-2">
+      {visible.map((lead, i) => {
+        const dies = daysSince(lead.data);
+        const badge = intentBadge(lead.intent);
+        const ev = eventLabel(lead.event);
+        return (
+          <div key={`${lead.telefon}-${i}`} className="bg-orange-950/40 border border-orange-900/40 rounded-lg p-3">
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <div className="flex items-center gap-2 flex-wrap min-w-0 flex-1">
+                <span className="text-sm font-bold text-white truncate">{lead.nom || lead.telefon}</span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded border ${badge.color}`}>{badge.text}</span>
+                {ev && ev !== "3×3" && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">{ev}</span>
+                )}
+                {dies != null && (
+                  <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${dies > 2 ? "bg-red-900/50 text-red-300" : "bg-slate-800 text-slate-400"}`}>
+                    {dies === 0 ? "avui" : `fa ${dies}d`}
+                  </span>
+                )}
+                {lead.estat && lead.estat !== "Nou" && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">{lead.estat}</span>
+                )}
+              </div>
+              <a
+                href={waUrl(lead)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-[#25D366] hover:bg-[#1ebd58] text-white text-xs font-bold px-3 py-1.5 rounded transition-colors flex items-center gap-1.5 shrink-0"
+              >
+                💬 WhatsApp
+              </a>
+            </div>
+            <div className="text-xs text-slate-300 space-y-0.5">
+              <p>
+                <a href={`tel:${lead.telefon}`} className="font-mono text-slate-200 hover:text-white">{lead.telefon}</a>
+                {lead.email && <> · <a href={`mailto:${lead.email}`} className="text-slate-300 hover:text-white">{lead.email}</a></>}
+              </p>
+              {lead.dubte && lead.dubte.length > 1 && (
+                <p className="text-[11px] text-slate-400 italic leading-snug">"{lead.dubte}"</p>
+              )}
+              {lead.notes && lead.notes.length > 1 && (
+                <p className="text-[11px] text-orange-300/70 leading-snug">📝 {lead.notes}</p>
+              )}
+            </div>
+          </div>
+        );
+      })}
+      {leads.length > 8 && (
+        <button
+          onClick={() => setShowAll(v => !v)}
+          className="w-full text-xs text-orange-300 hover:text-orange-200 py-2 transition-colors"
+        >
+          {showAll ? `Mostrar només 8 (de ${leads.length})` : `Veure tots els ${leads.length} pendents →`}
+        </button>
+      )}
+      <div className="border-t border-orange-900/30 pt-3 mt-3 text-[11px] text-orange-300/70 leading-relaxed">
+        💡 <strong>Estratègia:</strong> Comença pels que diuen "Vol reservar" (intent més alt) o pels que tenen un dubte concret. Després els de més de 3 dies sense seguiment. La plantilla del botó WhatsApp ja porta un text adaptat a cada cas.
+      </div>
     </div>
   );
 }

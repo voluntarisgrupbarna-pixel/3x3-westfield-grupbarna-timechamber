@@ -36,7 +36,7 @@ amb organitzadors i jugadors.
 
 Salutacions,
 Ana Fernández · Coordinadora 3×3 Westfield Glòries
-voluntaris@grupbarna.info · WhatsApp +34 698 425 153
+voluntarisgrupbarna@gmail.com · WhatsApp +34 698 425 153
 https://cbgrupbarna-3x3timechamber.com
 ```
 
@@ -71,7 +71,7 @@ in-situ, em poso al vostre servei.
 
 Salutacions,
 Ana Fernández
-voluntaris@grupbarna.info · +34 698 425 153
+voluntarisgrupbarna@gmail.com · +34 698 425 153
 ```
 
 ---
@@ -106,7 +106,7 @@ https://cbgrupbarna-3x3timechamber.com/premsa
 
 Salutacions,
 Ana Fernández
-voluntaris@grupbarna.info
+voluntarisgrupbarna@gmail.com
 ```
 
 ---
@@ -178,7 +178,7 @@ penetració del 3×3 al bàsquet base català.
 
 Salutacions,
 Ana Fernández · CB Grup Barna
-voluntaris@grupbarna.info · +34 698 425 153
+voluntarisgrupbarna@gmail.com · +34 698 425 153
 ```
 
 ---
@@ -213,7 +213,7 @@ Detalls + assets: https://cbgrupbarna-3x3timechamber.com/premsa
 
 Salutacions,
 Ana Fernández
-voluntaris@grupbarna.info · +34 698 425 153
+voluntarisgrupbarna@gmail.com · +34 698 425 153
 ```
 
 ---
@@ -248,7 +248,7 @@ Estem disponibles per parlar amb veïns, entrevista, fotografia, etc.
 
 Una abraçada,
 Ana Fernández · Voluntària coordinadora 3×3 Westfield Glòries
-voluntaris@grupbarna.info · +34 698 425 153
+voluntarisgrupbarna@gmail.com · +34 698 425 153
 ```
 
 ---

@@ -91,7 +91,7 @@ function _emailT7_(c) {
       '<p><a href="' + c.checkinUrl + '" style="background:#dc2626;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:bold">🎟️ Obrir el meu QR</a></p>' +
       '<p style="font-size:11px;color:#666">URL directa: <a href="' + c.checkinUrl + '">' + c.checkinUrl + '</a></p>'
     ) : '<p>(El QR el pots recuperar a l\'email original de inscripció.)</p>',
-    '<p>Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp del club</a> · <a href="mailto:voluntaris@grupbarna.info">voluntaris@grupbarna.info</a></p>',
+    '<p>Per qualsevol dubte: <a href="https://wa.me/+34698425153">WhatsApp del club</a> · <a href="mailto:voluntarisgrupbarna@gmail.com">voluntarisgrupbarna@gmail.com</a></p>',
     '<hr><p style="font-size:11px;color:#666">3×3 Westfield Glòries · CB Grup Barna · Time Chamber · Eix Clot</p>'
   ].join('');
 }
@@ -220,7 +220,7 @@ function _emailPostEvent_(c) {
     '<h3 style="color:#dc2626">3 coses que pots fer ara</h3>',
     '<ol>',
     '<li><strong>📸 Comparteix-ho a Instagram</strong> · Etiqueta\'ns a <a href="https://www.instagram.com/cbgrupbarna/">@cbgrupbarna</a> i <a href="https://www.instagram.com/timechamber_es/">@timechamber_es</a> a les fotos del teu equip. Republicarem les millors a la nostra story.</li>',
-    '<li><strong>⭐ Enquesta ràpida</strong> · 30 segons que ens ajuden a millorar l\'edició de l\'any que ve. <a href="mailto:voluntaris@grupbarna.info?subject=Feedback%203x3%202026">Envia\'ns un email</a> amb 1-3 coses que canviaries.</li>',
+    '<li><strong>⭐ Enquesta ràpida</strong> · 30 segons que ens ajuden a millorar l\'edició de l\'any que ve. <a href="mailto:voluntarisgrupbarna@gmail.com?subject=Feedback%203x3%202026">Envia\'ns un email</a> amb 1-3 coses que canviaries.</li>',
     '<li><strong>🗓️ Marca el calendari</strong> · La 5ª edició serà el primer cap de setmana de juny 2027. Inscripcions obertes 6 mesos abans.</li>',
     '</ol>',
     '<p>Si vols mantenir-te al dia, segueix-nos a Instagram. Allà publiquem fotos, vídeos i totes les novetats del club al llarg de l\'any.</p>',

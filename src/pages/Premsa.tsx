@@ -115,12 +115,12 @@ export default function Premsa() {
         {/* Contacte premsa */}
         <Section icon={Mail} title="Contacte premsa">
           <div className="grid sm:grid-cols-2 gap-3">
-            <a href="mailto:voluntaris@grupbarna.info?subject=Premsa%20·%203x3%20Westfield%20Gl%C3%B2ries"
+            <a href="mailto:voluntarisgrupbarna@gmail.com?subject=Premsa%20·%203x3%20Westfield%20Gl%C3%B2ries"
               className="flex items-center gap-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl p-4 transition-colors group">
               <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center"><Mail className="w-4 h-4 text-red-300"/></div>
               <div>
                 <p className="text-xs text-white/40 uppercase tracking-wider font-bold">Email premsa</p>
-                <p className="text-sm font-semibold text-white group-hover:text-red-300">voluntaris@grupbarna.info</p>
+                <p className="text-sm font-semibold text-white group-hover:text-red-300">voluntarisgrupbarna@gmail.com</p>
               </div>
             </a>
             <button type="button" onClick={() => setWaOpen(true)}
@@ -144,7 +144,7 @@ export default function Premsa() {
             Mitjans, fotògrafs, equips de TV o blocaires són benvinguts les dues jornades. T'enviem el calendari de partits i un punt de contacte in-situ.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href="mailto:voluntaris@grupbarna.info?subject=Acreditaci%C3%B3%20premsa%203x3%202026">
+            <a href="mailto:voluntarisgrupbarna@gmail.com?subject=Acreditaci%C3%B3%20premsa%203x3%202026">
               <Button size="lg" className="w-full sm:w-auto bg-orange-600 hover:bg-orange-500 text-white font-bold uppercase tracking-wider">
                 📰 Demanar acreditació
               </Button>
