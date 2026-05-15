@@ -825,19 +825,61 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ══ ESTADÍSTIQUES EN VIU ══ */}
-      <section id="evento" className="py-20 scroll-mt-20 bg-slate-950">
+      {/* ══ EL TORNEIG ══ */}
+      <section id="evento" className="py-20 scroll-mt-20 bg-slate-900">
         <div className="container mx-auto px-4">
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mb-8">
-            <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block text-center">Inscripcions en directe</span>
-            <h2 className="text-3xl md:text-4xl font-black text-center mb-6" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
-              COM S'OMPLE EL TORNEIG · <span className="text-red-500">EN DIRECTE</span>
-            </h2>
-            <EquipsProgress />
-          </motion.div>
+          <div className="grid md:grid-cols-2 gap-10 items-center">
+            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}>
+              <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">El Torneig</span>
+              <h2 className="text-4xl md:text-5xl font-black leading-tight mb-5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
+                EL TORNEIG URBÀ<br /><span className="text-red-500">MÉS POTENT</span><br />DE BARCELONA
+              </h2>
+              <p className="text-white/60 leading-relaxed mb-5">
+                El <strong className="text-white">3×3 Westfield Glòries</strong> organitzat per <strong className="text-white">CB Grup Barna, Time Chamber i Eix Clot</strong> torna amb més equips, més categories i més espectacle.
+              </p>
+              <p className="text-white/60 leading-relaxed mb-7">
+                Tres seus de competició official FIBA al barri del Clot-Glòries. Des de Premini fins a Senior Pro amb Prize Money i punts per al rànquing mundial.
+              </p>
+              <div className="grid grid-cols-2 gap-3 mb-7">
+                {[
+                  { icon: <Calendar className="w-4 h-4" />, label: "Dates", value: "6-7 Juny 2026" },
+                  { icon: <MapPin className="w-4 h-4" />, label: "Seus", value: "3 ubicacions" },
+                  { icon: <Users className="w-4 h-4" />, label: "Equip", value: "3+1 jugadors" },
+                  { icon: <Trophy className="w-4 h-4" />, label: "Inscripció", value: "des de 75€" },
+                ].map(item => (
+                  <div key={item.label} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 hover:border-red-500/30 transition-colors">
+                    <span className="text-red-400">{item.icon}</span>
+                    <div>
+                      <div className="text-xs text-white/40 uppercase tracking-wider">{item.label}</div>
+                      <div className="text-sm font-semibold text-white">{item.value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <EquipsProgress />
+            </motion.div>
+
+            <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
+              <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
+                <img src="/images/basquet-3x3-barcelona.jpg"
+                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async"
+                  width="1024" height="575"
+                  className="w-full h-96 object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
+                <div className="absolute bottom-5 left-5">
+                  <span className="text-xs font-bold uppercase tracking-wider text-red-400">#1 Esport Urbà del Món</span>
+                  <p className="text-lg font-bold text-white mt-1">Olímpic des de Tòquio 2021</p>
+                </div>
+              </div>
+              <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-xl p-3 text-center shadow-xl">
+                <div className="text-xl font-black font-mono">4ª</div>
+                <div className="text-xs font-bold uppercase tracking-wider">Edició</div>
+              </div>
+            </motion.div>
+          </div>
 
           {/* Visualització "100 caselles" */}
-          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-8">
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="mt-12">
             <CategoryFillGrid />
           </motion.div>
 
