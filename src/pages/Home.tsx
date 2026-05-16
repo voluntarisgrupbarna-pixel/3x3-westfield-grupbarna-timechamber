@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Calendar, Users, Trophy, ChevronDown, Instagram, ExternalLink, X, ChevronLeft, ChevronRight, Zap, Medal, Star } from "lucide-react";
@@ -234,8 +234,8 @@ function CategoryFillGrid() {
             key={`${cell.cat.name}-${i}`}
             initial={{ opacity: 0, scale: 0.5 }}
             whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.005, duration: 0.25 }}
+            viewport={{ once: true, amount: 0.01 }}
+            transition={{ delay: i < 20 ? i * 0.008 : 0.16, duration: 0.2 }}
             title={`${cell.cat.emoji} ${cell.cat.name} · ${cell.filled ? "Inscrit" : "Lliure"}`}
             className={`aspect-square rounded-sm sm:rounded-md transition-all duration-300 bg-gradient-to-br ${cell.cat.color} ${
               cell.filled ? "opacity-100 shadow-md" : "opacity-15"
@@ -537,17 +537,6 @@ const HIGHLIGHTED_REELS = [
 
 /* ─── Edicions Anteriors (dades del dossier oficial) ─── */
 function EdicionsAnterior() {
-  // Reprocesa els blockquotes Instagram quan el component es munta i quan el script ja està carregat
-  useEffect(() => {
-    const tryProcess = () => {
-      if ((window as any).instgrm?.Embeds?.process) {
-        (window as any).instgrm.Embeds.process();
-      }
-    };
-    tryProcess();
-    const t = setTimeout(tryProcess, 1500);
-    return () => clearTimeout(t);
-  }, []);
 
   return (
     <section id="edicions" className="py-20 bg-slate-950 scroll-mt-20 border-t border-white/8">
@@ -635,32 +624,36 @@ function EdicionsAnterior() {
               Continguts oficials del dossier · etiquetats <span className="text-white/70 font-mono">#3x3</span> <span className="text-white/70 font-mono">#3x3timechamber</span>
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 justify-items-center">
-            {HIGHLIGHTED_REELS.map(reel => (
-              <div key={reel.id} className="w-full max-w-[400px]">
-                <blockquote
-                  className="instagram-media"
-                  data-instgrm-permalink={`https://www.instagram.com/reel/${reel.id}/`}
-                  data-instgrm-version="14"
-                  style={{
-                    background: "#0f172a",
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    borderRadius: 12,
-                    margin: "0 auto",
-                    maxWidth: 400,
-                    minWidth: 280,
-                    width: "100%",
-                  }}
-                >
-                  <div style={{ padding: 16, color: "#94a3b8", fontSize: 13, textAlign: "center" }}>
-                    Carregant Instagram...{" "}
-                    <a href={`https://www.instagram.com/reel/${reel.id}/`} target="_blank" rel="noopener noreferrer" style={{ color: "#f87171", textDecoration: "underline" }}>
-                      Obrir el reel
-                    </a>
+          {/* Targetes lleugeres sense embed Instagram (0 JS extern, 0 bloqueig de scroll) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {HIGHLIGHTED_REELS.map((reel, i) => (
+              <a
+                key={reel.id}
+                href={`https://www.instagram.com/reel/${reel.id}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group relative flex flex-col items-center justify-center aspect-[4/5] rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-br from-[#833ab4]/20 via-[#fd1d1d]/20 to-[#fcb045]/20 hover:border-pink-500/40 transition-all"
+              >
+                {/* Fons gradient Instagram */}
+                <div className="absolute inset-0 bg-gradient-to-br from-[#405DE6]/10 via-[#C13584]/10 to-[#F77737]/10 group-hover:opacity-80 transition-opacity" />
+                {/* Icona play */}
+                <div className="relative z-10 flex flex-col items-center gap-3 p-6 text-center">
+                  <div className="w-16 h-16 rounded-full bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                    <svg className="w-7 h-7 text-white ml-1" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
                   </div>
-                </blockquote>
-                <p className="text-center text-xs text-white/40 mt-2">{reel.caption}</p>
-              </div>
+                  <div>
+                    <p className="text-white font-bold text-sm leading-snug">{reel.caption}</p>
+                    <p className="text-white/40 text-xs mt-1.5 flex items-center justify-center gap-1">
+                      <Instagram className="w-3 h-3" /> @cbgrupbarna · Reel {i + 1}
+                    </p>
+                  </div>
+                  <span className="mt-1 text-[10px] font-bold uppercase tracking-widest text-pink-400 border border-pink-400/30 px-3 py-1 rounded-full group-hover:bg-pink-400/10 transition-colors">
+                    Veure a Instagram ↗
+                  </span>
+                </div>
+              </a>
             ))}
           </div>
           <div className="text-center mt-7">
@@ -683,7 +676,22 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [activeUbic, setActiveUbic] = useState(0);
+  const [mapVisible, setMapVisible] = useState(false);
+  const mapSectionRef = useRef<HTMLDivElement>(null);
   const anunciVisible = useAnunciVisible();
+
+  // Carrega l'iframe de Google Maps només quan la secció és visible (estalvia ~1.5MB en mòbil)
+  useEffect(() => {
+    if (mapVisible) return;
+    const el = mapSectionRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setMapVisible(true); obs.disconnect(); } },
+      { rootMargin: "200px" }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [mapVisible]);
 
   const openLightbox = useCallback((i: number) => setLightboxIdx(i), []);
   const closeLightbox = useCallback(() => setLightboxIdx(null), []);
@@ -959,16 +967,23 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3" ref={mapSectionRef}>
               <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={0.5}
                 className="rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <iframe
-                  key={activeUbic}
-                  title={`Mapa ${UBICACIONS[activeUbic].nom} · 3x3 Westfield Glòries`}
-                  src={`https://maps.google.com/maps?q=${UBICACIONS[activeUbic].lat},${UBICACIONS[activeUbic].lng}&hl=ca&z=16&output=embed`}
-                  width="100%" height="380"
-                  style={{ border: 0 }}
-                  allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                {mapVisible ? (
+                  <iframe
+                    key={activeUbic}
+                    title={`Mapa ${UBICACIONS[activeUbic].nom} · 3x3 Westfield Glòries`}
+                    src={`https://maps.google.com/maps?q=${UBICACIONS[activeUbic].lat},${UBICACIONS[activeUbic].lng}&hl=ca&z=16&output=embed`}
+                    width="100%" height="380"
+                    style={{ border: 0 }}
+                    allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+                ) : (
+                  <div className="w-full h-[380px] bg-slate-900 flex flex-col items-center justify-center gap-3 text-white/30">
+                    <MapPin className="w-8 h-8" />
+                    <span className="text-sm">Carregant mapa…</span>
+                  </div>
+                )}
               </motion.div>
               <motion.div key={activeUbic} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
                 className="mt-3 flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3">
