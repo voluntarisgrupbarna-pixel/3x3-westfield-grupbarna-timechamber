@@ -340,8 +340,8 @@ function CategoryChart() {
   );
 }
 
-/* ─── Anunci banner (early-bird -10% fins 2026-05-15 23:59) ─── */
-const ANUNCI_VISIBLE_FINS = new Date("2026-05-15T23:59:59+02:00");
+/* ─── Anunci banner (codi 3X3AVIAT 5% fins 2026-06-15 23:59) ─── */
+const ANUNCI_VISIBLE_FINS = new Date("2026-06-15T23:59:59+02:00");
 
 function useAnunciVisible() {
   const [visible, setVisible] = useState(() => new Date() < ANUNCI_VISIBLE_FINS);
@@ -389,9 +389,8 @@ function AnunciBanner({ visible }: { visible: boolean }) {
     <div className="fixed top-0 left-0 right-0 z-[55] bg-gradient-to-r from-orange-600 via-red-500 to-pink-500 text-white text-center py-2 px-4 text-[11px] sm:text-sm font-bold uppercase tracking-wider shadow-lg whitespace-nowrap overflow-hidden">
       <span className="inline-flex items-center gap-1.5 sm:gap-2">
         <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse shrink-0" />
-        <span className="sm:hidden">🔥 -10% · Acaba en</span>
-        <span className="hidden sm:inline">🔥 Early Bird · -10% · Acaba en</span>
-        <BannerCountdown target={ANUNCI_VISIBLE_FINS} />
+        <span className="sm:hidden">🏷️ 3X3AVIAT → −5% · Fins al 15 juny</span>
+        <span className="hidden sm:inline">🏷️ Codi 3X3AVIAT · −5% de descompte · Vàlid fins al 15 de juny</span>
       </span>
     </div>
   );
@@ -861,14 +860,14 @@ export default function Home() {
 
             <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} custom={1} className="relative">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <img src="/images/basquet-3x3-barcelona.jpg"
-                  alt="3x3 Basketball Barcelona" loading="lazy" decoding="async"
+                <img src="/images/hero-edicio-anterior.jpg"
+                  alt="3x3 Westfield Glòries – edicions anteriors" loading="lazy" decoding="async"
                   width="1024" height="575"
                   className="w-full h-96 object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <div className="absolute bottom-5 left-5">
-                  <span className="text-xs font-bold uppercase tracking-wider text-red-400">#1 Esport Urbà del Món</span>
-                  <p className="text-lg font-bold text-white mt-1">Olímpic des de Tòquio 2021</p>
+                  <span className="text-xs font-bold uppercase tracking-wider text-orange-400">3 seus · 1 barri</span>
+                  <p className="text-lg font-bold text-white mt-1">La Nau del Clot · Westfield Glòries · Rambleta</p>
                 </div>
               </div>
               <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-xl p-3 text-center shadow-xl">
@@ -1292,7 +1291,7 @@ export default function Home() {
             <div>
               <div className="text-lg font-black font-mono text-red-500 tracking-widest mb-1">3×3 WESTFIELD GLÒRIES</div>
               <div className="text-xs text-white/30 mb-1">× GRUP BARNA · TIME CHAMBER · EIX CLOT</div>
-              <div className="text-xs text-white/30 mb-4">6-7 Juny 2025 · Barcelona</div>
+              <div className="text-xs text-white/30 mb-4">6-7 Juny 2026 · Barcelona</div>
               <div className="flex items-center gap-2">
                 {LOGOS.map(logo => (
                   <a key={logo.name} href={logo.url} target={logo.url !== "#" ? "_blank" : undefined} rel="noopener noreferrer" title={logo.name}>
@@ -1344,7 +1343,7 @@ export default function Home() {
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-slate-950/95 backdrop-blur border-t border-white/10 p-3">
         <Link to="/inscripcion">
           <Button className="w-full bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider py-4 text-sm shadow-xl">
-            🏀 Inscriu-te — des de 75€/equip
+            🏀 Inscriu-te · des de 75€ · Codi 3X3AVIAT −5%
           </Button>
         </Link>
       </div>

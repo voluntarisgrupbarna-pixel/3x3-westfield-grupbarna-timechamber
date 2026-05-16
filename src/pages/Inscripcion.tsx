@@ -1435,7 +1435,7 @@ export default function Inscripcion() {
             <ArrowLeft className="w-4 h-4"/><span className="text-sm font-medium">Tornar</span>
           </Link>
           <span className="text-sm font-black font-mono text-red-500 tracking-widest">3×3 WESTFIELD GLÒRIES</span>
-          <div className="text-xs text-white/30 hidden sm:block">Pas {step} de 5</div>
+          <div className="text-xs text-white/30">Pas {step} de 5</div>
         </div>
       </div>
 
@@ -1498,7 +1498,7 @@ export default function Inscripcion() {
                   : "border-white/15 text-white/20"}`}>
                   {step > s.id ? <Check className="w-4 h-4"/> : s.icon}
                 </div>
-                <span className={`text-[10px] mt-1 font-medium hidden sm:block ${step===s.id?"text-red-400":"text-white/20"}`}>{s.label}</span>
+                <span className={`text-[8px] sm:text-[10px] mt-1 font-medium ${step===s.id?"text-red-400":"text-white/20"}`}>{s.label}</span>
               </div>
               {i < STEPS.length-1 && (
                 <div className={`flex-1 h-0.5 mx-1 transition-all ${step > s.id ? "bg-red-500" : "bg-white/10"}`} />
