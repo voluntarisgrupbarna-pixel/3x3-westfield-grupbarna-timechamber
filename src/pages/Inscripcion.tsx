@@ -1372,6 +1372,45 @@ export default function Inscripcion() {
         title="Inscripció d'equips · 3×3 Westfield Glòries 2026"
         description="Inscriu el teu equip al torneig 3×3 FIBA Barcelona: Premini fins a Sèniors Pro · 2.000€ prize money (Sèniors M/F) · 6-7 juny 2026 al Clot-Glòries. Inscripcions obertes."
         path="/inscripcion"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "SportsEvent",
+          "@id": "https://cbgrupbarna-3x3timechamber.com/#event-2026",
+          "name": "3×3 Westfield Glòries 2026",
+          "startDate": "2026-06-06T09:00:00+02:00",
+          "endDate": "2026-06-07T20:00:00+02:00",
+          "eventStatus": "https://schema.org/EventScheduled",
+          "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+          "image": "https://cbgrupbarna-3x3timechamber.com/og-image.png",
+          "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
+          "location": {
+            "@type": "Place",
+            "name": "Westfield Glòries",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Av. Diagonal 208",
+              "addressLocality": "Barcelona",
+              "postalCode": "08018",
+              "addressCountry": "ES"
+            }
+          },
+          "offers": {
+            "@type": "AggregateOffer",
+            "name": "Inscripció equip 3×3 Westfield Glòries 2026",
+            "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
+            "lowPrice": "75",
+            "highPrice": "105",
+            "priceCurrency": "EUR",
+            "availability": "https://schema.org/InStock",
+            "validFrom": "2026-04-01T00:00:00+02:00",
+            "validThrough": "2026-06-05T23:59:59+02:00"
+          },
+          "organizer": {
+            "@type": "SportsOrganization",
+            "name": "CB Grup Barna",
+            "url": "https://cbgrupbarna.com"
+          }
+        }}
       />
 
       {/* ─── Exit-intent popup ─── */}

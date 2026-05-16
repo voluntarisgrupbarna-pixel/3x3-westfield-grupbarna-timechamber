@@ -9,7 +9,7 @@
     <!-- Primary SEO -->
     <title>3×3 Barcelona 2026 · Torneig FIBA Westfield Glòries | Inscripcions Obertes</title>
     <meta name="description" content="El torneig 3×3 més potent de Barcelona. Punts FIBA, 2.000€ prize money (1.000€ Sèniors Masculí + 1.000€ Sèniors Femení) + trofeus per a Veterans M/F i categories formatives. 6-7 Juny 2026 al Clot-Glòries. Inscriu-te ja!" />
-    <meta name="keywords" content="3x3 Barcelona, torneig 3x3 FIBA, Westfield Glòries, basquet 3x3, basquet de carrer Barcelona, CB Grup Barna, Time Chamber, prize money 3x3, ranking FIBA 3x3, Sant Martí, Clot, Barcelona basquet" />
+    <meta name="keywords" content="3x3 Barcelona, torneig 3x3 FIBA, torneo 3x3 Barcelona, Westfield Glòries, basquet 3x3, baloncesto 3x3 Barcelona, basquet de carrer Barcelona, streetball Barcelona, CB Grup Barna, Time Chamber, prize money 3x3, ranking FIBA 3x3, inscripció torneig bàsquet, inscripcion torneo baloncesto Barcelona, Sant Martí, Clot, Barcelona basquet" />
     <meta name="author" content="CB Grup Barna · Time Chamber · Eix Clot" />
     <meta name="publisher" content="CB Grup Barna" />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />
@@ -24,8 +24,11 @@
     <meta name="geo.position" content="41.4048;2.1896" />
     <meta name="ICBM" content="41.4048, 2.1896" />
 
-    <!-- Canonical -->
+    <!-- Canonical + hreflang -->
     <link rel="canonical" href="https://cbgrupbarna-3x3timechamber.com/" />
+    <link rel="alternate" hreflang="ca" href="https://cbgrupbarna-3x3timechamber.com/" />
+    <link rel="alternate" hreflang="es" href="https://cbgrupbarna-3x3timechamber.com/" />
+    <link rel="alternate" hreflang="x-default" href="https://cbgrupbarna-3x3timechamber.com/" />
 
     <!-- Icons -->
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -38,6 +41,7 @@
 
     <!-- Open Graph (Facebook, WhatsApp, Instagram, LinkedIn) -->
     <meta property="og:locale" content="ca_ES" />
+    <meta property="og:locale:alternate" content="es_ES" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="3×3 Westfield Glòries" />
     <meta property="og:title" content="3×3 Westfield Glòries 2026 · Torneig FIBA Barcelona" />
@@ -77,7 +81,6 @@
     <!-- Performance: preconnect to third parties used by the SPA -->
     <link rel="preconnect" href="https://script.google.com" crossorigin />
     <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
-    <link rel="preconnect" href="https://www.instagram.com" crossorigin />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://www.google-analytics.com" />
@@ -91,9 +94,6 @@
 
     <!-- LCP: preload hero image -->
     <link rel="preload" as="image" href="/images/hero-edicio-anterior.jpg" fetchpriority="high" />
-
-    <!-- Instagram embed (carrega blockquotes amb data-instgrm-permalink) -->
-    <script async src="//www.instagram.com/embed.js"></script>
 
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-DJDDRR4KW0"></script>
@@ -132,22 +132,28 @@
     {
       "@context": "https://schema.org",
       "@type": "SportsEvent",
+      "@id": "https://cbgrupbarna-3x3timechamber.com/#event-2026",
       "name": "3×3 Westfield Glòries 2026",
-      "alternateName": "Torneig 3×3 FIBA Barcelona",
-      "description": "Torneig de bàsquet 3×3 amb punts FIBA i prize money. Categories de Premini a Senior Pro · 3 seus al barri del Clot-Glòries · Barcelona.",
+      "alternateName": ["Torneig 3×3 FIBA Barcelona", "Torneo 3x3 Westfield Glòries Barcelona"],
+      "description": "Torneig de bàsquet 3×3 oficial FIBA amb prize money de 2.000€ (1.000€ Sèniors Masculí + 1.000€ Sèniors Femení) i punts per al rànquing mundial. 10 categories de Premini a Sèniors Pro. 3 seus al barri del Clot-Glòries de Barcelona els dies 6 i 7 de juny de 2026.",
       "startDate": "2026-06-06T09:00:00+02:00",
       "endDate": "2026-06-07T20:00:00+02:00",
       "eventStatus": "https://schema.org/EventScheduled",
       "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+      "inLanguage": ["ca", "es"],
       "sport": "Basketball 3x3",
       "image": [
-        "https://cbgrupbarna-3x3timechamber.com/og-image.png"
+        "https://cbgrupbarna-3x3timechamber.com/og-image.png",
+        "https://cbgrupbarna-3x3timechamber.com/og-court-action.jpg",
+        "https://cbgrupbarna-3x3timechamber.com/og-court-bg.jpg"
       ],
       "url": "https://cbgrupbarna-3x3timechamber.com/",
       "location": [
         {
           "@type": "Place",
-          "name": "Westfield Glòries",
+          "@id": "https://cbgrupbarna-3x3timechamber.com/#westfield-glories",
+          "name": "Westfield Glòries — Seu Principal 3×3",
+          "url": "https://cbgrupbarna-3x3timechamber.com/seu/westfield-glories",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Av. Diagonal 208",
@@ -158,76 +164,119 @@
           },
           "geo": {
             "@type": "GeoCoordinates",
-            "latitude": 41.4048,
+            "latitude": 41.4034,
             "longitude": 2.1896
           }
         },
         {
           "@type": "Place",
-          "name": "La Nau del Clot",
+          "@id": "https://cbgrupbarna-3x3timechamber.com/#nau-del-clot",
+          "name": "La Nau del Clot — Pavelló Oficial CB Grup Barna",
+          "url": "https://cbgrupbarna-3x3timechamber.com/seu/nau-del-clot",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Carrer de la Llacuna 172",
             "addressLocality": "Barcelona",
+            "postalCode": "08018",
+            "addressRegion": "Catalunya",
             "addressCountry": "ES"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 41.4063,
+            "longitude": 2.1921
           }
         },
         {
           "@type": "Place",
-          "name": "Rambleta del Clot",
+          "@id": "https://cbgrupbarna-3x3timechamber.com/#rambleta-del-clot",
+          "name": "Rambleta del Clot — Pista Exterior Streetball",
+          "url": "https://cbgrupbarna-3x3timechamber.com/seu/rambleta-del-clot",
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Rambla del Poblenou / Clot",
             "addressLocality": "Barcelona",
+            "postalCode": "08018",
+            "addressRegion": "Catalunya",
             "addressCountry": "ES"
+          },
+          "geo": {
+            "@type": "GeoCoordinates",
+            "latitude": 41.4074,
+            "longitude": 2.1876
           }
         }
       ],
       "organizer": [
         {
           "@type": "SportsOrganization",
+          "@id": "https://cbgrupbarna-3x3timechamber.com/#cb-grup-barna",
           "name": "CB Grup Barna",
-          "url": "https://www.instagram.com/cbgrupbarna/",
-          "sameAs": "https://www.instagram.com/cbgrupbarna/"
+          "url": "https://cbgrupbarna.com",
+          "sameAs": ["https://www.instagram.com/cbgrupbarna/", "https://cbgrupbarna.com"]
         },
         {
           "@type": "Organization",
           "name": "Time Chamber",
-          "url": "https://timechamber.es"
+          "url": "https://timechamber.es",
+          "sameAs": "https://www.instagram.com/timechamber_es/"
         },
         {
           "@type": "Organization",
-          "name": "Eix Clot"
+          "name": "Eix Clot",
+          "url": "https://www.eixclot.cat"
+        }
+      ],
+      "sponsor": [
+        {
+          "@type": "Organization",
+          "name": "Westfield Glòries",
+          "url": "https://es.westfield.com/glories",
+          "sameAs": "https://es.westfield.com/glories"
+        },
+        {
+          "@type": "Organization",
+          "name": "Ajuntament de Barcelona",
+          "url": "https://www.barcelona.cat"
         }
       ],
       "offers": [
         {
           "@type": "AggregateOffer",
-          "name": "Inscripció equip 3×3",
+          "name": "Inscripció equip 3×3 Westfield Glòries 2026",
           "url": "https://cbgrupbarna-3x3timechamber.com/inscripcion",
           "lowPrice": "75",
           "highPrice": "105",
           "priceCurrency": "EUR",
           "offerCount": "10",
           "availability": "https://schema.org/InStock",
-          "validFrom": "2026-04-01T00:00:00+02:00"
+          "validFrom": "2026-04-01T00:00:00+02:00",
+          "validThrough": "2026-06-05T23:59:59+02:00",
+          "seller": {
+            "@type": "SportsOrganization",
+            "name": "CB Grup Barna"
+          }
         },
         {
           "@type": "Offer",
-          "name": "Inscripció individual (sense equip)",
-          "description": "Per jugadors que no tenen equip. El club l'assigna a un equip 1 setmana abans del torneig segons edat i posició.",
+          "name": "Inscripció individual sense equip — 3×3 Westfield Glòries 2026",
+          "description": "Per jugadors que no tenen equip format. El club els assigna a un equip 1 setmana abans del torneig. Inclou samarreta oficial i dorsal.",
           "url": "https://cbgrupbarna-3x3timechamber.com/inscripcio-individual",
           "price": "20",
           "priceCurrency": "EUR",
           "availability": "https://schema.org/InStock",
-          "validFrom": "2026-04-01T00:00:00+02:00"
+          "validFrom": "2026-04-01T00:00:00+02:00",
+          "validThrough": "2026-05-31T23:59:59+02:00",
+          "seller": {
+            "@type": "SportsOrganization",
+            "name": "CB Grup Barna"
+          }
         }
       ],
-      "performer": {
-        "@type": "PerformingGroup",
-        "name": "Equips participants 3×3"
-      },
-      "award": "Prize money 2.000€: Sèniors Masculí 1.000€ · Sèniors Femení 1.000€. Veterans M/F i categories formatives reben trofeus i medalles. + Punts FIBA 3×3 + Premis dels comerços col·laboradors"
+      "award": "Prize money 2.000€: 1r Sèniors Masculí 1.000€ · 1r Sèniors Femení 1.000€. Punts oficials FIBA 3×3. Veterans M/F (+35) i categories formatives: trofeus, medalles i premis dels comerços col·laboradors.",
+      "typicalAgeRange": "6-",
+      "isAccessibleForFree": false,
+      "maximumAttendeeCapacity": 600
     }
     </script>
 
