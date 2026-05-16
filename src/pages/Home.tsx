@@ -511,11 +511,11 @@ const sponsors = [
 
 const galleryImages = [
   { src: "/images/hero-edicio-anterior.jpg", alt: "3x3 Glòries – Edició anterior" },
-  { src: "/images/basquet-3x3-barcelona.jpg", alt: "Bàsquet 3x3 Barcelona" },
+  { src: "/images/basquet-3x3-barcelona.jpg", webp: "/images/basquet-3x3-barcelona.webp", alt: "Bàsquet 3x3 Barcelona" },
   { src: "/images/3x3-olimpic-paris-2024.jpg", alt: "3x3 Olímpic – Paris 2024" },
-  { src: "/images/mate-3x3.jpg", alt: "Mate espectacular 3x3" },
+  { src: "/images/mate-3x3.jpg", webp: "/images/mate-3x3.webp", alt: "Mate espectacular 3x3" },
   { src: "/images/streetball-urba.jpg", alt: "Streetball urbà" },
-  { src: "/images/fiba-3x3-urban.jpg", alt: "FIBA 3x3 urban" },
+  { src: "/images/fiba-3x3-urban.jpg", webp: "/images/fiba-3x3-urban.webp", alt: "FIBA 3x3 urban" },
 ];
 
 /* Ubicacions: La Nau first, then Westfield, then Rambleta */
@@ -766,13 +766,16 @@ export default function Home() {
       <section className="relative min-h-[100dvh] flex items-center bg-slate-900 overflow-hidden pt-16">
         {/* Fons fotogràfic — visible a mòbil, ocult a desktop (on la imatge va a la columna dreta) */}
         <div className="absolute inset-0 md:hidden pointer-events-none" aria-hidden="true">
-          <img
-            src="/images/basquet-3x3-barcelona.jpg"
-            alt=""
-            loading="eager"
-            decoding="async"
-            className="w-full h-full object-cover object-top opacity-25"
-          />
+          <picture>
+            <source srcSet="/images/basquet-3x3-barcelona.webp" type="image/webp" />
+            <img
+              src="/images/basquet-3x3-barcelona.jpg"
+              alt=""
+              loading="eager"
+              decoding="async"
+              className="w-full h-full object-cover object-top opacity-25"
+            />
+          </picture>
           <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/75 to-slate-900" />
         </div>
         <div className="relative z-10 container mx-auto px-4 py-20">
@@ -819,10 +822,13 @@ export default function Home() {
             {/* Dreta: foto d'acció + badge 4ª EDICIÓ — ocult a mòbil (ja va com a bg) */}
             <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="relative hidden md:block">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
-                <img src="/images/basquet-3x3-barcelona.jpg"
-                  alt="3x3 Basketball Barcelona" loading="eager" decoding="async"
-                  width="1024" height="575"
-                  className="w-full h-96 object-cover" />
+                <picture>
+                  <source srcSet="/images/basquet-3x3-barcelona.webp" type="image/webp" />
+                  <img src="/images/basquet-3x3-barcelona.jpg"
+                    alt="3x3 Basketball Barcelona" loading="eager" decoding="async"
+                    width="1024" height="575"
+                    className="w-full h-96 object-cover" />
+                </picture>
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
                 <div className="absolute bottom-5 left-5">
                   <span className="text-xs font-bold uppercase tracking-wider text-red-400">#1 Esport Urbà del Món</span>
@@ -1223,7 +1229,10 @@ export default function Home() {
                 whileHover={{ scale: 1.03 }}
                 className="relative overflow-hidden rounded-xl aspect-square border border-white/8 group cursor-pointer"
                 onClick={() => openLightbox(i)}>
-                <img src={img.src} alt={img.alt} loading="lazy" decoding="async" width="600" height="600" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <picture>
+                  {img.webp && <source srcSet={img.webp} type="image/webp" />}
+                  <img src={img.src} alt={img.alt} loading="lazy" decoding="async" width="600" height="600" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                </picture>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="absolute bottom-2 left-2 right-2 text-xs font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity">{img.alt}</div>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/50 rounded-full p-1">
