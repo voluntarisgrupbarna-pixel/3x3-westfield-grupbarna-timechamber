@@ -764,6 +764,17 @@ export default function Home() {
 
       {/* ══ HERO ══ */}
       <section className="relative min-h-[100dvh] flex items-center bg-slate-900 overflow-hidden pt-16">
+        {/* Fons fotogràfic — visible a mòbil, ocult a desktop (on la imatge va a la columna dreta) */}
+        <div className="absolute inset-0 md:hidden pointer-events-none" aria-hidden="true">
+          <img
+            src="/images/basquet-3x3-barcelona.jpg"
+            alt=""
+            loading="eager"
+            decoding="async"
+            className="w-full h-full object-cover object-top opacity-25"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/75 to-slate-900" />
+        </div>
         <div className="relative z-10 container mx-auto px-4 py-20">
           <div className="grid md:grid-cols-2 gap-10 items-center">
             {/* Esquerra: títol + descripció + 4 targetes + CTA */}
@@ -805,8 +816,8 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* Dreta: foto d'acció + badge 4ª EDICIÓ */}
-            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="relative">
+            {/* Dreta: foto d'acció + badge 4ª EDICIÓ — ocult a mòbil (ja va com a bg) */}
+            <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="relative hidden md:block">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <img src="/images/basquet-3x3-barcelona.jpg"
                   alt="3x3 Basketball Barcelona" loading="eager" decoding="async"

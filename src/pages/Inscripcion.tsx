@@ -1474,7 +1474,20 @@ export default function Inscripcion() {
             <ArrowLeft className="w-4 h-4"/><span className="text-sm font-medium">Tornar</span>
           </Link>
           <span className="text-sm font-black font-mono text-red-500 tracking-widest">3×3 WESTFIELD GLÒRIES</span>
-          <div className="text-xs text-white/30">Pas {step} de 5</div>
+          <div className="flex flex-col items-end gap-0.5">
+            <div className="text-xs text-white/30">Pas {step} de 5</div>
+            {capCategoria && midaEquip && (
+              <motion.div
+                key={total}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="text-xs font-black text-orange-400 tabular-nums"
+              >
+                {total.toFixed(2)} €
+              </motion.div>
+            )}
+          </div>
         </div>
       </div>
 
