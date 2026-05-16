@@ -224,5 +224,27 @@ export default defineConfig(() => {
         "@": path.resolve(__dirname, "./src"),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // React core — canvia rarament, es pot guardar a caché molt de temps
+            "react-core": ["react", "react-dom", "react-router-dom"],
+            // Framer Motion — gran (~100KB) i independent de la lògica de negoci
+            "motion": ["framer-motion"],
+            // Formularis + validació — només es necessita a /inscripcion
+            "forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+            // Radix UI primitives — components visuals compartits
+            "ui-radix": [
+              "@radix-ui/react-select",
+              "@radix-ui/react-checkbox",
+              "@radix-ui/react-label",
+              "@radix-ui/react-slot",
+              "@radix-ui/react-toast",
+            ],
+          },
+        },
+      },
+    },
   }
 });

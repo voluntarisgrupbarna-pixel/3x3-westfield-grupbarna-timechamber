@@ -772,6 +772,7 @@ export default function Home() {
               src="/images/basquet-3x3-barcelona.jpg"
               alt=""
               loading="eager"
+              fetchPriority="high"
               decoding="async"
               className="w-full h-full object-cover object-top opacity-25"
             />
@@ -825,7 +826,7 @@ export default function Home() {
                 <picture>
                   <source srcSet="/images/basquet-3x3-barcelona.webp" type="image/webp" />
                   <img src="/images/basquet-3x3-barcelona.jpg"
-                    alt="3x3 Basketball Barcelona" loading="eager" decoding="async"
+                    alt="3x3 Basketball Barcelona" loading="eager" fetchPriority="high" decoding="async"
                     width="1024" height="575"
                     className="w-full h-96 object-cover" />
                 </picture>
