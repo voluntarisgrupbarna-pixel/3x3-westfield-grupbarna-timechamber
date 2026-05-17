@@ -1,0 +1,57 @@
+name: Daily snapshot tag
+
+# Crea automàticament un tag diari del main perquè mai es perdi
+# l'estat estable del site (Vite/GitHub Pages).
+#
+# Per restaurar qualsevol dia:
+#   1. GitHub → codi → etiquetes → busca "daily-YYYY-MM-DD"
+#   2. git checkout daily-2026-05-17
+#   3. git push origin HEAD:main  (o obre PR)
+#   → GitHub Actions deplojarà automàticament.
+#
+# Manté els últims 30 dies; els antics s'esborren automàticament.
+
+on:
+  schedule:
+    # 22:00 UTC = 00:00 hora Catalunya (estiu)
+    - cron: "0 22 * * *"
+  workflow_dispatch:   # Executable manualment des de GitHub → Actions
+
+permissions:
+  contents: write
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Create daily tag
+        run: |
+          TAG="daily-$(date -u +%Y-%m-%d)"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping"
+            exit 0
+          fi
+          git tag -a "$TAG" -m "Snapshot automàtic · $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push origin "$TAG"
+          echo "✅ Tagged $(git rev-parse --short HEAD) as $TAG"
+
+      - name: Prune tags older than 30 days
+        run: |
+          # data límit (GNU date o macOS date)
+          CUTOFF=$(date -u -d '30 days ago' +%Y-%m-%d 2>/dev/null \
+                || date -u -v-30d +%Y-%m-%d)
+          echo "Keeping tags from $CUTOFF onwards"
+          for tag in $(git tag -l "daily-*"); do
+            DATE="${tag#daily-}"
+            if [[ "$DATE" < "$CUTOFF" ]]; then
+              echo "  Deleting $tag"
+              git push --delete origin "$tag" || true
+              git tag -d "$tag" || true
+            fi
+          done
