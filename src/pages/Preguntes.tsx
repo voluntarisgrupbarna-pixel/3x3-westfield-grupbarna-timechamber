@@ -19,7 +19,7 @@ type FAQ = { q: string; a: string; tags?: string[] };
 const FAQS: FAQ[] = [
   {
     q: "Què és el 3×3 Westfield Glòries?",
-    a: "És el torneig oficial de bàsquet 3×3 amb punts FIBA del barri del Clot-Glòries de Barcelona, organitzat per CB Grup Barna · Time Chamber · Eix Clot. La 4a edició es disputa el 6 i 7 de juny de 2026 amb 2.000€ de prize money (Sèniors Masculí + Sèniors Femení) i jugadors de tota la península.",
+    a: "És el torneig oficial de bàsquet 3×3 amb punts FIBA del barri del Clot-Glòries de Barcelona, organitzat per CB Grup Barna · Time Chamber · Eix Clot. La 3a edició es disputa el 6 i 7 de juny de 2026 amb 2.000€ de prize money (Sèniors Masculí + Sèniors Femení) i jugadors de tota la península.",
     tags: ["què és", "torneig", "fiba"],
   },
   {
@@ -106,6 +106,21 @@ const FAQS: FAQ[] = [
     q: "Es pot fer una inscripció individual i pagar el dia del torneig?",
     a: "No. Tota inscripció requereix pagament confirmat per transferència abans del 31 de maig per garantir que tindràs samarreta de la teva talla. La samarreta s'encarrega 1 setmana abans del torneig i no podem afegir noves talles passada aquesta data.",
     tags: ["individual", "pagament", "data límit"],
+  },
+  {
+    q: "El meu equip és de fora de Barcelona, val la pena venir?",
+    a: "Sí, totalment. A les edicions anteriors hem tingut equips de Alacant, Lleida, Girona i d'altres punts de la península. El torneig es disputa a tres seus al barri del Clot-Glòries — zona ben comunicada per AVE, aeroport i autobús. Si el vostre equip juga Sèniors, a més de competir per 1.000€ acumuleu punts FIBA que sumen per al rànquing mundial individual. Es pot combinar perfectament amb un cap de setmana a Barcelona.",
+    tags: ["fora de barcelona", "desplaçament", "viatjar", "peninsula"],
+  },
+  {
+    q: "I si plou o fa mal temps el dia del torneig?",
+    a: "Les categories formatives (U14, U16, U18, Premini, Mini, Escola) juguen a La Nau del Clot, que és un pavelló cobert. Les categories d'adults (Sèniors, Veterans, Màgics) juguen principalment a Westfield Glòries i a la Rambleta del Clot (exterior). En cas de pluja intensa, hi ha un pla B per traslladar partits a la Nau, que es troba a menys de 200 metres. El torneig no s'ha suspès cap de les dues edicions anteriors.",
+    tags: ["pluja", "mal temps", "exterior", "cobert", "pavelló", "pla b"],
+  },
+  {
+    q: "Quin nivell cal per a la categoria Sèniors Pro amb prize money?",
+    a: "No hi ha criteri de classificació previ: qualsevol equip major d'edat pot inscriure's a Sèniors. El que canvia és la intensitat — és la categoria amb el prize money (1.000€ M + 1.000€ F) i els punts FIBA, on sol participar el nivell més alt del torneig. Si el vostre equip es considera competitiu, apunteu-vos sense dubtar. Si busqueu ambient festiu amb menys pressió, Veterans (+35 anys) és la vostra categoria.",
+    tags: ["sèniors", "nivell", "pro", "requisits", "prize money", "fiba"],
   },
 ];
 

@@ -103,7 +103,7 @@ export default function Patrocinadors() {
             al torneig 3×3 <span className="text-orange-400">més gran de Barcelona</span>
           </h1>
           <p className="text-white/65 max-w-2xl mx-auto leading-relaxed">
-            6 i 7 de juny 2026. 100 equips. 3 seus al barri del Clot-Glòries. Punts FIBA olímpics. La 4ª edició consecutiva. Visibilitat per a empreses locals i marques nacionals.
+            6 i 7 de juny 2026. 100 equips. 3 seus al barri del Clot-Glòries. Punts FIBA olímpics. La 3ª edició consecutiva. Visibilitat per a empreses locals i marques nacionals.
           </p>
         </motion.div>
 
@@ -217,7 +217,7 @@ export default function Patrocinadors() {
           className="bg-gradient-to-br from-yellow-600/20 via-orange-600/20 to-red-600/15 border border-yellow-500/30 rounded-3xl p-7 sm:p-10 text-center">
           <Trophy className="w-10 h-10 text-yellow-300 mx-auto mb-4"/>
           <h3 className="font-black text-2xl sm:text-3xl mb-2" style={{ fontFamily:"'Rajdhani', sans-serif" }}>
-            Vols formar part de la 4ª edició?
+            Vols formar part de la 3ª edició?
           </h3>
           <p className="text-white/70 text-sm mb-6 max-w-md mx-auto leading-relaxed">
             Quedan poques places de patrocini. Contacta'ns per email o WhatsApp i et fem una proposta personalitzada en menys de 48 h.

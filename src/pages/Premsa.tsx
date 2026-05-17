@@ -49,7 +49,7 @@ export default function Premsa() {
         {/* Key facts */}
         <Section icon={FileText} title="Press Release · Key Facts">
           <ul className="text-sm text-white/75 space-y-2 leading-relaxed">
-            <li>📅 <strong className="text-white">6 i 7 de juny de 2026</strong> · 4ª edició anual del torneig.</li>
+            <li>📅 <strong className="text-white">6 i 7 de juny de 2026</strong> · 3ª edició anual del torneig.</li>
             <li>📍 <strong className="text-white">3 seus al barri del Clot-Glòries de Barcelona</strong>: Westfield Glòries (FIBA), La Nau del Clot (formatives), Rambleta del Clot (Open Day).</li>
             <li>🏀 <strong className="text-white">100 equips · 10 categories</strong>: Escola, Premini, Mini, Preinfantil, Infantil, Cadet, Junior, Sèniors, Veterans, Màgics (inclusiva).</li>
             <li>💰 <strong className="text-white">2.000 € de prize money</strong>: 1.000€ Sèniors Masculí + 1.000€ Sèniors Femení. Veterans M/F: trofeu + medalles.</li>

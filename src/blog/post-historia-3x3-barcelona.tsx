@@ -92,7 +92,7 @@ export default function PostHistoria() {
 
       <h2 id="torneig">El 3×3 Westfield Glòries com a referent</h2>
       <p>
-        El nostre torneig va néixer el <strong>2024</strong> com una iniciativa modesta del CB Grup Barna i del centre comercial Westfield Glòries per donar visibilitat al 3×3 al barri. La primera edició va tenir 24 equips. La segona, 35. La tercera (2026 és la 4ª), 65.
+        El nostre torneig va néixer el <strong>2024</strong> com una iniciativa modesta del CB Grup Barna i del centre comercial Westfield Glòries per donar visibilitat al 3×3 al barri. La primera edició va tenir 80 equips. La segona (2025), 100. La tercera (2026) obre amb 100 equips i noves categories inclusives.
       </p>
       <p>
         El 2026 obrim a <strong>100 equips</strong>, distribuïts en <strong>10 categories</strong> des d'<em>Escola</em> fins a <em>Veterans (+35)</em>, més la categoria inclusiva <strong>Màgics</strong>. La categoria Sèniors té punts FIBA 3×3 oficials. El prize money és de 2.000€ totals (1.000€ Sèniors Masculí + 1.000€ Sèniors Femení). Veterans M/F reben trofeu i medalles.
@@ -123,7 +123,7 @@ export default function PostHistoria() {
 
       <div className="bg-gradient-to-br from-red-600/20 to-orange-500/15 border border-red-500/30 rounded-2xl p-5 my-7 not-prose">
         <p className="font-black text-lg mb-2">Forma part de la història del 3×3 a Barcelona</p>
-        <p className="text-sm text-white/70 mb-4">Inscriu el teu equip al 3×3 Westfield Glòries 2026 — 4ª edició, 6 i 7 de Juny.</p>
+        <p className="text-sm text-white/70 mb-4">Inscriu el teu equip al 3×3 Westfield Glòries 2026 — 3ª edició, 6 i 7 de Juny.</p>
         <Link to="/inscripcion" className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold uppercase tracking-wider px-5 py-3 rounded-xl transition-colors">
           🏀 Inscriure el meu equip
         </Link>

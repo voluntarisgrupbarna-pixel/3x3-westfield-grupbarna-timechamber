@@ -557,7 +557,7 @@ function EdicionsAnterior() {
           {[
             { num: "1ª", date: "Maig 2024", equips: 80, jugadors: "~360", cats: "Cadet M, Infantil F, Infantil M", color: "from-slate-500/15 to-slate-600/10", border: "border-white/15" },
             { num: "2ª", date: "Maig 2025", equips: 100, jugadors: "~450", cats: "+ Veterans · creixement +25%", color: "from-red-500/20 to-orange-500/10", border: "border-red-500/40" },
-            { num: "4ª", date: "6-7 Juny 2026", equips: "—", jugadors: "Tu hi pots ser", cats: "+ EQUALS (inclusiva) · Senior Pro Prize Money", color: "from-orange-500/20 to-yellow-500/10", border: "border-orange-400/50" },
+            { num: "3ª", date: "6-7 Juny 2026", equips: "—", jugadors: "Tu hi pots ser", cats: "+ EQUALS (inclusiva) · Senior Pro Prize Money", color: "from-orange-500/20 to-yellow-500/10", border: "border-orange-400/50" },
           ].map((ed, i) => (
             <motion.div
               key={ed.num}
@@ -783,7 +783,13 @@ export default function Home() {
           <div className="grid md:grid-cols-2 gap-10 items-center">
             {/* Esquerra: títol + descripció + 4 targetes + CTA */}
             <motion.div variants={fadeUp} initial="hidden" animate="visible">
-              <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em] mb-3 block">El Torneig</span>
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                <span className="text-red-400 text-xs font-bold uppercase tracking-[0.2em]">3ª Edició</span>
+                <span className="text-white/20 text-xs">·</span>
+                <span className="inline-flex items-center gap-1 bg-orange-500/15 border border-orange-400/40 text-orange-300 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                  <Zap className="w-2.5 h-2.5" /> FIBA Official
+                </span>
+              </div>
               <h1 className="text-4xl md:text-5xl font-black leading-tight mb-5" style={{ fontFamily: "'Rajdhani', sans-serif" }}>
                 EL TORNEIG URBÀ<br /><span className="text-red-500">MÉS POTENT</span><br />DE BARCELONA
               </h1>
@@ -793,7 +799,7 @@ export default function Home() {
                 torna amb més equips, més categories i més espectacle.
               </p>
               <p className="text-white/60 leading-relaxed mb-7">
-                Tres seus de competició official FIBA al barri del Clot-Glòries. Des de Premini
+                Tres seus de competició oficial FIBA al barri del Clot-Glòries. Des de Premini
                 fins a Senior Pro amb Prize Money i punts per al rànquing mundial.
               </p>
               <div className="grid grid-cols-2 gap-3 mb-7">
@@ -801,7 +807,7 @@ export default function Home() {
                   { icon: <Calendar className="w-4 h-4" />, label: "Dates", value: "6-7 Juny 2026" },
                   { icon: <MapPin className="w-4 h-4" />, label: "Seus", value: "3 ubicacions" },
                   { icon: <Users className="w-4 h-4" />, label: "Equip", value: "3+1 jugadors" },
-                  { icon: <Trophy className="w-4 h-4" />, label: "Inscripció", value: "des de 75€" },
+                  { icon: <Trophy className="w-4 h-4" />, label: "Prize Money", value: "2.000€ · M+F" },
                 ].map(item => (
                   <div key={item.label} className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-xl p-3 hover:border-red-500/30 transition-colors">
                     <span className="text-red-400">{item.icon}</span>
@@ -820,7 +826,7 @@ export default function Home() {
               </Link>
             </motion.div>
 
-            {/* Dreta: foto d'acció + badge 4ª EDICIÓ — ocult a mòbil (ja va com a bg) */}
+            {/* Dreta: foto d'acció + badge 3ª EDICIÓ — ocult a mòbil (ja va com a bg) */}
             <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={1} className="relative hidden md:block">
               <div className="relative rounded-2xl overflow-hidden border border-white/10 shadow-2xl">
                 <picture>
@@ -837,7 +843,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-xl p-3 text-center shadow-xl">
-                <div className="text-xl font-black font-mono">4ª</div>
+                <div className="text-xl font-black font-mono">3ª</div>
                 <div className="text-xs font-bold uppercase tracking-wider">Edició</div>
               </div>
             </motion.div>
@@ -897,7 +903,7 @@ export default function Home() {
                 </div>
               </div>
               <div className="absolute -top-3 -right-3 bg-red-600 text-white rounded-xl p-3 text-center shadow-xl">
-                <div className="text-xl font-black font-mono">4ª</div>
+                <div className="text-xl font-black font-mono">3ª</div>
                 <div className="text-xs font-bold uppercase tracking-wider">Edició</div>
               </div>
             </motion.div>
@@ -1063,6 +1069,22 @@ export default function Home() {
               </motion.div>
             ))}
           </div>
+
+          {/* Bloc paritat prize money */}
+          <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }}
+            className="max-w-3xl mx-auto mb-8 bg-gradient-to-r from-red-900/30 via-slate-900/50 to-orange-900/20 border border-red-500/25 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="shrink-0 w-10 h-10 rounded-full bg-red-600/20 border border-red-500/40 flex items-center justify-center">
+              <Medal className="w-5 h-5 text-red-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-white mb-1">
+                El 3×3 Westfield Glòries premia igual el Sèniors Femení i el Sèniors Masculí: 1.000€ cadascun.
+              </p>
+              <p className="text-xs text-white/45 leading-relaxed">
+                Dels pocs torneigs de Catalunya amb prize money paritari. Organitzat per CB Grup Barna — el club amb més fitxes femenines federades de Barcelona.
+              </p>
+            </div>
+          </motion.div>
 
           {/* 2n + 3r + comerços */}
           <motion.div variants={fadeUp} initial="hidden" whileInView="visible" viewport={{ once: true }} className="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">

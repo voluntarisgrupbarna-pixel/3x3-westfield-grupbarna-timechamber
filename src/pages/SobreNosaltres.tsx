@@ -47,7 +47,7 @@ export default function SobreNosaltres() {
         <div className="grid grid-cols-3 gap-3 mb-12">
           {[
             { num: "60+", label: "Anys de bàsquet base" },
-            { num: "4ª",   label: "Edició del 3×3" },
+            { num: "3ª",   label: "Edició del 3×3" },
             { num: "100",  label: "Equips · 2026" },
           ].map(s => (
             <div key={s.label} className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
