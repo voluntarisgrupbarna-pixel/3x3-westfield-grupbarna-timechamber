@@ -296,6 +296,29 @@ function CategoryChart() {
         </Link>
       </div>
 
+      {/* ── Banner AMPLIACIÓ DE PLACES — sempre visible ── */}
+      <a
+        href="https://wa.me/34698425153?text=Hola!%20Vull%20inscriure%27m%20al%203x3%20Westfield%20Gl%C3%B2ries%20per%C3%B2%20la%20meva%20categoria%20apareix%20plena.%20M%27heu%20dit%20que%20esteu%20ampliant%20places."
+        target="_blank" rel="noopener noreferrer"
+        className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-2xl border border-green-400/40 bg-gradient-to-r from-green-900/60 to-emerald-900/40 px-4 py-3 hover:from-green-800/60 hover:to-emerald-800/40 transition-colors"
+      >
+        <div className="flex items-start sm:items-center gap-2 flex-1 min-w-0">
+          <span className="text-xl shrink-0 mt-0.5 sm:mt-0">🟢</span>
+          <div>
+            <p className="text-sm sm:text-base font-black text-green-200 leading-tight">
+              Estem ampliant places · Estamos ampliando plazas
+            </p>
+            <p className="text-xs text-green-300/70 mt-0.5">
+              Si la teva categoria apareix plena, escriu-nos — podem obrir nous grups.
+              <span className="hidden sm:inline"> · Si tu categoría aparece llena, contáctanos.</span>
+            </p>
+          </div>
+        </div>
+        <span className="shrink-0 inline-flex items-center gap-2 bg-green-500 hover:bg-green-400 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full shadow-lg shadow-green-700/30 self-start sm:self-auto">
+          💬 WhatsApp
+        </span>
+      </a>
+
       <div className="space-y-2">
         {CATEGORIES.map(cat => {
           const inscrits = byCategory[cat.name] || 0;
@@ -307,8 +330,10 @@ function CategoryChart() {
               <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
                 <span className="text-base sm:text-lg shrink-0">{cat.emoji}</span>
                 <div className="min-w-0">
-                  <p className={`text-[11px] sm:text-sm font-bold truncate ${ple ? "text-white/40 line-through" : "text-white"}`}>{cat.name}</p>
-                  <p className="text-[9px] sm:text-[10px] text-white/35 truncate hidden sm:block">{cat.edats}</p>
+                  <p className={`text-[11px] sm:text-sm font-bold truncate ${ple ? "text-green-300" : "text-white"}`}>{cat.name}</p>
+                  <p className={`text-[9px] sm:text-[10px] truncate hidden sm:block ${ple ? "text-green-400/60" : "text-white/35"}`}>
+                    {ple ? "Ampliant places 💬" : cat.edats}
+                  </p>
                 </div>
               </div>
               {/* Progress bar */}
@@ -317,20 +342,24 @@ function CategoryChart() {
                   initial={{ width: 0 }}
                   animate={{ width: `${pct}%` }}
                   transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
-                  className={`h-full bg-gradient-to-r ${cat.color} ${ple ? "opacity-70" : ""}`}
+                  className={`h-full bg-gradient-to-r ${ple ? "from-green-600 to-emerald-500" : cat.color}`}
                 />
                 <div className="absolute inset-0 flex items-center justify-between px-2 text-[9px] sm:text-[11px] font-bold uppercase tracking-wider">
-                  <span className={`${pct > 35 ? "text-white" : "text-white/55"}`}>
-                    {ple ? "PLE" : `${pct}%`}
+                  <span className="text-white">
+                    {ple ? "AMPLIANT" : `${pct}%`}
                   </span>
                 </div>
               </div>
-              {/* Waitlist si ple */}
+              {/* Acció si ple → WhatsApp directe */}
               <div className="text-right min-w-[44px]">
                 {ple ? (
-                  <Link to="/llista-espera" className="text-[10px] font-bold text-orange-300 hover:text-orange-200 underline">
-                    Llista
-                  </Link>
+                  <a
+                    href={`https://wa.me/34698425153?text=Hola!%20Vull%20apuntar-me%20a%20${encodeURIComponent(cat.name)}%20al%203x3%20Westfield%20Gl%C3%B2ries.%20Veig%20que%20amplieu%20places!`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-[10px] font-bold text-green-400 hover:text-green-300"
+                  >
+                    💬 WA
+                  </a>
                 ) : (
                   <span className="text-[10px] font-mono text-white/40">
                     {pct}%
@@ -342,24 +371,6 @@ function CategoryChart() {
         })}
       </div>
 
-      {/* Banner "ampliant grups" — visible quan almenys una categoria és plena o sempre com a avís proactiu */}
-      <div className="mt-4 rounded-2xl border border-green-500/30 bg-green-950/40 px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-green-300">
-            🟢 La teva categoria és plena? Estem ampliant grups!
-          </p>
-          <p className="text-xs text-green-200/70 mt-0.5">
-            ¿Tu categoría está llena? ¡Contáctanos — estamos ampliando grupos!
-          </p>
-        </div>
-        <a
-          href="https://wa.me/34698425153?text=Hola!%20Vull%20inscriure%27m%20al%203x3%20Westfield%20Gl%C3%B2ries%20per%C3%B2%20la%20meva%20categoria%20apareix%20plena.%20M%27heu%20dit%20que%20esteu%20ampliant%20grups."
-          target="_blank" rel="noopener noreferrer"
-          className="shrink-0 inline-flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full transition-colors shadow-lg shadow-green-700/30"
-        >
-          💬 WhatsApp · Apunta'm
-        </a>
-      </div>
 
       <p className="text-[10px] text-white/30 mt-4 leading-relaxed">
         🔄 Actualització cada 30s · Només <span className="text-white/55 font-semibold">Sèniors Masculí</span> i <span className="text-white/55 font-semibold">Sèniors Femení</span> reben prize money (1.000€ cadascun) i atorguen punts FIBA. La resta de categories: trofeus i medalles.
