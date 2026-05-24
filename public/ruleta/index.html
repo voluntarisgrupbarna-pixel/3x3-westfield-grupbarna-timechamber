@@ -303,8 +303,8 @@
         <li>
           <span class="num">4</span>
           <span class="tx">
-            <strong>Per reclamar el premi</strong> cal: seguir <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" style="color:#9ad0ff">@cbgrupbarna</a> a <strong>Instagram + TikTok</strong>, compartir per WhatsApp i inscriure's al 3×3.
-            <em>Para reclamar: seguir @cbgrupbarna en Instagram + TikTok, compartir por WhatsApp e inscribirse.</em>
+            <strong>Per reclamar el premi</strong> cal: seguir <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" style="color:#9ad0ff">@cbgrupbarna</a> a <strong>Instagram + TikTok</strong> i inscriure's al 3×3.
+            <em>Para reclamar: seguir @cbgrupbarna en Instagram + TikTok e inscribirse al 3×3.</em>
           </span>
         </li>
         <li>
@@ -438,17 +438,8 @@
         <a href="https://www.tiktok.com/@cbgrupbarna" target="_blank" class="step-btn tk" id="tk-btn" onclick="markStep('tk')">SEGUIR →</a>
       </div>
 
-      <div class="step-item" id="step-wa">
-        <div class="step-num">3</div>
-        <div class="step-info">
-          <div class="st-title">📲 Comparteix amb amics</div>
-          <div class="st-sub">Convida'ls al sorteig per WhatsApp</div>
-        </div>
-        <a href="#" class="step-btn wa" id="wa-btn" onclick="shareWhatsApp(event)">COMPARTIR →</a>
-      </div>
-
       <div class="step-item" id="step-ins">
-        <div class="step-num">4</div>
+        <div class="step-num">3</div>
         <div class="step-info">
           <div class="st-title">🏀 Inscriu-te al 3×3</div>
           <div class="st-sub">Aplica el codi al pagar — Aplica el código al pagar</div>
@@ -566,7 +557,7 @@ let userNom     = '';
 let spinResults = []; // codes dels 3 premis ja tirats
 let spinIdx     = 0;  // 0..2
 let selectedCode = null;
-const stepsDone = { ig:false, tk:false, wa:false, ins:false };
+const stepsDone = { ig:false, tk:false, ins:false };
 
 /* ============================================================
    PANTALLES
@@ -859,8 +850,8 @@ async function doClaim() {
   const err = document.getElementById('claimError');
   err.style.display = 'none';
 
-  if (!stepsDone.ig || !stepsDone.tk || !stepsDone.wa || !stepsDone.ins) {
-    err.textContent = 'Cal completar els 4 passos abans de reclamar.';
+  if (!stepsDone.ig || !stepsDone.tk || !stepsDone.ins) {
+    err.textContent = 'Cal completar els 3 passos abans de reclamar.';
     err.style.display = 'block';
     return;
   }
@@ -878,7 +869,7 @@ async function doClaim() {
 
   if (isApiConfigured() && userEmail) {
     try {
-      const url = `${API_URL}?action=claim&email=${enc(userEmail)}&code=${enc(selectedCode)}&instagram=1&tiktok=1&whatsapp=1`;
+      const url = `${API_URL}?action=claim&email=${enc(userEmail)}&code=${enc(selectedCode)}&instagram=1&tiktok=1`;
       const res = await fetchApi(url);
       if (res && res.ok) {
         if (res.degraded) {
