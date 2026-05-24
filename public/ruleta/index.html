@@ -573,8 +573,28 @@ function showScreen(id) {
    ============================================================ */
 window.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
-  const ref = params.get('ref') || '';
-  if (ref) document.getElementById('fEmail').value = ref;
+
+  // Auto-fill agressiu — Brevo passa nom, cognom, email i mòbil al URL
+  const ref      = params.get('ref')    || params.get('email')  || '';
+  const nomParam = params.get('nom')    || params.get('name')   || '';
+  const cogParam = params.get('cognom') || params.get('apellido') || params.get('lastname') || '';
+  const movParam = params.get('mobil')  || params.get('mobile') || params.get('phone') || params.get('sms') || '';
+
+  if (ref)      document.getElementById('fEmail').value  = ref;
+  if (nomParam) document.getElementById('fNom').value    = nomParam;
+  if (cogParam) document.getElementById('fCognom').value = cogParam;
+  if (movParam) document.getElementById('fMobil').value  = movParam;
+
+  // Si arriba 100% pre-omplert (des de Brevo), destaca-ho visualment
+  if (ref && nomParam) {
+    const card = document.querySelector('#screen-register .card');
+    if (card) {
+      const hint = document.createElement('div');
+      hint.style.cssText = 'background:#0a1a0e;border:1px solid #4ade80;color:#4ade80;font-size:11px;padding:8px 12px;border-radius:8px;margin-bottom:14px;text-align:center;font-weight:700';
+      hint.innerHTML = '✅ Dades pre-omplertes des de l\'email. Accepta el checkbox i clica per accedir.';
+      card.insertBefore(hint, card.querySelector('.lead').nextSibling);
+    }
+  }
 
   const stored = localStorage.getItem('ruleta3x3_email');
   if (stored && isApiConfigured()) {
