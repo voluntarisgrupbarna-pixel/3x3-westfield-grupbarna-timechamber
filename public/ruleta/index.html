@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Gira la Ruleta · 3×3 Westfield Glòries 2026</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:#05060a; color:#fff;
+      font-family:Arial,Helvetica,sans-serif;
+      min-height:100vh;
+      display:flex; flex-direction:column; align-items:center;
+      padding:20px 16px 40px; overflow-x:hidden;
+    }
+
+    /* ── Capçalera ── */
+    .header { text-align:center; padding:18px 0 14px; width:100%; max-width:500px; }
+    .badge {
+      display:inline-block; background:#ff1f4f; color:#fff;
+      font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:2px;
+      padding:5px 16px; border-radius:20px; margin-bottom:14px;
+    }
+    .header h1 { font-size:28px; font-weight:900; text-transform:uppercase; line-height:1.15; margin-bottom:8px; }
+    .header h1 span { color:#ff1f4f; }
+    .header h1 em  { color:#ffcc66; font-style:normal; font-size:22px; }
+    .header .sub { font-size:13px; color:#7a8a9e; font-weight:700; letter-spacing:1px; }
+
+    /* ── Pantalles ── */
+    .screen { width:100%; max-width:480px; display:none; flex-direction:column; align-items:center; }
+    .screen.active { display:flex; }
+
+    /* ── Targeta general ── */
+    .card {
+      background:#0d1018; border:1px solid #1e2a3a; border-radius:18px;
+      padding:24px 22px; width:100%; margin-top:4px;
+    }
+    .card h2 {
+      font-size:18px; font-weight:900; text-transform:uppercase; letter-spacing:1px;
+      margin-bottom:6px;
+    }
+    .card h2 span { color:#ffcc66; }
+    .card .lead { font-size:13px; color:#7a8a9e; margin-bottom:18px; line-height:1.5; }
+    .card .lead em { color:#3a4a5e; font-style:normal; }
+
+    /* ── Form fields ── */
+    .row-2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .field { margin-bottom:14px; }
+    .field label {
+      display:block; font-size:10px; font-weight:700; letter-spacing:1.5px;
+      text-transform:uppercase; color:#5a6a7e; margin-bottom:6px;
+    }
+    .field input {
+      width:100%; background:#080c12; border:1px solid #1e2a3a; color:#fff;
+      font-family:Arial,sans-serif; font-size:15px; border-radius:10px;
+      padding:12px 14px; outline:none; transition:border-color .15s;
+      -webkit-appearance:none;
+    }
+    .field input:focus { border-color:#2a4fa8; }
+    .field input::placeholder { color:#2a3545; }
+    .rgpd-row {
+      display:flex; gap:10px; align-items:flex-start;
+      margin-bottom:18px; padding:12px 14px;
+      background:#080c12; border:1px solid #1a2535; border-radius:10px;
+    }
+    .rgpd-row input[type="checkbox"] {
+      width:18px; height:18px; min-width:18px; flex-shrink:0;
+      margin-top:1px; accent-color:#ff1f4f; cursor:pointer;
+    }
+    .rgpd-row label { font-size:11px; color:#4a5a6e; line-height:1.55; cursor:pointer; }
+    .form-error {
+      color:#ff7070; font-size:12px; margin-bottom:12px;
+      padding:8px 12px; background:#1a0a0a; border-radius:8px;
+      display:none; line-height:1.4;
+    }
+
+    /* ── Botons ── */
+    .btn-primary {
+      display:block; width:100%;
+      background:linear-gradient(135deg,#ff1f4f,#ff6b35);
+      color:#fff; font-family:Arial,sans-serif; font-size:16px; font-weight:900;
+      text-transform:uppercase; letter-spacing:2px;
+      border:none; border-radius:50px; padding:16px 24px;
+      cursor:pointer; box-shadow:0 8px 28px rgba(255,31,79,.4);
+      transition:transform .15s, box-shadow .15s;
+    }
+    .btn-primary:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 12px 36px rgba(255,31,79,.55); }
+    .btn-primary:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+
+    .btn-secondary {
+      display:block; width:100%;
+      background:#0d1018; border:1px solid #2a3a50; color:#c0c8d8;
+      font-family:Arial,sans-serif; font-size:14px; font-weight:700;
+      border-radius:50px; padding:13px 20px; cursor:pointer;
+      transition:border-color .15s;
+    }
+    .btn-secondary:hover { border-color:#7a8a9e; }
+
+    .note { text-align:center; font-size:11px; color:#2a3545; margin-top:12px; line-height:1.5; }
+
+    /* ── Roda ── */
+    .wheel-wrap { position:relative; width:300px; height:300px; margin:18px auto 8px; }
+    .pointer {
+      position:absolute; top:-16px; left:50%; transform:translateX(-50%);
+      width:0; height:0;
+      border-left:13px solid transparent; border-right:13px solid transparent;
+      border-top:26px solid #ff1f4f;
+      z-index:10; filter:drop-shadow(0 3px 8px rgba(255,31,79,0.9));
+    }
+    canvas { display:block; border-radius:50%; box-shadow:0 0 50px rgba(255,31,79,.35); }
+
+    .spin-btn {
+      display:block; margin:14px auto 6px;
+      background:linear-gradient(135deg,#ff1f4f,#ff6b35);
+      color:#fff; font-size:18px; font-weight:900;
+      text-transform:uppercase; letter-spacing:2px;
+      border:none; border-radius:50px; padding:16px 44px;
+      cursor:pointer; box-shadow:0 8px 28px rgba(255,31,79,.5);
+    }
+    .spin-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+    .spin-progress { text-align:center; margin:8px 0 14px; font-size:13px; font-weight:700; color:#7a8a9e; }
+    .spin-progress strong { color:#ffcc66; }
+
+    /* ── Toast (premi guanyat enmig de les tirades) ── */
+    .toast {
+      position:fixed; left:50%; bottom:30px; transform:translateX(-50%);
+      background:#0d1018; border:2px solid #ff1f4f; border-radius:14px;
+      padding:14px 22px; box-shadow:0 8px 30px rgba(0,0,0,.6);
+      z-index:300; opacity:0; pointer-events:none;
+      transition:opacity .3s, transform .3s;
+    }
+    .toast.show { opacity:1; transform:translateX(-50%) translateY(-6px); }
+    .toast .em { font-size:24px; display:block; text-align:center; }
+    .toast .tx { font-size:14px; font-weight:900; text-align:center; margin-top:4px; }
+
+    /* ── Cards de tria de premi ── */
+    .prize-pick {
+      width:100%; background:#0d1018; border:2px solid #1e2a3a; border-radius:14px;
+      padding:18px 20px; margin-bottom:10px; cursor:pointer;
+      transition:border-color .15s, background .15s, transform .15s;
+      display:flex; align-items:center; gap:14px;
+      text-align:left;
+    }
+    .prize-pick:hover { border-color:#ff1f4f; background:#150a12; transform:translateY(-1px); }
+    .prize-pick.selected { border-color:#ffcc66; background:#1a1408; }
+    .prize-pick .em { font-size:34px; flex-shrink:0; }
+    .prize-pick .tx { flex:1; }
+    .prize-pick .tx .name { font-size:14px; font-weight:900; text-transform:uppercase; color:#fff; line-height:1.2; }
+    .prize-pick .tx .cd {
+      display:inline-block; margin-top:6px;
+      background:#1a3a6b; color:#9ad0ff; font-family:monospace;
+      font-size:11px; font-weight:900; letter-spacing:1.5px;
+      padding:2px 8px; border-radius:4px;
+    }
+    .prize-pick .tx small { display:block; color:#7a8a9e; font-size:11px; margin-top:5px; line-height:1.4; }
+
+    /* ── Steps de reclamació ── */
+    .step-item {
+      display:flex; align-items:center; gap:12px;
+      background:#0d1018; border:1px solid #1e2a3a; border-radius:12px;
+      padding:14px 16px; margin-bottom:10px;
+    }
+    .step-item.done { border-color:#4ade80; background:#0a1a0e; }
+    .step-num {
+      width:32px; height:32px; flex-shrink:0;
+      border-radius:50%; background:#1a2535; color:#7a8a9e;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:900; font-size:14px;
+    }
+    .step-item.done .step-num { background:#4ade80; color:#0a1a0e; }
+    .step-info { flex:1; min-width:0; }
+    .step-info .st-title { font-size:13px; font-weight:900; color:#fff; line-height:1.2; }
+    .step-info .st-sub { font-size:11px; color:#7a8a9e; margin-top:2px; line-height:1.3; }
+    .step-btn {
+      flex-shrink:0; background:linear-gradient(135deg,#ff1f4f,#ff6b35);
+      color:#fff; border:none; border-radius:50px;
+      font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:1px;
+      padding:8px 14px; cursor:pointer; text-decoration:none; white-space:nowrap;
+    }
+    .step-btn.ig { background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045); }
+    .step-btn.wa { background:#25D366; }
+    .step-btn.done-btn { background:#4ade80; color:#0a1a0e; cursor:default; }
+
+    /* ── Final card ── */
+    .final-em { font-size:64px; text-align:center; margin:10px 0; }
+    .final-code {
+      background:#0a1428; border:2px dashed #3a5fc0; border-radius:12px;
+      padding:14px 20px; margin:14px 0; text-align:center;
+    }
+    .final-code .lbl { font-size:10px; letter-spacing:2px; color:#6a8ab8; text-transform:uppercase; }
+    .final-code .val { font-size:28px; font-weight:900; letter-spacing:6px; color:#fff; font-family:monospace; display:block; margin-top:4px; }
+
+    /* ── Loader ── */
+    .loader { display:flex; justify-content:center; padding:40px 0; }
+    .spinner {
+      width:36px; height:36px; border:3px solid #1e2a3a;
+      border-top-color:#ff1f4f; border-radius:50%;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── Daily-full message ── */
+    .daily-full {
+      text-align:center; padding:24px 18px;
+      background:#0d1018; border:1px solid #1e2a3a; border-radius:14px;
+    }
+    .daily-full .em { font-size:48px; }
+    .daily-full h3 { font-size:18px; margin:10px 0 8px; }
+    .daily-full p { color:#7a8a9e; font-size:13px; line-height:1.5; }
+
+    /* ── Peu ── */
+    .footer { text-align:center; color:#2a3540; font-size:11px; padding-top:20px; line-height:1.8; max-width:500px; }
+    .footer a { color:#3a4a5e; }
+
+    @media (max-width:340px) { .wheel-wrap{width:270px;height:270px;} .header h1{font-size:22px;} }
+  </style>
+</head>
+<body>
+
+  <!-- ── Capçalera ── -->
+  <div class="header">
+    <div class="badge">🏀 CB Grup Barna × Westfield Glòries</div>
+    <h1>GIRA LA <span>RULETA</span><br><em>I GUANYA!</em></h1>
+    <p class="sub">3×3 Streetball · 6–7 de juny 2026 · Barcelona</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 1 — Registre
+  ══════════════════════════════════════════════ -->
+  <div class="screen active" id="screen-register">
+    <div class="card">
+      <h2>Accedeix a la <span>ruleta</span> 🎰</h2>
+      <p class="lead">
+        Registra't per fer <strong style="color:#fff">3 tirades gratuïtes</strong> i triar el teu premi.<br>
+        <em>Regístrate para 3 tiradas gratuitas y elegir tu premio.</em>
+      </p>
+      <div id="formError" class="form-error"></div>
+
+      <div class="row-2">
+        <div class="field">
+          <label for="fNom">Nom *</label>
+          <input type="text" id="fNom" placeholder="Anna" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label for="fCognom">Cognom *</label>
+          <input type="text" id="fCognom" placeholder="García" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="field">
+        <label for="fEmail">Correu electrònic *</label>
+        <input type="email" id="fEmail" placeholder="anna@exemple.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="fMobil">Mòbil *</label>
+        <input type="tel" id="fMobil" placeholder="+34 600 000 000" autocomplete="tel">
+      </div>
+
+      <div class="rgpd-row">
+        <input type="checkbox" id="fRgpd">
+        <label for="fRgpd">
+          Accepto que CB Grup Barna tracti les meves dades per a aquesta promoció i enviar-me info del 3×3 Westfield Glòries 2026.
+          <em style="display:block;margin-top:3px;color:#2a3545">Acepto el tratamiento de mis datos para esta promoción.</em>
+        </label>
+      </div>
+
+      <button class="btn-primary" id="submitBtn" onclick="submitRegister()">🎰 ACCEDIR A LA RULETA</button>
+      <p class="note">Màxim 3 tirades · Un premi reclamable<br>Premi vàlid només pagant la inscripció al 3×3</p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 2 — Roda (3 tirades)
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-wheel">
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <canvas id="wheel" width="300" height="300"></canvas>
+    </div>
+    <button class="spin-btn" id="spinBtn" onclick="doSpin()">🎰 TIRA 1 / 3</button>
+    <p class="spin-progress" id="spinProgress">Et queden <strong>3 tirades</strong></p>
+    <p class="note">Després de les 3 tirades, podràs triar el premi que vulguis 🏆</p>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 3 — Tria de premi
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-pick">
+    <div class="card">
+      <h2>Tria el teu <span>premi</span> 🏆</h2>
+      <p class="lead">
+        Has tirat 3 cops. <strong style="color:#ffcc66">Tria 1 dels 3 premis</strong> per reclamar — els altres tornaran al sorteig.<br>
+        <em>Elige 1 de los 3 premios. Los demás vuelven al sorteo.</em>
+      </p>
+      <div id="prizesList"></div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 4 — Steps reclamació
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-claim">
+    <div class="card">
+      <h2>Reclama el teu <span>premi</span></h2>
+      <p class="lead">
+        Per recollir <strong style="color:#fff" id="claimPrizeName">…</strong>, completa aquests passos:<br>
+        <em>Para recoger tu premio, completa estos pasos:</em>
+      </p>
+
+      <div class="step-item" id="step-ig">
+        <div class="step-num">1</div>
+        <div class="step-info">
+          <div class="st-title">📸 Segueix @cbgrupbarna</div>
+          <div class="st-sub">A Instagram · En Instagram</div>
+        </div>
+        <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" class="step-btn ig" id="ig-btn" onclick="markStep('ig')">SEGUIR →</a>
+      </div>
+
+      <div class="step-item" id="step-wa">
+        <div class="step-num">2</div>
+        <div class="step-info">
+          <div class="st-title">📲 Comparteix amb amics</div>
+          <div class="st-sub">Convida'ls al sorteig per WhatsApp</div>
+        </div>
+        <a href="#" class="step-btn wa" id="wa-btn" onclick="shareWhatsApp(event)">COMPARTIR →</a>
+      </div>
+
+      <div class="step-item" id="step-ins">
+        <div class="step-num">3</div>
+        <div class="step-info">
+          <div class="st-title">🏀 Inscriu-te al 3×3</div>
+          <div class="st-sub">Aplica el codi al pagar — Aplica el código al pagar</div>
+        </div>
+        <a href="https://cbgrupbarna-3x3timechamber.com/#inscripcio" target="_blank" class="step-btn" onclick="markStep('ins')">INSCRIURE →</a>
+      </div>
+
+      <div id="claimError" class="form-error"></div>
+
+      <button class="btn-primary" id="claimBtn" onclick="doClaim()" style="margin-top:14px">
+        ✅ HE COMPLETAT — Reclama el premi
+      </button>
+      <p class="note">
+        Important: per fer efectiu el premi <strong style="color:#ffcc66">has de pagar la inscripció al 3×3</strong><br>
+        <em>Para hacer efectivo el premio debes pagar la inscripción al 3×3</em>
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN 5 — Confirmació final
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-done">
+    <div class="card">
+      <div class="final-em" id="doneEmoji">🎉</div>
+      <h2 style="text-align:center"><span id="doneTitle">PREMI RECLAMAT!</span></h2>
+      <p class="lead" style="text-align:center;margin-top:8px">
+        T'hem enviat el codi al correu. Comprova la safata d'entrada (i el SPAM!).<br>
+        <em>Te hemos enviado el código por correo.</em>
+      </p>
+
+      <div class="final-code" id="doneCodeBox">
+        <span class="lbl">El teu codi promo · Tu código</span>
+        <span class="val" id="doneCode">BARNAR5</span>
+      </div>
+
+      <a href="https://cbgrupbarna-3x3timechamber.com/#inscripcio" class="btn-primary" style="text-decoration:none;text-align:center;margin-top:14px">
+        🏀 INSCRIU-TE AL 3×3
+      </a>
+      <a href="https://wa.me/34698425153" target="_blank" class="btn-secondary" style="text-decoration:none;text-align:center;margin-top:8px">
+        💬 Dubtes? WhatsApp +34 698 425 153
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN — Quota diària esgotada
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-full">
+    <div class="card daily-full">
+      <div class="em">⏰</div>
+      <h3>Avui ja s'han acabat les tirades!</h3>
+      <p>
+        Les places diàries són limitades.<br>
+        <strong style="color:#ffcc66">Torna demà a les 9h</strong> per intentar-ho de nou.<br><br>
+        <em>Hoy se han agotado las tiradas. Vuelve mañana a las 9h.</em>
+      </p>
+      <a href="https://cbgrupbarna-3x3timechamber.com/#inscripcio" class="btn-primary" style="text-decoration:none;text-align:center;margin-top:18px">
+        🏀 Mentrestant, inscriu-te al 3×3
+      </a>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       SCREEN — Loader genèric
+  ══════════════════════════════════════════════ -->
+  <div class="screen" id="screen-loader">
+    <div class="loader"><div class="spinner"></div></div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <span class="em" id="toastEm">🎫</span>
+    <span class="tx" id="toastTx">Has guanyat!</span>
+  </div>
+
+  <div class="footer">
+    <img src="https://cbgrupbarna-3x3timechamber.com/cb-grup-barna-logo-512.png" width="36" alt="CB Grup Barna"
+      style="opacity:.35;margin-bottom:6px;display:block;margin-left:auto;margin-right:auto;"><br>
+    © CB Grup Barna 2026 · <a href="https://cbgrupbarna.com">cbgrupbarna.com</a><br>
+    Subjecte a bases legals. Premi vàlid només pagant la inscripció. Places limitades.
+  </div>
+
+<script>
+/* ============================================================
+   CONFIG
+   ============================================================ */
+const API_URL = 'POSA_AQUI_LA_URL_APPS_SCRIPT';
+// Exemple: 'https://script.google.com/macros/s/AKfycbxxxxxxx/exec'
+
+const WA_NUMBER     = '34698425153';
+const RULETA_URL    = 'https://cbgrupbarna-3x3timechamber.com/ruleta/';
+const EVENT_URL     = 'https://cbgrupbarna-3x3timechamber.com/#inscripcio';
+const INSTAGRAM_URL = 'https://www.instagram.com/cbgrupbarna/';
+
+/* ============================================================
+   PREMIS (han de coincidir amb Code.gs)
+   ============================================================ */
+const PRIZES = [
+  { code:'BARNAR5',       short:'5% DESCOMPTE',           desc:'Aplica el codi en pagar la inscripció.', color:'#2a4fa8', tc:'#fff',     emoji:'🎫', weight:90, label:'5%\nDESCOMPTE' },
+  { code:'BARNAR10',      short:'10% DESCOMPTE',          desc:'Aplica el codi en pagar la inscripció.', color:'#ff6b35', tc:'#fff',     emoji:'🏀', weight:3,  label:'10%\nDESCOMPTE' },
+  { code:'CAMISETA3X3',   short:'SAMARRETA CBGB',         desc:'Recull-la el dia de l\'event en pagar.', color:'#1d2d5f', tc:'#fff',     emoji:'👕', weight:2,  label:'SAMARRETA\nCBGB' },
+  { code:'REGAL3X3',      short:'REGAL SORPRESA',         desc:'Recull el regal a l\'event en pagar.',   color:'#c89a00', tc:'#090b12', emoji:'🎁', weight:2,  label:'REGAL\nSORPRESA' },
+  { code:'SENSE_PREMI',   short:'SENSE PREMI',            desc:'Millor sort un altre cop!',              color:'#1e2535', tc:'#6a7a8e', emoji:'😅', weight:2,  label:'SENSE\nPREMI' },
+  { code:'INDIVIDUAL3X3', short:'INSCRIPCIÓ INDIVIDUAL',  desc:'1 jugador inscrit gratis!',              color:'#ffcc66', tc:'#090b12', emoji:'⭐', weight:1,  label:'INSCRIPCIÓ\nINDIVIDUAL' },
+  { code:'EQUIP3X3',      short:'EQUIP COMPLET GRATIS',   desc:'4 jugadors gratis — única plaça!',       color:'#ff1f4f', tc:'#fff',     emoji:'🏆', weight:1,  label:'EQUIP\nCOMPLET' },
+  { code:'EQUIPS2025',    short:'10% FIDELITAT 2025',     desc:'Per equips que van jugar el 2025.',      color:'#1a4a2e', tc:'#4ade80', emoji:'🔄', weight:5,  label:'10%\nFIDEL. 2025' },
+];
+const PRIZE_BY_CODE = Object.fromEntries(PRIZES.map(p => [p.code, p]));
+
+/* ============================================================
+   ESTAT GLOBAL
+   ============================================================ */
+let userEmail   = '';
+let userNom     = '';
+let spinResults = []; // codes dels 3 premis ja tirats
+let spinIdx     = 0;  // 0..2
+let selectedCode = null;
+const stepsDone = { ig:false, wa:false, ins:false };
+
+/* ============================================================
+   PANTALLES
+   ============================================================ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+/* ============================================================
+   INICIALITZACIÓ
+   ============================================================ */
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref') || '';
+  if (ref) document.getElementById('fEmail').value = ref;
+
+  const stored = localStorage.getItem('ruleta3x3_email');
+  if (stored && isApiConfigured()) {
+    showScreen('screen-loader');
+    try {
+      const res = await fetchApi(`${API_URL}?action=check&email=${enc(stored)}`);
+      if (res && res.ok && res.registered) {
+        userEmail = stored;
+        if (res.state === 'RECLAMAT') {
+          const p = PRIZE_BY_CODE[res.claimedCode] || PRIZE_BY_CODE.BARNAR5;
+          showFinal(p);
+          return;
+        }
+        if (res.state === 'TIRADES_FETES') {
+          spinResults = (res.prizes || []).map(p => p.code);
+          showPickScreen();
+          return;
+        }
+      } else if (res && res.dailyFull) {
+        showScreen('screen-full');
+        return;
+      }
+    } catch(_) {}
+  }
+
+  showScreen('screen-register');
+});
+
+/* ============================================================
+   SCREEN 1 — REGISTER
+   ============================================================ */
+async function submitRegister() {
+  const nom    = document.getElementById('fNom').value.trim();
+  const cognom = document.getElementById('fCognom').value.trim();
+  const email  = document.getElementById('fEmail').value.trim().toLowerCase();
+  const mobil  = document.getElementById('fMobil').value.trim();
+  const rgpd   = document.getElementById('fRgpd').checked;
+
+  const err = document.getElementById('formError');
+  err.style.display = 'none';
+
+  if (!nom)    return formError('Cal indicar el nom.');
+  if (!email || !email.includes('@')) return formError('Cal un correu vàlid.');
+  if (!mobil)  return formError('Cal indicar el mòbil.');
+  if (!rgpd)   return formError('Cal acceptar el tractament de dades.');
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Un moment...';
+
+  userEmail = email;
+  userNom = nom;
+  localStorage.setItem('ruleta3x3_email', email);
+
+  if (isApiConfigured()) {
+    try {
+      const url = `${API_URL}?action=register&nom=${enc(nom)}&cognom=${enc(cognom)}&email=${enc(email)}&mobil=${enc(mobil)}`;
+      const res = await fetchApi(url);
+
+      if (!res || !res.ok) {
+        if (res && res.error === 'daily_full') { showScreen('screen-full'); return; }
+        return formError('Error de connexió. Torna a provar.');
+      }
+
+      // Si ja havia tirat o reclamat, reprenem on toca
+      if (res.alreadyRegistered) {
+        if (res.state === 'RECLAMAT') {
+          const p = PRIZE_BY_CODE[res.claimedCode] || PRIZE_BY_CODE.BARNAR5;
+          showFinal(p);
+          return;
+        }
+        if (res.state === 'TIRADES_FETES' && res.prizes) {
+          spinResults = res.prizes.filter(Boolean);
+          showPickScreen();
+          return;
+        }
+      }
+    } catch(_) {
+      console.warn('API error — continuant en mode local');
+    }
+  }
+
+  // OK → pantalla roda
+  showScreen('screen-wheel');
+  drawWheel(angle);
+  updateSpinUI();
+}
+
+function formError(msg) {
+  const el = document.getElementById('formError');
+  el.textContent = msg;
+  el.style.display = 'block';
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = false;
+  btn.textContent = '🎰 ACCEDIR A LA RULETA';
+}
+
+/* ============================================================
+   SCREEN 2 — RODA (3 tirades)
+   ============================================================ */
+const canvas = document.getElementById('wheel');
+const ctx    = canvas.getContext('2d');
+const N      = PRIZES.length;
+const SLICE  = (2 * Math.PI) / N;
+let   angle  = -Math.PI / 2;
+let   spinning = false;
+let   serverPrizes = null; // [code, code, code] del servidor
+
+function drawWheel(a) {
+  const cx = canvas.width/2, cy = canvas.height/2, R = cx - 5;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.beginPath(); ctx.arc(cx,cy,R+5,0,2*Math.PI); ctx.fillStyle='#1a2240'; ctx.fill();
+  for (let i = 0; i < N; i++) {
+    const s = a + i*SLICE, e = s + SLICE;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,s,e); ctx.closePath();
+    ctx.fillStyle = PRIZES[i].color; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+R*Math.cos(e), cy+R*Math.sin(e));
+    ctx.strokeStyle='#090b12'; ctx.lineWidth=2; ctx.stroke();
+    const mid=s+SLICE/2, tr=R*0.62;
+    ctx.save();
+    ctx.translate(cx+tr*Math.cos(mid), cy+tr*Math.sin(mid));
+    ctx.rotate(mid+Math.PI/2); ctx.textAlign='center';
+    ctx.font='14px serif'; ctx.fillText(PRIZES[i].emoji, 0, -17);
+    const lines = PRIZES[i].label.split('\n');
+    ctx.fillStyle = PRIZES[i].tc;
+    ctx.font = `bold ${lines[0].length>7?8:9}px Arial,sans-serif`;
+    ctx.fillText(lines[0], 0, -4);
+    if (lines[1]) ctx.fillText(lines[1], 0, 7);
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(cx,cy,R-10,0,2*Math.PI); ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx,cy,26,0,2*Math.PI); ctx.fillStyle='#090b12'; ctx.fill(); ctx.strokeStyle='#ffcc66'; ctx.lineWidth=3; ctx.stroke();
+  ctx.font='18px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🏀',cx,cy); ctx.textBaseline='alphabetic';
+}
+
+function easeOut(t){ return 1 - Math.pow(1-t,4); }
+function localPick(){ let r=Math.random()*PRIZES.reduce((s,p)=>s+p.weight,0); for(let i=0;i<PRIZES.length;i++){ r-=PRIZES[i].weight; if(r<=0) return i; } return PRIZES.length-1; }
+
+function updateSpinUI() {
+  const left = 3 - spinIdx;
+  const btn = document.getElementById('spinBtn');
+  const prog = document.getElementById('spinProgress');
+  if (left > 0) {
+    btn.textContent = `🎰 TIRA ${spinIdx+1} / 3`;
+    btn.disabled = false;
+    prog.innerHTML = `Et queden <strong>${left} tirada${left===1?'':'s'}</strong>`;
+  } else {
+    btn.style.display = 'none';
+    prog.textContent = 'Ja has tirat 3 cops! 🎉';
+  }
+}
+
+async function doSpin() {
+  if (spinning || spinIdx >= 3) return;
+  spinning = true;
+  document.getElementById('spinBtn').disabled = true;
+
+  // A la primera tirada, demanem al servidor els 3 resultats
+  if (spinIdx === 0 && isApiConfigured() && userEmail && !serverPrizes) {
+    try {
+      const res = await fetchApi(`${API_URL}?action=spin3&email=${enc(userEmail)}`);
+      if (res && res.ok && res.prizes) {
+        serverPrizes = res.prizes.map(p => p.code);
+      }
+    } catch(_) {}
+  }
+
+  // Tria l'index del premi (servidor o fallback local)
+  let chosenIdx;
+  if (serverPrizes && serverPrizes[spinIdx]) {
+    chosenIdx = PRIZES.findIndex(p => p.code === serverPrizes[spinIdx]);
+    if (chosenIdx < 0) chosenIdx = localPick();
+  } else {
+    chosenIdx = localPick();
+  }
+
+  spinResults.push(PRIZES[chosenIdx].code);
+
+  // Angle exacte
+  const base   = -Math.PI/2 - (chosenIdx + 0.5) * SLICE;
+  const minEnd = angle + 6 * 2 * Math.PI;
+  const k      = Math.ceil((minEnd - base) / (2 * Math.PI));
+  const target = base + k * 2 * Math.PI;
+
+  const duration = 3500 + Math.random() * 1200;
+  const startAng = angle;
+  let startTs = null;
+
+  function frame(ts) {
+    if (!startTs) startTs = ts;
+    const prog = Math.min((ts - startTs) / duration, 1);
+    angle = startAng + (target - startAng) * easeOut(prog);
+    drawWheel(angle);
+    if (prog < 1) { requestAnimationFrame(frame); }
+    else {
+      angle = angle % (2 * Math.PI);
+      spinning = false;
+      spinIdx++;
+      showToast(PRIZES[chosenIdx]);
+      setTimeout(() => {
+        if (spinIdx >= 3) {
+          showPickScreen();
+        } else {
+          updateSpinUI();
+        }
+      }, 1600);
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function showToast(prize) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastEm').textContent = prize.emoji;
+  document.getElementById('toastTx').textContent = '+ ' + prize.short;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1400);
+}
+
+/* ============================================================
+   SCREEN 3 — TRIA
+   ============================================================ */
+function showPickScreen() {
+  const list = document.getElementById('prizesList');
+  list.innerHTML = '';
+  spinResults.forEach((code) => {
+    const p = PRIZE_BY_CODE[code]; if (!p) return;
+    const div = document.createElement('button');
+    div.className = 'prize-pick';
+    div.type = 'button';
+    div.onclick = () => pickPrize(p.code);
+    div.innerHTML = `
+      <span class="em">${p.emoji}</span>
+      <div class="tx">
+        <div class="name">${p.short}</div>
+        ${p.code && p.code !== 'SENSE_PREMI' ? `<span class="cd">${p.code}</span>` : ''}
+        <small>${p.desc}</small>
+      </div>`;
+    list.appendChild(div);
+  });
+  showScreen('screen-pick');
+}
+
+function pickPrize(code) {
+  selectedCode = code;
+  const p = PRIZE_BY_CODE[code];
+  document.getElementById('claimPrizeName').textContent = p.emoji + ' ' + p.short;
+  showScreen('screen-claim');
+}
+
+/* ============================================================
+   SCREEN 4 — RECLAMACIÓ (steps)
+   ============================================================ */
+function markStep(key) {
+  stepsDone[key] = true;
+  const el = document.getElementById('step-' + key);
+  el.classList.add('done');
+  const btn = el.querySelector('.step-btn');
+  if (btn) { btn.classList.add('done-btn'); btn.textContent = '✓ FET'; }
+}
+
+function shareWhatsApp(ev) {
+  ev.preventDefault();
+  const text = encodeURIComponent(
+    `🎰 Estic participant al sorteig del 3×3 Westfield Glòries 2026! Gira la ruleta i guanya premis: ${RULETA_URL}`
+  );
+  window.open(`https://wa.me/?text=${text}`, '_blank');
+  markStep('wa');
+}
+
+async function doClaim() {
+  const err = document.getElementById('claimError');
+  err.style.display = 'none';
+
+  if (!stepsDone.ig || !stepsDone.wa || !stepsDone.ins) {
+    err.textContent = 'Cal completar els 3 passos abans de reclamar.';
+    err.style.display = 'block';
+    return;
+  }
+  if (!selectedCode) {
+    err.textContent = 'No hi ha cap premi seleccionat.';
+    err.style.display = 'block';
+    return;
+  }
+
+  const btn = document.getElementById('claimBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Reclamant...';
+
+  let finalPrize = PRIZE_BY_CODE[selectedCode];
+
+  if (isApiConfigured() && userEmail) {
+    try {
+      const url = `${API_URL}?action=claim&email=${enc(userEmail)}&code=${enc(selectedCode)}&instagram=1&whatsapp=1`;
+      const res = await fetchApi(url);
+      if (res && res.ok) {
+        if (res.degraded) {
+          finalPrize = PRIZE_BY_CODE[res.prize] || finalPrize;
+        }
+      } else if (res && res.error === 'already_claimed') {
+        finalPrize = PRIZE_BY_CODE[res.claimedCode] || finalPrize;
+      }
+    } catch(_) {
+      console.warn('Claim API error — mostrant resultat local');
+    }
+  }
+
+  showFinal(finalPrize);
+}
+
+/* ============================================================
+   SCREEN 5 — FINAL
+   ============================================================ */
+function showFinal(prize) {
+  const hasCode = prize.code && prize.code !== 'SENSE_PREMI';
+  document.getElementById('doneEmoji').textContent = prize.emoji;
+  document.getElementById('doneTitle').textContent = prize.short;
+  if (hasCode) {
+    document.getElementById('doneCode').textContent = prize.code;
+    document.getElementById('doneCodeBox').style.display = 'block';
+  } else {
+    document.getElementById('doneCodeBox').style.display = 'none';
+  }
+  showScreen('screen-done');
+}
+
+/* ============================================================
+   UTILITATS
+   ============================================================ */
+function isApiConfigured() {
+  return API_URL && !API_URL.includes('POSA_AQUI') && API_URL.startsWith('https://');
+}
+function enc(s){ return encodeURIComponent(s || ''); }
+async function fetchApi(url) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 10000);
+  try {
+    const res = await fetch(url, { signal: ctrl.signal });
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+</script>
+</body>
+</html>
