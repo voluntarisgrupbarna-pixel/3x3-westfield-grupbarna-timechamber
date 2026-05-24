@@ -317,8 +317,8 @@
         <li>
           <span class="num">6</span>
           <span class="tx">
-            <strong>Stock limitat</strong> per a alguns premis — Quan s'esgoten, el sistema en dona un altre.
-            <em>Stock limitado — Cuando se agotan, el sistema asigna otro premio.</em>
+            <strong>Stock limitat</strong> — Sortegem <strong style="color:#ffcc66">1 inscripció individual cada 2 dies</strong> i <strong style="color:#ffcc66">2 equips complets a la setmana</strong>. Camisetes i regals fins esgotar.
+            <em>Sorteamos 1 inscripción individual cada 2 días y 2 equipos a la semana. Camisetas y regalos hasta agotar.</em>
           </span>
         </li>
         <li>
@@ -332,7 +332,7 @@
 
       <div class="rules-stock">
         <strong>📦 Premis disponibles</strong>
-        🎫 5% descompte <span>(BARNAR5)</span> · 🏀 10% descompte <span>(BARNAR10, 50 unitats)</span> · 👕 Samarreta CBGB <span>(20 unitats)</span> · 🎁 Regal sorpresa <span>(20 unitats)</span> · ⭐ Inscripció individual gratis <span>(1 plaça)</span> · 🏆 Equip complet gratis <span>(1 plaça)</span> · 🔄 10% fidelitat 2025
+        🎫 5% descompte <span>(BARNAR5)</span> · 🏀 10% descompte <span>(BARNAR10, 50 unitats)</span> · 👕 Samarreta CBGB <span>(20 unitats)</span> · 🎁 Regal sorpresa <span>(20 unitats)</span> · ⭐ Inscripció individual gratis <span>(1 cada 2 dies)</span> · 🏆 Equip complet gratis <span>(2 a la setmana)</span> · 🔄 10% fidelitat 2025
       </div>
     </div>
 
@@ -543,8 +543,8 @@ const PRIZES = [
   { code:'CAMISETA3X3',   short:'SAMARRETA CBGB',         desc:'Recull-la el dia de l\'event en pagar.', color:'#1d2d5f', tc:'#fff',     emoji:'👕', weight:2,  label:'SAMARRETA\nCBGB' },
   { code:'REGAL3X3',      short:'REGAL SORPRESA',         desc:'Recull el regal a l\'event en pagar.',   color:'#c89a00', tc:'#090b12', emoji:'🎁', weight:2,  label:'REGAL\nSORPRESA' },
   { code:'SENSE_PREMI',   short:'SENSE PREMI',            desc:'Millor sort un altre cop!',              color:'#1e2535', tc:'#6a7a8e', emoji:'😅', weight:2,  label:'SENSE\nPREMI' },
-  { code:'INDIVIDUAL3X3', short:'INSCRIPCIÓ INDIVIDUAL',  desc:'1 jugador inscrit gratis!',              color:'#ffcc66', tc:'#090b12', emoji:'⭐', weight:1,  label:'INSCRIPCIÓ\nINDIVIDUAL' },
-  { code:'EQUIP3X3',      short:'EQUIP COMPLET GRATIS',   desc:'4 jugadors gratis — única plaça!',       color:'#ff1f4f', tc:'#fff',     emoji:'🏆', weight:1,  label:'EQUIP\nCOMPLET' },
+  { code:'INDIVIDUAL3X3', short:'INSCRIPCIÓ INDIVIDUAL',  desc:'1 jugador inscrit gratis. Sortegem 1 cada 2 dies!',  color:'#ffcc66', tc:'#090b12', emoji:'⭐', weight:1,  label:'INSCRIPCIÓ\nINDIVIDUAL' },
+  { code:'EQUIP3X3',      short:'EQUIP COMPLET GRATIS',   desc:'4 jugadors inscrits gratis. Sortegem 2 equips a la setmana!', color:'#ff1f4f', tc:'#fff',     emoji:'🏆', weight:1,  label:'EQUIP\nCOMPLET' },
   { code:'EQUIPS2025',    short:'10% FIDELITAT 2025',     desc:'Per equips que van jugar el 2025.',      color:'#1a4a2e', tc:'#4ade80', emoji:'🔄', weight:5,  label:'10%\nFIDEL. 2025' },
 ];
 const PRIZE_BY_CODE = Object.fromEntries(PRIZES.map(p => [p.code, p]));
