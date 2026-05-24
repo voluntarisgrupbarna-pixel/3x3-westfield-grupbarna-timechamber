@@ -209,6 +209,50 @@
     .daily-full h3 { font-size:18px; margin:10px 0 8px; }
     .daily-full p { color:#7a8a9e; font-size:13px; line-height:1.5; }
 
+    /* ── Normes del sorteig ── */
+    .rules-card {
+      background:linear-gradient(135deg,#0a1428 0%,#0d1018 100%);
+      border:1px solid #2a4fa8; border-radius:18px;
+      padding:22px 22px 20px; width:100%; max-width:480px;
+      margin:0 auto 14px;
+    }
+    .rules-card h3 {
+      font-size:14px; font-weight:900; text-transform:uppercase; letter-spacing:2px;
+      color:#ffcc66; margin-bottom:14px;
+      display:flex; align-items:center; gap:8px;
+    }
+    .rules-list { list-style:none; padding:0; margin:0; }
+    .rules-list li {
+      display:flex; gap:12px; align-items:flex-start;
+      padding:9px 0; border-bottom:1px solid #1a2535;
+      font-size:13px; line-height:1.5; color:#c0c8d8;
+    }
+    .rules-list li:last-child { border-bottom:0; }
+    .rules-list li .num {
+      flex-shrink:0; width:24px; height:24px; background:#2a4fa8; color:#fff;
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:900; margin-top:1px;
+    }
+    .rules-list li .tx { flex:1; }
+    .rules-list li .tx strong { color:#fff; }
+    .rules-list li .tx em { color:#5a6a7e; font-style:normal; font-size:11px; display:block; margin-top:2px; }
+    .rules-stock {
+      margin-top:14px; padding:12px 14px;
+      background:#080c12; border:1px solid #1a2535; border-radius:10px;
+      font-size:11px; color:#7a8a9e; line-height:1.6;
+    }
+    .rules-stock strong { color:#ffcc66; display:block; margin-bottom:4px; font-size:12px; letter-spacing:1px; text-transform:uppercase; }
+    .rules-stock span { color:#fff; font-family:monospace; }
+
+    /* ── Recordatori curt a altres pantalles ── */
+    .mini-rules {
+      width:100%; max-width:480px; margin:0 auto 10px;
+      background:#0d1018; border:1px solid #1a2535; border-radius:10px;
+      padding:10px 14px;
+      font-size:11px; color:#7a8a9e; line-height:1.5; text-align:center;
+    }
+    .mini-rules strong { color:#ffcc66; }
+
     /* ── Peu ── */
     .footer { text-align:center; color:#2a3540; font-size:11px; padding-top:20px; line-height:1.8; max-width:500px; }
     .footer a { color:#3a4a5e; }
@@ -229,6 +273,68 @@
        SCREEN 1 — Registre
   ══════════════════════════════════════════════ -->
   <div class="screen active" id="screen-register">
+
+    <!-- Normes del sorteig -->
+    <div class="rules-card">
+      <h3>📋 Normes del sorteig · Reglas</h3>
+      <ol class="rules-list">
+        <li>
+          <span class="num">1</span>
+          <span class="tx">
+            <strong>Registre obligatori</strong> — Deixa nom, email, mòbil i accepta la política de dades.
+            <em>Registro obligatorio — Nombre, email, móvil y aceptación de datos.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">2</span>
+          <span class="tx">
+            <strong>3 tirades gratuïtes</strong> per persona — La roda gira 3 cops i guardem els 3 premis.
+            <em>3 tiradas gratuitas por persona — La ruleta gira 3 veces.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">3</span>
+          <span class="tx">
+            <strong>Tries 1 dels 3 premis</strong> — Els altres 2 tornen al sorteig per a la resta de jugadors.
+            <em>Eliges 1 de los 3 — Los demás vuelven al sorteo.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">4</span>
+          <span class="tx">
+            <strong>Per reclamar el premi</strong> cal: seguir <a href="https://www.instagram.com/cbgrupbarna/" target="_blank" style="color:#9ad0ff">@cbgrupbarna</a>, compartir el sorteig per WhatsApp i inscriure's al 3×3.
+            <em>Para reclamar: seguir @cbgrupbarna, compartir por WhatsApp e inscribirse.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">5</span>
+          <span class="tx">
+            <strong style="color:#ffcc66">Premi vàlid només pagant la inscripció</strong> al 3×3 — Aplica el codi en pagar.
+            <em>Premio válido solo pagando la inscripción al 3×3.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">6</span>
+          <span class="tx">
+            <strong>Stock limitat</strong> per a alguns premis — Quan s'esgoten, el sistema en dona un altre.
+            <em>Stock limitado — Cuando se agotan, el sistema asigna otro premio.</em>
+          </span>
+        </li>
+        <li>
+          <span class="num">7</span>
+          <span class="tx">
+            <strong>1500 tirades/dia</strong> — Si s'esgoten, torna l'endemà a les 9h.
+            <em>1500 tiradas/día — Si se agotan, vuelve mañana a las 9h.</em>
+          </span>
+        </li>
+      </ol>
+
+      <div class="rules-stock">
+        <strong>📦 Premis disponibles</strong>
+        🎫 5% descompte <span>(BARNAR5)</span> · 🏀 10% descompte <span>(BARNAR10, 50 unitats)</span> · 👕 Samarreta CBGB <span>(20 unitats)</span> · 🎁 Regal sorpresa <span>(20 unitats)</span> · ⭐ Inscripció individual gratis <span>(1 plaça)</span> · 🏆 Equip complet gratis <span>(1 plaça)</span> · 🔄 10% fidelitat 2025
+      </div>
+    </div>
+
     <div class="card">
       <h2>Accedeix a la <span>ruleta</span> 🎰</h2>
       <p class="lead">
@@ -273,6 +379,9 @@
        SCREEN 2 — Roda (3 tirades)
   ══════════════════════════════════════════════ -->
   <div class="screen" id="screen-wheel">
+    <div class="mini-rules">
+      Gira <strong>3 cops</strong> · Després <strong>triaràs 1 premi</strong> · Vàlid només <strong>pagant la inscripció</strong>
+    </div>
     <div class="wheel-wrap">
       <div class="pointer"></div>
       <canvas id="wheel" width="300" height="300"></canvas>
@@ -286,6 +395,9 @@
        SCREEN 3 — Tria de premi
   ══════════════════════════════════════════════ -->
   <div class="screen" id="screen-pick">
+    <div class="mini-rules">
+      ⚠️ Tries <strong>només 1 premi</strong> · Els altres 2 tornen al sorteig
+    </div>
     <div class="card">
       <h2>Tria el teu <span>premi</span> 🏆</h2>
       <p class="lead">
