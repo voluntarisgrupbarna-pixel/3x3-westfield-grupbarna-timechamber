@@ -241,7 +241,8 @@ function getDashboardData_() {
     inscTotal = inscRows;
     var inscHeaders = inscSheet.getRange(1, 1, 1, inscSheet.getLastColumn()).getValues()[0];
     var catCol = inscHeaders.indexOf('Categoria');
-    var totalCol = inscHeaders.indexOf('Total €');
+    var totalCol = inscHeaders.indexOf('Total (€)');
+    if (totalCol < 0) totalCol = inscHeaders.indexOf('Total €');
     if (catCol >= 0) {
       var cats = inscSheet.getRange(2, catCol + 1, inscRows, 1).getValues();
       cats.forEach(function(r) {
@@ -337,6 +338,10 @@ function doGet(e) {
       return jsonOut_({ headers: headers, totalCols: headers.length, totalRows: sheet.getLastRow() });
     } catch(err) { return jsonOut_({ error: String(err) }); }
   }
+  if (action === 'team') return getTeamForCheckin_(e);
+  if (action === 'confirmTeam') return confirmTeamStatus_(e);
+  if (action === 'cleanDuplicates') return cleanDuplicates_(e);
+  // one-shot eliminat 17/05/2026
   if (action === 'migrateGenere') {
     // Afegeix la columna Gènere al Sheet si no hi és (sense necessitar nova inscripció)
     try {
@@ -413,33 +418,42 @@ function getInscripcionsForStaff_(e) {
     var idx = {};
     headers.forEach(function(h, i) { idx[h] = i; });
 
+    // Helper per llegir un camp amb fallback a noms de columna antics
+    // (el Sheet va tenir una capçalera diferent abans de la migració 2026-05-07)
+    function col_(r, newH, oldH) {
+      return String(r[idx[newH]] || (oldH ? r[idx[oldH]] : '') || '');
+    }
+
     var inscripcions = rows.map(function(r) {
-      var jugadorsRaw = String(r[idx['Jugadors']] || '');
+      var jugadorsRaw = String(r[idx['Jugadors']] || r[idx['Jugadors equip']] || '');
       // Jugadors estan separats per " · " en el Sheet
       var jugadors = jugadorsRaw ? jugadorsRaw.split(' · ').map(function(n) { return { nom: n.trim() }; }) : [];
+      // Noms de columnes antics (capçalera pre-migració):
+      //   'Timestamp' → 'Data', 'Nom Equip' → 'Team ID' (slug), 'Capità Nom' → 'Nom equip',
+      //   'Capità Cognom' → 'Capità', 'Capità Email' → 'Email', 'Capità Telèfon' → 'Telèfon'
       return {
-        team_id:            String(r[idx['Team ID']] || ''),
-        created_at:         String(r[idx['Data']] || ''),
+        team_id:            col_(r, 'Team ID',       'Nom Equip'),
+        created_at:         col_(r, 'Data',           'Timestamp'),
         tipus:              'equip',
-        nom_equip:          String(r[idx['Nom equip']] || ''),
-        capita:             String(r[idx['Capità']] || ''),
-        email:              String(r[idx['Email']] || ''),
-        telefon:            String(r[idx['Telèfon']] || ''),
-        poblacio:           String(r[idx['Població']] || ''),
-        categoria:          String(r[idx['Categoria']] || ''),
-        genere:             String(r[idx['Gènere']] || ''),
+        nom_equip:          col_(r, 'Nom equip',      'Capità Nom'),
+        capita:             col_(r, 'Capità',         'Capità Cognom'),
+        email:              col_(r, 'Email',          'Capità Email'),
+        telefon:            col_(r, 'Telèfon',        'Capità Telèfon'),
+        poblacio:           col_(r, 'Població',       null),
+        categoria:          col_(r, 'Categoria',      null),
+        genere:             col_(r, 'Gènere',         null),
         jugadors:           jugadors,
         total:              Number(r[idx['Total (€)']] || r[idx['Total €']] || 0),
         desc_aplicat:       String(r[idx['Desc. aplicat?']] || '') === 'Sí',
         desc_invitacions:   String(r[idx['Desc. invitacions?']] || '') === 'Sí',
         desc_early_bird:    String(r[idx['Desc. early-bird?']] || '') === 'Sí',
-        mida_samarretes:    String(r[idx['Mida samarretes']] || ''),
+        mida_samarretes:    col_(r, 'Mida samarretes', 'Capità Talla'),
         samarretes_extra:   Number(r[idx['Samarretes extra']] || 0),
-        notes:              String(r[idx['Notes']] || ''),
-        checkin_url:        String(r[idx['Check-in URL']] || ''),
-        justificant_drive_url: String(r[idx['Justificant Drive URL']] || ''),
+        notes:              col_(r, 'Notes',           null),
+        checkin_url:        col_(r, 'Check-in URL',    null),
+        justificant_drive_url: col_(r, 'Justificant Drive URL', null),
         pagament_estat:     String(r[idx['Pagament estat']] || 'Pendent').toLowerCase(),
-        codi_wr:            String(r[idx['Codi WR']] || ''),
+        codi_wr:            col_(r, 'Codi WR',         null),
       };
     }).filter(function(i) { return i.team_id || i.nom_equip; });
 
@@ -455,6 +469,88 @@ function getInscripcionsForStaff_(e) {
  * per al dashboard de staff. Mateix esquema d'autenticació que inscripcions.
  * Cridat amb ?action=leads&token=<METRICS_TOKEN>
  */
+
+/**
+ * GET ?action=team&teamId=T3X3-2026-XXXXX
+ * Retorna les dades de l'equip per a la pàgina de check-in del site Vercel.
+ * Resposta: { ok: true, team: { teamId, teamName, category, package, status, numPlayers, players[] } }
+ * Si no es troba: { ok: false, error: 'not_found' }
+ * NO requereix autenticació (accés públic per QR).
+ */
+function getTeamForCheckin_(e) {
+  var teamId = (e && e.parameter && e.parameter.teamId) ? String(e.parameter.teamId).trim().toUpperCase() : '';
+  if (!teamId) return jsonOut_({ ok: false, error: 'missing_teamId' });
+  // Sanitize: only alphanumeric + hyphen, max 40 chars
+  teamId = teamId.replace(/[^A-Z0-9\-]/g, '').slice(0, 40);
+  if (!teamId) return jsonOut_({ ok: false, error: 'invalid_teamId' });
+
+  try {
+    var sheet = getSheet_();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonOut_({ ok: false, error: 'not_found' });
+
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var idx = {};
+    headers.forEach(function(h, i) { idx[String(h).trim()] = i; });
+
+    var rows = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    var found = null;
+    for (var ri = 0; ri < rows.length; ri++) {
+      if (String(rows[ri][idx['Team ID']] || '').trim().toUpperCase() === teamId) {
+        found = rows[ri];
+        break;
+      }
+    }
+    if (!found) return jsonOut_({ ok: false, error: 'not_found' });
+
+    // ── Status ──
+    var estatCrm  = String(found[idx['Estat CRM']]    || '').trim();
+    var pagEstat  = String(found[idx['Pagament estat']]|| '').trim();
+    var status;
+    if (['Confirmat', 'Pagat', 'Verificat'].indexOf(estatCrm) >= 0 || pagEstat === 'Verificat') {
+      status = 'confirmed';
+    } else if (['Cancel·lat', 'Cancelat', 'Cancelled'].indexOf(estatCrm) >= 0) {
+      status = 'cancelled';
+    } else {
+      status = 'pending_payment';
+    }
+
+    // ── Players: parse "Nom1 · Nom2 · Nom3" field ──
+    var jugadorsStr = String(found[idx['Jugadors']] || '');
+    var players = [];
+    if (jugadorsStr) {
+      jugadorsStr.split('·').forEach(function(part, i) {
+        var name = part.replace(/\([^)]*\)/g, '').trim(); // treure (DNI/notes)
+        if (name) {
+          players.push({
+            playerId: teamId + '-J' + i,
+            fullName: name,
+            dorsal: String(i + 1),
+            position: '',
+            shirtSize: '',
+          });
+        }
+      });
+    }
+
+    return jsonOut_({
+      ok: true,
+      team: {
+        teamId:     teamId,
+        teamName:   String(found[idx['Nom equip']]  || ''),
+        category:   String(found[idx['Categoria']]  || ''),
+        package:    String(found[idx['Concepte']]   || ''),
+        status:     status,
+        numPlayers: players.length,
+        players:    players,
+      }
+    });
+  } catch (err) {
+    Logger.log('getTeamForCheckin_ error: ' + err);
+    return jsonOut_({ ok: false, error: String(err) });
+  }
+}
+
 function getLeadsForStaff_(e) {
   var token = (e && e.parameter && e.parameter.token) || '';
   var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
@@ -655,6 +751,13 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+    // Guard: rebutja payloads sense nomEquip (accions vàlides ja han retornat amunt)
+    if (!raw.nomEquip) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'payload_buit' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const data = normalizeFormData_(raw);
 
     // ─── Bloqueig de duplicats (només per inscripcions d'equip, no per individuals que ja s'han processat amunt).
@@ -781,7 +884,20 @@ function normalizeFormData_(data) {
     descAplicat: !!data.descAplicat,
     descInvitacions: !!data.descInvitacions,
     descEarlyBird: !!data.descEarlyBird,
-    jugadors: Array.isArray(data.jugadors) ? data.jugadors : [],
+    codiDesc: data.codiDesc || '',
+    // Suport doble format:
+    //  - Vite form: { jugadors: [{ nom, cognoms, dni }] }
+    //  - Next.js form: { players: [{ fullName, shirtSize, position, dorsal }] }
+    jugadors: Array.isArray(data.jugadors) ? data.jugadors
+            : Array.isArray(data.players) ? data.players.map(function(p) {
+                return {
+                  nom: (p.fullName || p.nom || (p.nom + ' ' + (p.cognom||'')).trim() || '').trim(),
+                  talla: p.shirtSize || p.talla || '',
+                  posicio: p.position || p.posicio || '',
+                  dorsal: p.dorsal || '',
+                };
+              })
+            : [],
     justificant: data.justificant || null,
     codiWR: data.codiWR || '',
   };
@@ -804,7 +920,7 @@ function writeToSheet_(data, justificantUpload) {
   const EXPECTED_HEADERS = [
     'Data', 'Team ID', 'Concepte', 'Categoria', 'Nom equip', 'Capità', 'Població', 'Email', 'Telèfon',
     'Jugadors', 'Mida samarretes', 'Notes', 'Total (€)',
-    'Desc. aplicat?', 'Desc. invitacions?', 'Justificant Drive URL',
+    'Desc. aplicat?', 'Desc. invitacions?', 'Codi descompte', 'Justificant Drive URL',
     'Check-in URL', 'Samarretes extra', 'Talles extra', 'Pagament estat', 'Arribat (timestamp)',
     'Gènere', 'Desc. early-bird?',
     'Estat CRM', 'Notes CRM', 'Proper seguiment',
@@ -854,6 +970,7 @@ function writeToSheet_(data, justificantUpload) {
     'Total (€)':             d.total,
     'Desc. aplicat?':        d.descAplicat ? 'Sí' : 'No',
     'Desc. invitacions?':    d.descInvitacions ? 'Sí' : 'No',
+    'Codi descompte':        d.codiDesc || '',
     'Justificant Drive URL': justifUrl,
     'Check-in URL':          d.checkinUrl,
     'Samarretes extra':      numExtras,
@@ -2751,4 +2868,277 @@ function addAbandonament_(data) {
       htmlBody: html,
     });
   } catch (e) { Logger.log('[abandon] admin mail err: ' + e); }
+}
+
+/**
+ * TEST / DIAGNÒSTIC — GA4 Analytics Data API
+ * Executa manualment des del dropdown del editor per veure
+ * la resposta COMPLETA (codi HTTP + body) de la GA4 API.
+ * Útil per detectar si l'API no està activada al projecte GCP.
+ */
+function testGa4Debug() {
+  var props = PropertiesService.getScriptProperties();
+  var propertyId = props.getProperty('GA4_PROPERTY_ID') || '';
+  Logger.log('GA4_PROPERTY_ID: ' + propertyId);
+
+  if (!propertyId) {
+    Logger.log('ERROR: GA4_PROPERTY_ID no configurat a Script Properties');
+    return;
+  }
+
+  var token = ScriptApp.getOAuthToken();
+  Logger.log('OAuth token obtingut (primeres 20 chars): ' + token.substring(0, 20) + '...');
+
+  var baseUrl = 'https://analyticsdata.googleapis.com/v1beta/properties/' + propertyId + ':runReport';
+  var body = {
+    dateRanges: [{ startDate: '30daysAgo', endDate: 'yesterday' }],
+    dimensions: [{ name: 'date' }],
+    metrics: [{ name: 'sessions' }, { name: 'activeUsers' }],
+    limit: 5,
+  };
+
+  try {
+    var resp = UrlFetchApp.fetch(baseUrl, {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + token },
+      payload: JSON.stringify(body),
+      muteHttpExceptions: true,
+    });
+    var code = resp.getResponseCode();
+    var text = resp.getContentText();
+    Logger.log('HTTP status: ' + code);
+    Logger.log('Response body: ' + text.substring(0, 1000));
+  } catch (err) {
+    Logger.log('Excepcio: ' + err);
+  }
+}
+
+// ─── INSCRIPCIÓ MANUAL: The Walking Dead (WR-032) ──────────────────────────
+// Funció d'un sol ús. Executa-la des de l'editor d'Apps Script (▶ Run).
+// Un cop feta, pots esborrar-la o deixar-la (no fa res si no la crides).
+function addWalkingDeadRow() {
+  var SHEET_ID   = '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var SHEET_NAME = 'Inscripcions 2026';
+
+  var ss    = SpreadsheetApp.openById(SHEET_ID);
+  var sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) throw new Error('Pestanya "' + SHEET_NAME + '" no trobada');
+
+  var lastRow = sheet.getLastRow();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  var data = {
+    'Data':                  '17/05/2026 14:10',
+    'Team ID':               'WR-032',
+    'Concepte':              'Veterans · 4 jugadors',
+    'Categoria':             'Veterans',
+    'Nom equip':             'The Walking Dead',
+    'Capità':                'Alberto Marí',
+    'Població':              '',
+    'Email':                 'almari_21@hotmail.com',
+    'Telèfon':               '',
+    'Jugadors':              'Alberto Marí · Andreu Puig · Ignacio Goñi · Dífac Puig',
+    'Mida samarretes':       'L',
+    'Notes':                 'Inscripció manual via WhatsApp 17/05/2026',
+    'Total (€)':             47.50,
+    'Desc. aplicat?':        'No',
+    'Desc. invitacions?':    'No',
+    'Justificant Drive URL': '',
+    'Check-in URL':          'https://www.cbgrupbarna-3x3timechamber.com/check-in/WR-032',
+    'Samarretes extra':      0,
+    'Talles extra':          'L, XL, XXL, L',
+    'Pagament estat':        'Verificat',
+    'Gènere':                'Masculí',
+    'Codi WR':               'WR-032'
+  };
+
+  var newRow = headers.map(function(h) {
+    return data.hasOwnProperty(h) ? data[h] : '';
+  });
+
+  sheet.getRange(lastRow + 1, 1, 1, headers.length).setValues([newRow]);
+
+  var msg = 'OK ✅ — Fila ' + (lastRow + 1) + ' afegida: The Walking Dead (WR-032)';
+  Logger.log(msg);
+  return msg;
+}
+
+/**
+ * One-shot: Afegeix Bocadillo Jamón (WR-033) a "Inscripcions 2026"
+ * i actualitza el telèfon del Walking Dead (WR-032).
+ * Utilitza la mateixa estructura que addWalkingDeadRow (columnes reals de la pestanya).
+ */
+function confirmBocadilloJamonAndCleanWalkingDead_() {
+  var SHEET_ID   = '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+  var SHEET_NAME = 'Inscripcions 2026';
+  var ss         = SpreadsheetApp.openById(SHEET_ID);
+  var sheet      = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) return 'ERROR: pestanya "' + SHEET_NAME + '" no trobada';
+
+  var results = [];
+  var lastRow = sheet.getLastRow();
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+
+  // ── 1. Afegir Bocadillo Jamón si no existeix (check per nom equip) ──
+  var wrCol      = headers.indexOf('Codi WR');
+  var nomCol     = headers.indexOf('Nom equip');
+  var alreadyExists = false;
+  if (nomCol >= 0 && lastRow > 1) {
+    var nomVals = sheet.getRange(2, nomCol + 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < nomVals.length; i++) {
+      var nomVal = String(nomVals[i][0]).toLowerCase().trim();
+      if (nomVal.indexOf('bocadillo') >= 0) { alreadyExists = true; break; }
+    }
+  }
+
+  if (!alreadyExists) {
+    var bocData = {
+      'Data':                  '15/05/2026 21:33',
+      'Team ID':               'WR-035',
+      'Concepte':              'Infantil · 4 jugadors',
+      'Categoria':             'Infantil (2012-2013)',
+      'Nom equip':             'Bocadillo jamon y queso',
+      'Capità':                'Isaac Montaner García',
+      'Població':              '',
+      'Email':                 'dulga76@gmail.com',
+      'Telèfon':               '630438251',
+      'Jugadors':              'Isaac Montaner García · Santos Gracia Delgado · Ignacio Gabarró Castells · Enzo Casquero Jovellanos',
+      'Mida samarretes':       'M',
+      'Notes':                 'Confirmat per Ana via WhatsApp 17/05/2026. Pagament Bizum 63,75€',
+      'Total (€)':             63.75,
+      'Desc. aplicat?':        'Sí',
+      'Desc. invitacions?':    'No',
+      'Justificant Drive URL': 'https://drive.google.com/file/d/1IvjqyB-XSFzxZ6k60vE55zOikkEwJM6X/view?usp=drivesdk',
+      'Check-in URL':          'https://cbgrupbarna-3x3timechamber.com/check-in/WR-035',
+      'Samarretes extra':      0,
+      'Talles extra':          'M, L, M, L',
+      'Pagament estat':        'Verificat',
+      'Gènere':                'Masculí',
+      'Desc. early-bird?':     'Sí',
+      'Estat CRM':             'Confirmat',
+      'Codi WR':               'WR-035'
+    };
+    var newRow = headers.map(function(h) { return bocData.hasOwnProperty(h) ? bocData[h] : ''; });
+    sheet.getRange(lastRow + 1, 1, 1, headers.length).setValues([newRow]);
+    results.push('✅ Bocadillo Jamón afegit a fila ' + (lastRow + 1) + ' (WR-035)');
+    lastRow = lastRow + 1;
+  } else {
+    results.push('ℹ️ Bocadillo Jamón ja existia al Sheet');
+  }
+
+  // ── 2. Actualitzar telèfon del Walking Dead (WR-032) ──
+  var telCol = headers.indexOf('Telèfon');
+  if (wrCol >= 0 && telCol >= 0) {
+    var allVals = sheet.getRange(2, wrCol + 1, Math.max(1, lastRow - 1), 1).getValues();
+    for (var j = 0; j < allVals.length; j++) {
+      if (String(allVals[j][0]).trim() === 'WR-032') {
+        var currentTel = String(sheet.getRange(j + 2, telCol + 1).getValue()).trim();
+        if (!currentTel) {
+          sheet.getRange(j + 2, telCol + 1).setValue('+34696896227');
+          results.push('✅ Walking Dead: telèfon afegit (+34696896227)');
+        } else {
+          results.push('ℹ️ Walking Dead telèfon ja tenia valor: ' + currentTel);
+        }
+        break;
+      }
+    }
+  }
+
+  Logger.log(results.join('\n'));
+  return results.join('\n');
+}
+
+/**
+ * Confirma manualment l'status d'un equip al Sheet.
+ * GET ?action=confirmTeam&token=<METRICS_TOKEN>&teamId=<TEAMID>&notes=<notes>
+ * Proteigit per METRICS_TOKEN. Retorna {ok, teamId, oldStatus, newStatus}.
+ */
+function confirmTeamStatus_(e) {
+  var token = (e && e.parameter && e.parameter.token) || '';
+  var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
+  if (!validToken || token !== validToken) {
+    return jsonOut_({ error: 'Unauthorized', ts: new Date().toISOString() });
+  }
+  var teamId = (e && e.parameter && e.parameter.teamId) || '';
+  if (!teamId) return jsonOut_({ error: 'teamId required', ts: new Date().toISOString() });
+  var notes = (e && e.parameter && e.parameter.notes) || 'Confirmat manualment';
+
+  try {
+    var sheet = getSheet_();
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonOut_({ error: 'Sheet buit', ts: new Date().toISOString() });
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var teamIdCol = headers.indexOf('TeamID');
+    var statusCol = headers.indexOf('Status');
+    var notesCol  = headers.indexOf('Notes');
+    if (teamIdCol < 0 || statusCol < 0) {
+      return jsonOut_({ error: 'Columnes TeamID o Status no trobades', headers: headers.join(',') });
+    }
+    var data = sheet.getRange(2, 1, lastRow - 1, headers.length).getValues();
+    var rowIdx = -1;
+    var oldStatus = '';
+    for (var i = 0; i < data.length; i++) {
+      if (String(data[i][teamIdCol]).trim() === teamId) {
+        rowIdx = i + 2;
+        oldStatus = String(data[i][statusCol]).trim();
+        break;
+      }
+    }
+    if (rowIdx < 0) return jsonOut_({ error: 'Equip no trobat', teamId: teamId });
+    sheet.getRange(rowIdx, statusCol + 1).setValue('confirmed');
+    if (notesCol >= 0 && notes) {
+      var existingNote = String(data[rowIdx - 2][notesCol] || '').trim();
+      var newNote = existingNote ? existingNote + ' | ' + notes : notes;
+      sheet.getRange(rowIdx, notesCol + 1).setValue(newNote);
+    }
+    return jsonOut_({
+      ok: true, teamId: teamId, row: rowIdx,
+      oldStatus: oldStatus, newStatus: 'confirmed', notesAdded: notes,
+      ts: new Date().toISOString()
+    });
+  } catch (err) {
+    return jsonOut_({ error: String(err), teamId: teamId });
+  }
+}
+
+/**
+ * Elimina files duplicades d'un TeamID a qualsevol pestanya del Sheet.
+ * GET ?action=cleanDuplicates&token=<METRICS_TOKEN>&teamId=<TEAMID>&sheet=<SHEET_NAME>
+ * Manté la PRIMERA fila i elimina les duplicades de baix a dalt.
+ */
+function cleanDuplicates_(e) {
+  var token = (e && e.parameter && e.parameter.token) || '';
+  var validToken = PROPS.getProperty('METRICS_TOKEN') || '';
+  if (!validToken || token !== validToken) {
+    return jsonOut_({ error: 'Unauthorized', ts: new Date().toISOString() });
+  }
+  var teamId    = (e && e.parameter && e.parameter.teamId) || '';
+  var sheetName = (e && e.parameter && e.parameter.sheet)  || 'Inscripcions 2026';
+  if (!teamId) return jsonOut_({ error: 'teamId required' });
+
+  try {
+    var id = PROPS.getProperty('SHEET_ID') || '1MG5_8cmeKOe5Jz8BWiJ2e1K669EcIdNNHN1gFGI2uPA';
+    var ss = SpreadsheetApp.openById(id);
+    var sheet = ss.getSheetByName(sheetName);
+    if (!sheet) return jsonOut_({ error: 'Sheet not found: ' + sheetName });
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return jsonOut_({ ok: true, deleted: 0, msg: 'Sheet buit' });
+    var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    var teamIdCol = headers.indexOf('TeamID');
+    if (teamIdCol < 0) return jsonOut_({ error: 'Columna TeamID no trobada a ' + sheetName });
+
+    var matchRows = [];
+    for (var r = 2; r <= lastRow; r++) {
+      var val = String(sheet.getRange(r, teamIdCol + 1).getValue()).trim();
+      if (val === teamId) matchRows.push(r);
+    }
+    if (matchRows.length <= 1) return jsonOut_({ ok: true, deleted: 0, msg: 'Sense duplicats a ' + sheetName });
+
+    var toDelete = matchRows.slice(1).reverse();
+    toDelete.forEach(function(r) { sheet.deleteRow(r); });
+    return jsonOut_({ ok: true, deleted: toDelete.length, kept: matchRows[0], teamId: teamId, sheet: sheetName });
+  } catch (err) {
+    return jsonOut_({ error: String(err) });
+  }
 }

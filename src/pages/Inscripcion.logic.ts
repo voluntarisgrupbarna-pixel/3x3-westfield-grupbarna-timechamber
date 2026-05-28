@@ -11,6 +11,8 @@ export const PRECIO_SENIOR_4 = 85; // Sèniors/Veterans · 4 jugadors
 export const PRECIO_SENIOR_5 = 105; // Sèniors/Veterans · 5 jugadors
 
 export const COD_DESC = "3X3AVIAT";
+/** Codi de fidelitat per a equips que van participar l'any 2025 → 5% de descompte */
+export const COD_DESC_2025 = "EQUIPS2025";
 export const IBAN = "ES25 0182 1797 3002 0387 8558";
 export const BENEFICIARI = "CB Grup Barna";
 

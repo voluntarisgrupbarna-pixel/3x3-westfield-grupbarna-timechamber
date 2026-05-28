@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   TALLAS, GENERES, PRECIO_GEN_4, PRECIO_GEN_5, PRECIO_SENIOR_4, PRECIO_SENIOR_5,
-  COD_DESC, IBAN, BENEFICIARI,
+  COD_DESC, COD_DESC_2025, IBAN, BENEFICIARI,
   precioByCat, buildConcepte, buildTeamId, buildEpcQr, calcTotal,
   isEarlyBirdActive, isSeniorCat,
   schema, type FD,
@@ -675,7 +675,8 @@ export default function Inscripcion() {
 
   const aplicarCodi = () => {
     const expiry = new Date("2026-06-15");
-    if (codiInput.toUpperCase() === COD_DESC) {
+    const cod = codiInput.toUpperCase();
+    if (cod === COD_DESC || cod === COD_DESC_2025) {
       if (new Date() <= expiry) {
         setDescAplicat(true); setCodError("");
         toast({ title:"✅ Codi aplicat", description:"5% de descompte activat!" });
@@ -1870,7 +1871,7 @@ export default function Inscripcion() {
                         <p className="text-white/70">Quota equip: {base.toFixed(2)}€</p>
                         {(reason === "early-bird" || reason === "early-bird+viral") && <p className="text-white/80 font-semibold">🔥 -{desc10.toFixed(2)}€ Early Bird (−10%)</p>}
                         {(reason === "viral" || reason === "early-bird+viral") && <p className="text-white/80 font-semibold">🎁 -{desc5.toFixed(2)}€ comparticions (−5%)</p>}
-                        {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {COD_DESC})</p>}
+                        {reason === "code5" && <p className="text-white/70">(-{desc5.toFixed(2)}€ descompte {codiInput})</p>}
                         {numExtraShirts > 0 && (
                           <p className="text-white/80 font-semibold">+{extras.toFixed(2)}€ — {numExtraShirts} samarreta{numExtraShirts === 1 ? "" : "es"} addicional{numExtraShirts === 1 ? "" : "s"}</p>
                         )}
@@ -2054,7 +2055,7 @@ export default function Inscripcion() {
                     {reason === "early-bird" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-10% Early Bird 🔥</strong></div>}
                     {reason === "viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-green-400">-5% (5 comparticions + IG) 🎁</strong></div>}
                     {reason === "early-bird+viral" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-15% (Early Bird + comparticions) 🏆</strong></div>}
-                    {reason === "code5" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({COD_DESC})</strong></div>}
+                    {reason === "code5" && <div className="flex gap-2"><span className="text-white/30 w-20 shrink-0">Descompte:</span><strong className="text-orange-400">-5% ({codiInput})</strong></div>}
                     <div className="flex gap-2 border-t border-white/8 pt-2 mt-1">
                       <span className="text-white/30 w-20 shrink-0">TOTAL:</span>
                       <strong className="text-red-400 text-lg">{total.toFixed(2)}€</strong>
